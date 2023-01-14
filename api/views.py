@@ -1,22 +1,22 @@
 from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import viewsets
 
-from prescription.models import Pharm_Group, Prescription, Kind, Country
-from .serializers import PharmGroupSeralizer, PrescriptionSeralizer, KindSerializer, CountrySerializer
+from medician.models import Pharm_Group, Medician, Kind, Country
+from .serializers import PharmGroupSeralizer, MedicianSeralizer, KindSerializer, CountrySerializer
 
-class PrescriptionView(generics.ListAPIView):
-    queryset = Prescription.objects.all()
-    serializer_class = PrescriptionSeralizer
+class MedicianView(viewsets.ModelViewSet):
+    queryset = Medician.objects.all()
+    serializer_class = MedicianSeralizer
 
-class KindView(generics.ListAPIView):
+class KindView(viewsets.ModelViewSet):
     queryset = Kind.objects.all()
     serializer_class = KindSerializer
 
-class CountryView(generics.ListAPIView):
+class CountryView(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
 
-class PharmGroupView(generics.ListAPIView):
+class PharmGroupView(viewsets.ModelViewSet):
     queryset = Pharm_Group.objects.all()
     serializer_class = PharmGroupSeralizer
 

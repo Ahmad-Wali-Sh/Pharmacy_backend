@@ -20,7 +20,7 @@ class Country(models.Model):
         return self.name
 
 
-class Prescription(models.Model):
+class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = models.CharField(max_length=100, blank=True, null=True)
     no_pocket = models.IntegerField()
