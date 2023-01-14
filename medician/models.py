@@ -39,6 +39,7 @@ class Medician(models.Model):
     kind = models.ForeignKey(Kind, on_delete=models.CASCADE)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
     pharm_group = models.ForeignKey(Pharm_Group, on_delete=models.CASCADE)
+    image = models.FileField(null=True, blank=True, default="", upload_to='images/')
 
     def __str__ (self):
         return self.brand_name
