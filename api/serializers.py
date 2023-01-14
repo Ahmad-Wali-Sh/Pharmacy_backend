@@ -5,7 +5,9 @@ from medician.models import Medician, Pharm_Group, Kind, Country
 class MedicianSeralizer(serializers.ModelSerializer):
     class Meta:
         model = Medician
-        fields = '__all__'
+        fields = ('id', 'brand_name', 'generic_name', 'no_pocket','pharm_group', 'kind', 'ml','unit', 'weight',
+                 'location','country','company', 'barcode', 'price', 'minmum_existence','maximum_existence',
+                 'dividing_rules','cautions', 'usages', 'description', 'image')
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta: 
