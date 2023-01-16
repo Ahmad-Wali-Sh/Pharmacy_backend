@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'api',
-    'medician'
+    'medician',
+    'prescriptions',
 ]
 
 MIDDLEWARE = [

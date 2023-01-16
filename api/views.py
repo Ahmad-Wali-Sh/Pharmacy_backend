@@ -2,7 +2,9 @@ from django.shortcuts import render
 from rest_framework import viewsets
 
 from medician.models import Pharm_Group, Medician, Kind, Country
-from .serializers import PharmGroupSeralizer, MedicianSeralizer, KindSerializer, CountrySerializer
+from prescriptions.models import Prescription
+
+from .serializers import PharmGroupSeralizer, MedicianSeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -19,5 +21,9 @@ class CountryView(viewsets.ModelViewSet):
 class PharmGroupView(viewsets.ModelViewSet):
     queryset = Pharm_Group.objects.all()
     serializer_class = PharmGroupSeralizer
+
+class PrescriptionView(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
 
 # Create your views here.
