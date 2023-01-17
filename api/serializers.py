@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from medician.models import Medician, Pharm_Group, Kind, Country
+from medician.models import Medician, Pharm_Group, Kind, Country, Unit
 from prescriptions.models import Prescription
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
@@ -30,3 +30,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
                  'location','country','company', 'barcode', 'price', 'minmum_existence','maximum_existence',
                  'dividing_rules','cautions', 'usages', 'description', 'image')
 
+class UnitSeralizer(serializers.ModelSerializer):
+    class Meta:
+        model = Unit
+        fields = '__all__'

@@ -44,7 +44,7 @@ class Medician(models.Model):
     cautions = models.TextField(blank=True, null=True)
     usages = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    image = models.FileField(null=True, blank=True, default="", upload_to='images/')
+    image = models.FileField(null=True, blank=True, default="", upload_to='D:/Personaly/Pharmacy App/Pharmacy_app/backend/frontend/public/images')
 
     def __str__ (self):
         return self.brand_name
