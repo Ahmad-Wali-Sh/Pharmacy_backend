@@ -2,18 +2,22 @@ from django.db import models
 
 class Kind(models.Model):
     name = models.CharField(max_length=60)
+    image = models.FileField(null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
 
     def __str__ (self):
         return self.name
 
 class Pharm_Group(models.Model):
     name = models.CharField(max_length=60)
+    image = models.FileField(null=True, blank=True, default="", upload_to='frontend/public/dist/images/pharm_groub')
 
     def __str__ (self):
         return self.name
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
+    image = models.FileField(null=True, blank=True, default="", upload_to='frontend/public/dist/images/countries')
+    
 
     def __str__ (self):
         return self.name
