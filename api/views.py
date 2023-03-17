@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 
 from core.models import Pharm_Group, Medician, Kind, Country, Unit, Prescription
@@ -14,17 +13,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
-    # pagination_class = StandardResultsSetPagination
-
-    # def get_queryset(self):
-
-    #     queryset = self.queryset
-
-    #     med = self.request.query_params.get("med")
-
-    #     if med:
-    #         queryset.filter(brand_name=med)
-    #     return queryset
 
 class KindView(viewsets.ModelViewSet):
     queryset = Kind.objects.all()
@@ -46,4 +34,3 @@ class UnitView(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
     serializer_class = UnitSeralizer
 
-# Create your views here.
