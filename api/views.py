@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 
-from medician.models import Pharm_Group, Medician, Kind, Country, Unit
-from prescriptions.models import Prescription
+from core.models import Pharm_Group, Medician, Kind, Country, Unit, Prescription
 
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer
 from rest_framework.pagination import PageNumberPagination

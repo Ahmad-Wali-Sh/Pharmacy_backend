@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from medician.models import Medician, Pharm_Group, Kind, Country, Unit
-from prescriptions.models import Prescription
+from core.models import Medician, Pharm_Group, Kind, Country, Unit, Prescription
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta: 
