@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from core.models import Pharm_Group, Medician, Kind, Country, Unit, Prescription, PharmCompany
+from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany
 
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer
 from rest_framework.pagination import PageNumberPagination
@@ -28,7 +28,7 @@ class CountryView(viewsets.ModelViewSet):
 
 
 class PharmGroupView(viewsets.ModelViewSet):
-    queryset = Pharm_Group.objects.all()
+    queryset = PharmGroup.objects.all()
     serializer_class = PharmGroupSeralizer
 
 

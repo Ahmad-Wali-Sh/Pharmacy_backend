@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from core.models import Medician, Pharm_Group, Kind, Country, Unit, Prescription, PharmCompany
+from core.models import Medician, PharmGroup, Kind, Country, Unit, Prescription, PharmCompany
 
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta:
-        model = Pharm_Group
+        model = PharmGroup
         fields = '__all__'
 
 
