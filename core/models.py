@@ -118,23 +118,6 @@ class Store (models.Model):
     def __str__(self):
         return self.name
 
-<<<<<<< HEAD
-
-class Entrance (models.Model):
-    name = models.CharField(max_length=10, null=True)
-    company = models.ForeignKey(
-        PharmCompany, on_delete=models.CASCADE, null=True)
-    code = models.IntegerField(null=True)
-    medicians = models.ManyToManyField(
-        Medician, through='EntranceThroughModel')
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, null=True)
-    price = models.IntegerField(null=True)
-    number = models.IntegerField(default=0)
-
-    def __str__(self):
-        return self.name
-=======
 
 
 class Entrance (models.Model):
@@ -154,15 +137,3 @@ class EntranceThrough(models.Model):
     total = models.FloatField()
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
 
->>>>>>> 0ff627eda673f2af0dc730279b1ca73427865ef2
-
-
-class EntranceThroughModel(models.Model):
-    medician = models.ForeignKey(
-        Medician, on_delete=models.CASCADE, null=True)
-    entrance = models.ForeignKey(
-        Entrance, on_delete=models.CASCADE, null=True)
-    number = models.IntegerField(null=True)
-    each_price = models.FloatField(null=True)
-    total = models.FloatField(null=True)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)
