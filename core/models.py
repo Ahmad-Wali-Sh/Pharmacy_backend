@@ -10,6 +10,7 @@ class Kind(models.Model):
     def __str__(self):
         return self.name
 
+
 class PharmGroup(models.Model):
     name = models.CharField(max_length=60)
     image = models.FileField(null=True, blank=True, default="",
@@ -67,7 +68,6 @@ class Medician(models.Model):
         return self.brand_name
 
 
-
 class Prescription (models.Model):
     name = models.CharField(max_length=80)
     code = models.IntegerField()
@@ -96,6 +96,7 @@ class PharmCompany (models.Model):
     def __str__(self):
         return self.name
 
+
 class Currency (models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
@@ -103,6 +104,7 @@ class Currency (models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Store (models.Model):
     name = models.CharField(max_length=100)
@@ -113,27 +115,32 @@ class Store (models.Model):
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
 
-    def __str__ (self):
+    def __str__(self):
         return self.name
 
-class EntranceThroughModel(models.Model):
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    number = models.IntegerField()
-    each_price = models.FloatField()
-    total = models.FloatField()
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
 
 class Entrance (models.Model):
-    company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
-    code = models.IntegerField()
-    medicians = models.ForeignKey(EntranceThroughModel, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    price = models.IntegerField()
+    name = models.CharField(max_length=10, null=True)
+    company = models.ForeignKey(
+        PharmCompany, on_delete=models.CASCADE, null=True)
+    code = models.IntegerField(null=True)
+    medicians = models.ManyToManyField(
+        Medician, through='EntranceThroughModel')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, null=True)
+    price = models.IntegerField(null=True)
     number = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.code
+        return self.name
 
 
-
+class EntranceThroughModel(models.Model):
+    medician = models.ForeignKey(
+        Medician, on_delete=models.CASCADE, null=True)
+    entrance = models.ForeignKey(
+        Entrance, on_delete=models.CASCADE, null=True)
+    number = models.IntegerField(null=True)
+    each_price = models.FloatField(null=True)
+    total = models.FloatField(null=True)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)

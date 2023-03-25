@@ -2,7 +2,7 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
-                        Entrance, Store, Currency, EntranceThroughModel
+    Entrance, Store, Currency, EntranceThroughModel
 
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
