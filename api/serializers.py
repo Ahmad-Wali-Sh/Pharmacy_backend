@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import Medician, PharmGroup, Kind, Country, Unit, Prescription, PharmCompany
+from core.models import Medician, PharmGroup, Kind, Country, Unit, Prescription, PharmCompany, Entrance, EntranceThrough
 
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
@@ -44,4 +44,14 @@ class UnitSeralizer(serializers.ModelSerializer):
 class PharmCompanySeralizer(serializers.ModelSerializer):
     class Meta:
         model = PharmCompany
+        fields = '__all__'
+
+class EntranceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entrance
+        fields = '__all__'
+
+class EntranceThroughSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntranceThrough
         fields = '__all__'

@@ -116,24 +116,24 @@ class Store (models.Model):
     def __str__ (self):
         return self.name
 
-class EntranceThroughModel(models.Model):
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    number = models.IntegerField()
-    each_price = models.FloatField()
-    total = models.FloatField()
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+
 
 class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     code = models.IntegerField()
-    medicians = models.ForeignKey(EntranceThroughModel, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    medicians = models.ManyToManyField(Medician, through='EntranceThrough')
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    price = models.IntegerField()
-    number = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.code
+
+
+class EntranceThrough(models.Model):
+    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
+    number = models.IntegerField()
+    each_price = models.FloatField()
+    total = models.FloatField()
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
 
 
 
