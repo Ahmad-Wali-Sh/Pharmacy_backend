@@ -58,6 +58,7 @@ class Medician(models.Model):
     existence = models.IntegerField(default=0)
     minmum_existence = models.FloatField()
     maximum_existence = models.FloatField()
+    must_advised = models.BooleanField(default=False)
     dividing_rules = models.TextField(blank=True, null=True)
     cautions = models.TextField(blank=True, null=True)
     usages = models.TextField(blank=True, null=True)
@@ -69,14 +70,53 @@ class Medician(models.Model):
         return self.brand_name
 
 
-class Prescription (models.Model):
-    name = models.CharField(max_length=80)
-    code = models.IntegerField()
-    medician = models.ManyToManyField(Medician)
-    prescription_number = models.CharField(max_length=60)
+class Department (models.Model):
+    name = models.CharField(max_length=240)
+    over_price_money = models.FloatField(default=0)
+    over_price_percent = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+
+
+class PersonalName (models.Model):
+    name = models.CharField(max_length=100)
+    code = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+
+class DoctorName(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Prescription (models.Model):
+    department = models.ForeignKey(
+        Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
+    prescription_number = models.CharField(max_length=60)
+    name = models.ForeignKey(PersonalName, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(DoctorName, on_delete=models.CASCADE)
+    medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
+    grand_total = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+    zakat = models.FloatField(default=0)
+    khairat = models.FloatField(default=0)
+
+    def __str__(self):
+        return self.name.name
+
+
+class PrescriptionThrough(models.Model):
+    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=0)
+    each_price = models.FloatField(default=0)
+    total_price = models.FloatField(default=0)
 
 
 class PharmCompany (models.Model):
