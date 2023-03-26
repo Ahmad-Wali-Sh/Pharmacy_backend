@@ -119,21 +119,50 @@ class Store (models.Model):
         return self.name
 
 
+class PaymentMethod (models.Model):
+    name = models.CharField(max_length=20)
+
+
+class FinalRegister (models.Model):
+    name = models.CharField(max_length=20)
+
 
 class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
-    code = models.IntegerField()
+    factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
+    factor_date = models.DateField()
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    total_interest = models.IntegerField()
+    final_register = models.ForeignKey(FinalRegister, on_delete=models.CASCADE)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now=True)
+    deliver_by = models.CharField(max_length=100)
+    recived_by = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return str(self.code)
 
 
 class EntranceThrough(models.Model):
     medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
-    number = models.IntegerField()
-    each_price = models.FloatField()
-    total = models.FloatField()
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-
+    # تعداد در فاکتور
+    number_in_factor = models.IntegerField()
+    each_price = models.FloatField(null=True)
+    discount_money = models.FloatField(null=True, blank=True)
+    discount_percent = models.FloatField(null=True, blank=True)
+    total_purchase = models.FloatField()
+    bonus = models.IntegerField(default=0)
+    quantity_bonus = models.IntegerField(default=0)
+    register_quantity = models.IntegerField(
+        null=False)  # تعداد ثبت به سیستم جهت موجودی
+    each_purchase_price = models.FloatField(
+        null=True)  # قیمت فی خرید جهت ثبت به سیستم
+    interest_money = models.FloatField()
+    interest_percent = models.FloatField()
+    each_sell_price = models.FloatField()  # قیمت فی فروش جهت ثبت به سیستم
+    total_sell = models.FloatField()
+    interest = models.FloatField()  # مجموع فایده
+    expire_date = models.DateField()
