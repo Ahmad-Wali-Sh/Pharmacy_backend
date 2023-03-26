@@ -8,6 +8,10 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     pass
 
+class EntranceThrougheAdmin(ImportExportModelAdmin,admin.ModelAdmin):
+    exclude = ('total_purchase', )
+    readonly_fields=('total_purchase' ,'register_quantity', 'each_purchase_price', 'each_sell_price', 'total_sell', 'bonus_interest', 'total_interest' )
+
 
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, ImportAdmin)
@@ -19,7 +23,7 @@ admin.site.register(PharmCompany, ImportAdmin)
 admin.site.register(Entrance, ImportAdmin)
 admin.site.register(Store, ImportAdmin)
 admin.site.register(Currency, ImportAdmin)
-admin.site.register(EntranceThrough, ImportAdmin)
+admin.site.register(EntranceThrough, EntranceThrougheAdmin)
 admin.site.register(PaymentMethod, ImportAdmin)
 admin.site.register(FinalRegister, ImportAdmin)
 

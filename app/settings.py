@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'import_export',
+    'computedfields',
 
     'api',
     'core',
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
 
 
 CORS_ORIGIN_ALLOW_ALL = True
+COMPUTEDFIELDS_ADMIN = True
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
