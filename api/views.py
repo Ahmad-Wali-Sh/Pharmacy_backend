@@ -1,10 +1,7 @@
-from rest_framework import viewsets
-
-from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, EntranceThrough, Entrance
-
-from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer , \
-                         EntranceThroughSerializer, EntranceSerializer 
+from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer
 from rest_framework.pagination import PageNumberPagination
+from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany
+from rest_framework import viewsets
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -47,10 +44,12 @@ class PharmCompanyView(viewsets.ModelViewSet):
     queryset = PharmCompany.objects.all()
     serializer_class = PharmCompanySeralizer
 
-class EntranceView(viewsets.ModelViewSet):
-    queryset = Entrance.objects.all()
-    serializer_class = EntranceSerializer
 
-class EntranceThroughView(viewsets.ModelViewSet):
-    queryset = EntranceThrough.objects.all()
-    serializer_class = EntranceThroughSerializer
+# class EntranceView(viewsets.ModelViewSet):
+#     queryset = Entrance.objects.all()
+#     serializer_class = EntranceSerializer
+
+
+# class EntranceThroughView(viewsets.ModelViewSet):
+#     queryset = EntranceThrough.objects.all()
+#     serializer_class = EntranceThroughSerializer
