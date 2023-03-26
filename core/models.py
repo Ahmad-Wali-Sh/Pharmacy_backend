@@ -147,7 +147,7 @@ class Entrance (models.Model):
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return str(self.factor_number)
+        return self.company.name
 
 
 class EntranceThrough(models.Model):
@@ -173,6 +173,9 @@ class EntranceThrough(models.Model):
     bonus_interest = models.FloatField(default=0)
     total_interest = models.FloatField(default=0)  # مجموع فایده
     expire_date = models.DateField() # تاریخ انقضا
+
+    def __str__(self):
+        return self.medician.brand_name + " from " + self.entrance.company.name
 
 
     def save(self, *args, **kwargs):
