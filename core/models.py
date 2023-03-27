@@ -39,7 +39,7 @@ class Unit(models.Model):
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     # need array field
-    generic_name = models.CharField(max_length=100, blank=True, null=True)
+    generic_name = ArrayField(models.CharField(max_length=100, blank=True, null=True))
     no_pocket = models.IntegerField(null=True, blank=True)
     pharm_group = models.ForeignKey(
         PharmGroup, on_delete=models.CASCADE, null=True, blank=True)
