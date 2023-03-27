@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'import_export',
-    'computedfields',
 
     'api',
     'core',
@@ -92,8 +91,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ['DATABASE_NAME'],
-        'USER': 'postgres',
-        'PASSWORD': "Ahmadwali$8",
+        'USER': os.environ['DATABASE_USER'],
+        'PASSWORD': os.environ['DATABASE_PASSWORD'],
         'HOST': '127.0.0.1',
         'PORT': '5432'
     }
