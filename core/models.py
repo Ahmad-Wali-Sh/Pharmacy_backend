@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from django.db.models import Sum
 
 
 class Kind(models.Model):
@@ -39,7 +40,7 @@ class Unit(models.Model):
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     # need array field
-    generic_name = models.CharField(max_length=100, blank=True, null=True)
+    generic_name = ArrayField(models.CharField(max_length=100, blank=True, null=True))
     no_pocket = models.IntegerField(null=True, blank=True)
     pharm_group = models.ForeignKey(
         PharmGroup, on_delete=models.CASCADE, null=True, blank=True)
@@ -55,7 +56,7 @@ class Medician(models.Model):
     company = models.CharField(max_length=50, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     price = models.FloatField()
-    existence = models.IntegerField(default=0)
+    existence = models.IntegerField(default=0, null=True)
     minmum_existence = models.FloatField()
     maximum_existence = models.FloatField()
     must_advised = models.BooleanField(default=False)
@@ -117,6 +118,27 @@ class PrescriptionThrough(models.Model):
     quantity = models.IntegerField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
+    
+
+    def save(self, *args, **kwargs):
+
+        def queryset():
+
+            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
+            
+            if prescription_sum_query == None:
+                result = entrance_sum_query
+            else: result = entrance_sum_query - prescription_sum_query
+            return result
+
+        self.medician.existence = queryset()
+        self.medician.save()
+
+        super(PrescriptionThrough, self).save(*args, **kwargs)
+
+    
+
 
 
 class PharmCompany (models.Model):
@@ -225,6 +247,20 @@ class EntranceThrough(models.Model):
 
         round_digit = 1
 
+        def queryset():
+
+            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
+            
+            if prescription_sum_query == None:
+                result = entrance_sum_query
+            else: result = entrance_sum_query - prescription_sum_query
+            return result
+
+        if self.total_purchase != 1:
+            self.medician.existence = queryset()
+            self.medician.save()
+
         """ Calculation iof currency """
 
         rated = self.each_price_factor * self.entrance.currency.rate
@@ -253,9 +289,7 @@ class EntranceThrough(models.Model):
 
         self.register_quantity = (
             self.each_quantity * self.number_in_factor) + self.bonus + self.quantity_bonus
-        self.medician.existence = self.medician.existence + self.register_quantity
-        if self.each_purchase_price == 1:
-            self.medician.save()
+        
 
         """ Calculation of Each Price Purchase for field each_price_purchase """
 
@@ -289,4 +323,9 @@ class EntranceThrough(models.Model):
         self.total_interest = round(
             self.bonus_interest + interest, round_digit)
 
+        
+
         super(EntranceThrough, self).save(*args, **kwargs)
+
+        
+            
