@@ -31,7 +31,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
     class Meta:
         model = Medician
         fields = ('id', 'brand_name', 'generic_name', 'no_pocket', 'pharm_group', 'kind', 'ml', 'unit', 'weight',
-                  'location', 'country', 'company', 'barcode', 'price', 'minmum_existence', 'maximum_existence',
+                  'location', 'country', 'company', 'barcode', 'price', 'existence', 'minmum_existence', 'maximum_existence',
                   'dividing_rules', 'cautions', 'usages', 'description', 'image')
 
 
