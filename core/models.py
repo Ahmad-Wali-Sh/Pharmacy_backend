@@ -293,8 +293,8 @@ class EntranceThrough(models.Model):
 
         """ محاسبه قیمت فی فروش"""
 
-        self.each_sell_price = (
-            self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)))
+        self.each_sell_price = round(
+            self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
 
         """ محاسبه مجموع فروش"""
 
