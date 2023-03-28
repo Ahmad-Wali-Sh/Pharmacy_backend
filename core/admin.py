@@ -14,6 +14,9 @@ class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('total_purchase', 'register_quantity', 'each_purchase_price',
                        'each_sell_price', 'total_sell', 'bonus_interest', 'total_interest', 'each_price')
 
+class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    readonly_fields = ('total_price' ,)
+
 
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, ImportAdmin)
@@ -31,6 +34,6 @@ admin.site.register(FinalRegister, ImportAdmin)
 admin.site.register(Department, ImportAdmin)
 admin.site.register(DoctorName, ImportAdmin)
 admin.site.register(PersonalName, ImportAdmin)
-admin.site.register(PrescriptionThrough, ImportAdmin)
+admin.site.register(PrescriptionThrough, PrescriptionThroughAdmin)
 
 # Register your models here.
