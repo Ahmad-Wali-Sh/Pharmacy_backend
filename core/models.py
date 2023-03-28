@@ -122,6 +122,13 @@ class PrescriptionThrough(models.Model):
 
     def save(self, *args, **kwargs):
 
+        """ Calculation of Total Price for total_price field"""
+
+        self.total_price = round(self.quantity * self.each_price, 1)
+
+        super(PrescriptionThrough, self).save(*args, **kwargs)
+        
+        
         def queryset():
 
             entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
@@ -134,8 +141,6 @@ class PrescriptionThrough(models.Model):
 
         self.medician.existence = queryset()
         self.medician.save()
-
-        super(PrescriptionThrough, self).save(*args, **kwargs)
 
     
 
@@ -219,7 +224,7 @@ class EntranceThrough(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
     # تعداد در فاکتور
     number_in_factor = models.IntegerField()
-    each_price_factor = models.FloatField(default=0)
+    each_price_factor = models.FloatField()
     each_price = models.FloatField(default=1)
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
@@ -246,20 +251,6 @@ class EntranceThrough(models.Model):
     def save(self, *args, **kwargs):
 
         round_digit = 1
-
-        def queryset():
-
-            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
-            
-            if prescription_sum_query == None:
-                result = entrance_sum_query
-            else: result = entrance_sum_query - prescription_sum_query
-            return result
-
-        if self.total_purchase != 1:
-            self.medician.existence = queryset()
-            self.medician.save()
 
         """ Calculation iof currency """
 
@@ -326,6 +317,19 @@ class EntranceThrough(models.Model):
         
 
         super(EntranceThrough, self).save(*args, **kwargs)
+
+        def queryset():
+
+            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
+            
+            if prescription_sum_query == None:
+                result = entrance_sum_query
+            else: result = entrance_sum_query - prescription_sum_query
+            return result
+ 
+        self.medician.existence = queryset()
+        self.medician.save()
 
         
             
