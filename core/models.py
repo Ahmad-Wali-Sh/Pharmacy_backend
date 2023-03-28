@@ -39,7 +39,6 @@ class Unit(models.Model):
 
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
-    # need array field
     generic_name = ArrayField(models.CharField(max_length=100, blank=True, null=True))
     no_pocket = models.IntegerField(null=True, blank=True)
     pharm_group = models.ForeignKey(
@@ -78,6 +77,8 @@ class Department (models.Model):
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
 
+    def __str__(self):
+        return self.name
 
 class PersonalName (models.Model):
     name = models.CharField(max_length=100)
@@ -98,9 +99,9 @@ class DoctorName(models.Model):
 class Prescription (models.Model):
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
-    prescription_number = models.CharField(max_length=60)
-    name = models.ForeignKey(PersonalName, on_delete=models.CASCADE)
-    doctor = models.ForeignKey(DoctorName, on_delete=models.CASCADE)
+    prescription_number = models.CharField(max_length=60, unique=True)
+    name = models.ForeignKey(PersonalName, on_delete=models.CASCADE, null=True, blank=True)
+    doctor = models.ForeignKey(DoctorName, on_delete=models.CASCADE, null=True, blank=True)
     medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
@@ -109,7 +110,7 @@ class Prescription (models.Model):
     khairat = models.FloatField(default=0)
 
     def __str__(self):
-        return self.name.name
+        return self.prescription_number
 
 
 class PrescriptionThrough(models.Model):
@@ -118,18 +119,21 @@ class PrescriptionThrough(models.Model):
     quantity = models.IntegerField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
+
+    def __str__(self):
+        return self.prescription.prescription_number
     
 
     def save(self, *args, **kwargs):
 
-        """ Calculation of Total Price for total_price field"""
+        """ Calculation of Total Price for total_price field """
 
         self.total_price = round(self.quantity * self.each_price, 1)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
         
         
-        def queryset():
+        def priscription_sum():
 
             entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
@@ -139,7 +143,7 @@ class PrescriptionThrough(models.Model):
             else: result = entrance_sum_query - prescription_sum_query
             return result
 
-        self.medician.existence = queryset()
+        self.medician.existence = priscription_sum()
         self.medician.save()
 
     
@@ -246,18 +250,18 @@ class EntranceThrough(models.Model):
     expire_date = models.DateField()  # تاریخ انقضا
 
     def __str__(self):
-        return self.medician.brand_name + " from " + self.entrance.company.name
+        return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
 
     def save(self, *args, **kwargs):
 
         round_digit = 1
 
-        """ Calculation iof currency """
+        """ Calculation of currency """
 
         rated = self.each_price_factor * self.entrance.currency.rate
         self.each_price = rated
 
-        """Calculation of discounts for each_price Field"""
+        """ Calculation of discounts for each_price Field """
 
         if self.discount_percent != 0:
             self.each_price = rated - \
@@ -267,7 +271,7 @@ class EntranceThrough(models.Model):
             self.each_price = (
                 rated - self.discount_money)
 
-        """ Calculation of total purchase for total_purchase field"""
+        """ Calculation of total purchase for total_purchase field """
         if self.total_purchase == 1:
             self.total_purchase = self.total_purchase * \
                 rated * self.number_in_factor
@@ -276,7 +280,7 @@ class EntranceThrough(models.Model):
             self.total_purchase = (
                 self.total_purchase * rated / self.total_purchase) * self.number_in_factor
 
-        """ Calculation of Register Qunatity & Calculation of Medician Existence Incress"""
+        """ Calculation of Register Qunatity & Calculation of Medician Existence Incress """
 
         self.register_quantity = (
             self.each_quantity * self.number_in_factor) + self.bonus + self.quantity_bonus
@@ -303,13 +307,16 @@ class EntranceThrough(models.Model):
             (self.interest_money + (self.each_purchase_price*(1 + (self.interest_percent / 100)))), round_digit)
 
         """ Calculation of Total Sell for total_sell field """
+        
         self.total_sell = round(
             self.each_sell_price * self.register_quantity, round_digit)
 
         """ Calculation of Bonus Interest for bonus_interset field """
+
         self.bonus_interest = round(self.bonus * bonus_each_price, round_digit)
 
         """ Calculation of Total Interset of interest field """
+
         interest = round(self.total_sell - self.total_purchase, round_digit)
         self.total_interest = round(
             self.bonus_interest + interest, round_digit)
@@ -318,7 +325,7 @@ class EntranceThrough(models.Model):
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
-        def queryset():
+        def entrance_sum():
 
             entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
@@ -328,7 +335,7 @@ class EntranceThrough(models.Model):
             else: result = entrance_sum_query - prescription_sum_query
             return result
  
-        self.medician.existence = queryset()
+        self.medician.existence = entrance_sum()
         self.medician.save()
 
         
