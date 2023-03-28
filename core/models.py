@@ -39,7 +39,8 @@ class Unit(models.Model):
 
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
-    generic_name = ArrayField(models.CharField(max_length=100, blank=True, null=True))
+    generic_name = ArrayField(models.CharField(
+        max_length=100, blank=True, null=True))
     no_pocket = models.IntegerField(null=True, blank=True)
     pharm_group = models.ForeignKey(
         PharmGroup, on_delete=models.CASCADE, null=True, blank=True)
@@ -80,6 +81,7 @@ class Department (models.Model):
     def __str__(self):
         return self.name
 
+
 class PersonalName (models.Model):
     name = models.CharField(max_length=100)
     code = models.IntegerField(null=True, blank=True)
@@ -100,8 +102,10 @@ class Prescription (models.Model):
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
     prescription_number = models.CharField(max_length=60, unique=True)
-    name = models.ForeignKey(PersonalName, on_delete=models.CASCADE, null=True, blank=True)
-    doctor = models.ForeignKey(DoctorName, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.ForeignKey(
+        PersonalName, on_delete=models.CASCADE, null=True, blank=True)
+    doctor = models.ForeignKey(
+        DoctorName, on_delete=models.CASCADE, null=True, blank=True)
     medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
@@ -122,32 +126,29 @@ class PrescriptionThrough(models.Model):
 
     def __str__(self):
         return self.prescription.prescription_number
-    
 
     def save(self, *args, **kwargs):
-
         """ Calculation of Total Price for total_price field """
 
         self.total_price = round(self.quantity * self.each_price, 1)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
-        
-        
+
         def priscription_sum():
 
-            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
-            
+            entrance_sum_query = list(EntranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            prescription_sum_query = list(PrescriptionThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
+
             if prescription_sum_query == None:
                 result = entrance_sum_query
-            else: result = entrance_sum_query - prescription_sum_query
+            else:
+                result = entrance_sum_query - prescription_sum_query
             return result
 
         self.medician.existence = priscription_sum()
         self.medician.save()
-
-    
-
 
 
 class PharmCompany (models.Model):
@@ -218,6 +219,7 @@ class Entrance (models.Model):
     deliver_by = models.CharField(max_length=100)
     recived_by = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
+    without_discount = models.BooleanField(default=False)
 
     def __str__(self):
         return self.company.name
@@ -226,28 +228,30 @@ class Entrance (models.Model):
 class EntranceThrough(models.Model):
     medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
-    # تعداد در فاکتور
-    number_in_factor = models.IntegerField()
-    each_price_factor = models.FloatField()
-    each_price = models.FloatField(default=1)
-    discount_money = models.FloatField(default=0)
-    discount_percent = models.FloatField(default=0)
-    total_purchase = models.FloatField(default=1)  # مجموع خرید
-    each_quantity = models.IntegerField(default=1)  # تعداد در فی فروش
-    bonus = models.IntegerField(default=0)  # بونوس
-    quantity_bonus = models.IntegerField(default=0)  # تعداد بیشتر از خرید
+    number_in_factor = models.IntegerField()  # G4 تعداد در فاکتور
+    each_price_factor = models.FloatField()  # G8 قیمت فی خرید توسط کاربر
+    each_price = models.FloatField(default=1)  # G5 قیمت فی خرید فاکتور
+    discount_money = models.FloatField(default=0)  # G6 تخفیف خرید پولی
+    discount_percent = models.FloatField(default=0)  # G7 تخفیف خرید فیصدی
+    total_purchaseـafghani = models.FloatField(
+        default=1)  # G9 مجموع خرید افغانی
+    total_purchaseـcurrency = models.FloatField(
+        default=1)  # G10 مجموع خرید اسعاری
+    each_quantity = models.IntegerField(default=1)  # G11  تعداد در فی فروش
+    bonus = models.IntegerField(default=0)  # G12 بونوس
+    quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
     register_quantity = models.IntegerField(
-        default=0)  # تعداد ثبت به سیستم جهت موجودی
+        default=0)  # G14 تعداد ثبت به سیستم جهت موجودی
     each_purchase_price = models.FloatField(
-        default=1)  # قیمت فی خرید جهت ثبت به سیستم
-    interest_money = models.FloatField(default=0)  # فایده پولی
-    interest_percent = models.FloatField(default=20)  # فایده فیصدی
+        default=1)  # G18 قیمت فی خرید جهت ثبت به سیستم
+    interest_money = models.FloatField(default=0)  # G19 فایده پولی
+    interest_percent = models.FloatField(default=20)  # G20 فایده فیصدی
     each_sell_price = models.FloatField(
-        default=0)  # قیمت فی فروش جهت ثبت به سیستم
-    total_sell = models.FloatField(default=0)  # مجموع فروش
-    bonus_interest = models.FloatField(default=0)
-    total_interest = models.FloatField(default=0)  # مجموع فایده
-    expire_date = models.DateField()  # تاریخ انقضا
+        default=0)  # G21 قیمت فی فروش جهت ثبت به سیستم
+    total_sell = models.FloatField(default=0)  # G25 مجموع فروش
+    bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
+    total_interest = models.FloatField(default=0)  # G30 مجموع فایده
+    expire_date = models.DateField()  # G31 تاریخ انقضا
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -256,87 +260,89 @@ class EntranceThrough(models.Model):
 
         round_digit = 1
 
-        """ Calculation of currency """
+        """ محاسبه قیمت فی خرید فاکتور"""
 
-        rated = self.each_price_factor * self.entrance.currency.rate
-        self.each_price = rated
+        self.each_price = round(- \
+            (self.discount_money-(self.each_price_factor *
+             (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
 
-        """ Calculation of discounts for each_price Field """
+ 
+        """   محاسبه مجموع خرید"""
 
-        if self.discount_percent != 0:
-            self.each_price = rated - \
-                ((rated * self.discount_percent) / 100)
+        self.total_purchaseـafghani = round(self.each_price * self.number_in_factor, round_digit)
+        self.total_purchaseـcurrency = round(self.each_price_factor * self.number_in_factor, round_digit)
 
-        if self.discount_money != 0:
-            self.each_price = (
-                rated - self.discount_money)
+        """ محاسبه تعداد ثبت به سیستم"""
 
-        """ Calculation of total purchase for total_purchase field """
-        if self.total_purchase == 1:
-            self.total_purchase = self.total_purchase * \
-                rated * self.number_in_factor
+        self.register_quantity = round((
+            self.number_in_factor * self.each_quantity) + self.bonus + self.quantity_bonus, round_digit)
 
-        elif self.total_purchase != 1:
-            self.total_purchase = (
-                self.total_purchase * rated / self.total_purchase) * self.number_in_factor
+        """ محاسبه قیمت فی خریده"""
 
-        """ Calculation of Register Qunatity & Calculation of Medician Existence Incress """
-
-        self.register_quantity = (
-            self.each_quantity * self.number_in_factor) + self.bonus + self.quantity_bonus
-        
-
-        """ Calculation of Each Price Purchase for field each_price_purchase """
-
-        simple_each_price = self.total_purchase / \
-            (self.number_in_factor * self.each_quantity)
-        bonus_each_price = ((rated / (self.number_in_factor *
-                            self.each_quantity)) * self.number_in_factor) * self.bonus
-        bonus_quantity_each_price = (self.total_purchase / (
-            (self.number_in_factor * self.each_quantity) + self.quantity_bonus)) * self.quantity_bonus
-
+        simple_each_purchase = self.total_purchaseـafghani / \
+            (self.number_in_factor * self.each_quantity)  # G15
+        bonus_each_purchase_price = (
+            (self.each_price / (self.number_in_factor * self.each_quantity)) * self.number_in_factor)*self.bonus  # G16
+        quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
+            (self.number_in_factor * self.each_quantity) + self.quantity_bonus))*self.quantity_bonus  # G17
         if self.bonus == 0 and self.quantity_bonus == 0:
-            self.each_purchase_price = round(simple_each_price, round_digit)
+            self.each_purchase_price = round(simple_each_purchase, round_digit)
         else:
-            self.each_purchase_price = round(
-                (bonus_each_price + bonus_quantity_each_price), round_digit)
+            self.each_purchase_price = round(bonus_each_purchase_price + \
+                quantity_bonus_each_purchase_price, round_digit)
 
-        """ Calculation of Each Sell Price for each_sell_price field """
+        """ محاسبه قیمت فی فروش"""
 
-        self.each_sell_price = round(
-            (self.interest_money + (self.each_purchase_price*(1 + (self.interest_percent / 100)))), round_digit)
+        self.each_sell_price = (
+            self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)))
 
-        """ Calculation of Total Sell for total_sell field """
-        
-        self.total_sell = round(
-            self.each_sell_price * self.register_quantity, round_digit)
+        """ محاسبه مجموع فروش"""
 
-        """ Calculation of Bonus Interest for bonus_interset field """
+        simple_total_sell = self.each_sell_price * \
+            self.each_quantity * self.number_in_factor  # G22
+        bonus_total_sell = self.each_sell_price * \
+            ((self.each_quantity * self.number_in_factor) +
+             self.bonus) * self.bonus  # G23
+        quantity_bonus_total_sell = self.each_sell_price * \
+            ((self.each_quantity * self.number_in_factor) +
+             self.quantity_bonus) * self.quantity_bonus  # G24
 
-        self.bonus_interest = round(self.bonus * bonus_each_price, round_digit)
+        if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
+            self.total_sell = round(simple_total_sell, round_digit)
+        else:
+            self.total_sell = round(bonus_total_sell + quantity_bonus_total_sell, round_digit)
 
-        """ Calculation of Total Interset of interest field """
+        """ محاسبه فایده """
 
-        interest = round(self.total_sell - self.total_purchase, round_digit)
-        self.total_interest = round(
-            self.bonus_interest + interest, round_digit)
+        quantity_bonus_interest = (
+            quantity_bonus_total_sell - self.total_purchaseـafghani) * self.quantity_bonus  # G28
+        dicount_interest = (self.each_price_factor *
+                            self.entrance.currency.rate)-self.each_price  # G29
 
-        
+        if quantity_bonus_interest == 0:
+            simple_interest = simple_total_sell - self.total_purchaseـafghani
+        else:
+            simple_interest = 0  # G26
+
+        self.total_interest = round(simple_interest + self.bonus_interest + \
+            quantity_bonus_interest + dicount_interest, round_digit) # G30
+
+       
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
         def entrance_sum():
 
-            entrance_sum_query = list(EntranceThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(medician_id = self.medician.id).aggregate(Sum('quantity')).values())[0]
-            
+            entrance_sum_query = list(EntranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            prescription_sum_query = list(PrescriptionThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
+
             if prescription_sum_query == None:
                 result = entrance_sum_query
-            else: result = entrance_sum_query - prescription_sum_query
+            else:
+                result = entrance_sum_query - prescription_sum_query
             return result
- 
+
         self.medician.existence = entrance_sum()
         self.medician.save()
-
-        
-            
