@@ -324,8 +324,13 @@ class EntranceThrough(models.Model):
         else:
             simple_interest = 0  # G26
 
-        self.total_interest = round(simple_interest + self.bonus_interest + \
-            quantity_bonus_interest + dicount_interest, round_digit) # G30
+        # Discount Interest on Entrance Without Discount result.
+
+        if self.entrance.without_discount == False:
+            self.total_interest = round(simple_interest + self.bonus_interest + \
+                quantity_bonus_interest + dicount_interest, round_digit) # G30
+        else: self.total_interest = round(simple_interest + self.bonus_interest + \
+                quantity_bonus_interest, round_digit)
 
        
 
