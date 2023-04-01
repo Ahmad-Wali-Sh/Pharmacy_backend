@@ -4,21 +4,25 @@ from django.db.models import Sum
 
 
 class Kind(models.Model):
-    name = models.CharField(max_length=60)
+    name_english = models.CharField(max_length=60, null=True, blank=True)
+    name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = models.FileField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.name_english
 
 
 class PharmGroup(models.Model):
-    name = models.CharField(max_length=60)
+    name_english = models.CharField(max_length=60, null=True, blank=True)
+    name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/pharm_groub')
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.name_english
 
 
 class Country(models.Model):
@@ -56,7 +60,7 @@ class Medician(models.Model):
     company = models.CharField(max_length=50, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     price = models.FloatField()
-    existence = models.IntegerField(default=0, null=True)
+    existence = models.FloatField(default=0, null=True)
     minmum_existence = models.FloatField()
     maximum_existence = models.FloatField()
     must_advised = models.BooleanField(default=False)
@@ -80,11 +84,24 @@ class Department (models.Model):
 
     def __str__(self):
         return self.name
+    
+GENDER_CHOICES = (
+    ("Male", "Male"),
+    ("Female", "Female")
+)
 
 
-class PersonalName (models.Model):
+class PatientName (models.Model):
     name = models.CharField(max_length=100)
     code = models.IntegerField(null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default=1)
+    birth_date = models.DateField(null=True, blank=True)
+    tazkira_number = models.IntegerField(null=True, blank=True)
+    contact_number = models.IntegerField(null=True, blank=True)
+    address = models.CharField(max_length=150, null=True, blank=True)
+    sickness = models.CharField(max_length=100, null=True, blank=True)
+    discription = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -93,6 +110,14 @@ class PersonalName (models.Model):
 class DoctorName(models.Model):
     name = models.CharField(max_length=100)
     code = models.IntegerField(null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    expertise = models.CharField(max_length=100, null=True, blank=True)
+    contact_number = models.IntegerField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    workplace = models.CharField(max_length=100, null=True, blank=True)
+    work_time = models.CharField(max_length=100, null=True, blank=True)
+    home_address = models.CharField(max_length=100, null=True, blank=True)
+    discription = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -103,7 +128,7 @@ class Prescription (models.Model):
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
     prescription_number = models.CharField(max_length=60, unique=True)
     name = models.ForeignKey(
-        PersonalName, on_delete=models.CASCADE, null=True, blank=True)
+        PatientName, on_delete=models.CASCADE, null=True, blank=True)
     doctor = models.ForeignKey(
         DoctorName, on_delete=models.CASCADE, null=True, blank=True)
     medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
@@ -112,6 +137,7 @@ class Prescription (models.Model):
     discount_percent = models.FloatField(default=0)
     zakat = models.FloatField(default=0)
     khairat = models.FloatField(default=0)
+    round_number = models.FloatField(default=0)
 
     def __str__(self):
         return self.prescription_number
@@ -120,7 +146,7 @@ class Prescription (models.Model):
 class PrescriptionThrough(models.Model):
     medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=0)
+    quantity = models.FloatField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
 
@@ -159,7 +185,7 @@ class PharmCompany (models.Model):
     manager_phone = models.IntegerField(null=True, blank=True)
     visitor = models.CharField(max_length=50)
     visitor_phone = models.IntegerField(null=True, blank=True)
-    companies = ArrayField(models.CharField(max_length=100))
+    companies = ArrayField(models.CharField(max_length=30))
     company_phone_1 = models.IntegerField()
     company_phone_2 = models.IntegerField(null=True, blank=True)
     company_online = models.CharField(max_length=50, null=True, blank=True)

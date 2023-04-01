@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from core.models import Medician, PharmGroup, Kind, Country, Unit, Prescription, PharmCompany
+from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
+    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough
+                        
 
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
@@ -30,9 +32,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 class MedicianSeralizer(serializers.ModelSerializer):
     class Meta:
         model = Medician
-        fields = ('id', 'brand_name', 'generic_name', 'no_pocket', 'pharm_group', 'kind', 'ml', 'unit', 'weight',
-                  'location', 'country', 'company', 'barcode', 'price', 'existence', 'minmum_existence', 'maximum_existence',
-                  'dividing_rules', 'cautions', 'usages', 'description', 'image')
+        fields = '__all__'
 
 
 class UnitSeralizer(serializers.ModelSerializer):
@@ -47,13 +47,58 @@ class PharmCompanySeralizer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class EntranceSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Entrance
-#         fields = '__all__'
+class EntranceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entrance
+        fields = '__all__'
 
 
-# class EntranceThroughSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = EntranceThrough
-#         fields = '__all__'
+class EntranceThroughSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntranceThrough
+        fields = '__all__'
+
+class StoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
+        fields = '__all__'
+
+class CurrencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = '__all__'
+
+
+class PaymentMethodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethod
+        fields = '__all__'
+        
+class FinalRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FinalRegister
+        fields = '__all__'
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = '__all__'
+
+
+class DoctorNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoctorName
+        fields = '__all__'
+
+        
+class PatientNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientName
+        fields = '__all__'
+
+        
+
+class PrescriptionThroughSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionThrough
+        fields = '__all__'
