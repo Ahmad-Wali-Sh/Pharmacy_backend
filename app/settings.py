@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-4z2-@%cm9ua90#c*7qlxn7bc2wmbwpw77eznu2_#prtjqltt*$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.0.103']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.0.103', '127.0.0.1:3000']
 
 
 # Application definition
@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'django_filters',
     'corsheaders',
     'import_export',
 
@@ -47,9 +48,12 @@ INSTALLED_APPS = [
     'core',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+
 
 CORS_ORIGIN_ALLOW_ALL = True
-COMPUTEDFIELDS_ADMIN = True
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
