@@ -5,6 +5,7 @@ from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough
 from rest_framework import viewsets
+from django_filters import rest_framework as filters
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -80,3 +81,4 @@ class EntranceView(viewsets.ModelViewSet):
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()
     serializer_class = EntranceThroughSerializer
+    filterset_fields = ('entrance',)
