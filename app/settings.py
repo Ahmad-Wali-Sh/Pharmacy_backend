@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'import_export',
+    'image_optimizer',
 
     'api',
     'core',
@@ -51,6 +52,8 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
+
+OPTIMIZED_IMAGE_METHOD = 'pillow'
 
 
 CORS_ORIGIN_ALLOW_ALL = True
