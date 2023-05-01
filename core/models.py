@@ -1,12 +1,13 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Sum
+from image_optimizer.fields import OptimizedImageField
 
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
-    image = models.FileField(
+    image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
     description = models.TextField(null=True, blank=True)
 
@@ -17,7 +18,7 @@ class Kind(models.Model):
 class PharmGroup(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
-    image = models.FileField(null=True, blank=True, default="",
+    image = OptimizedImageField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/pharm_groub')
     description = models.TextField(null=True, blank=True)
 
@@ -27,7 +28,7 @@ class PharmGroup(models.Model):
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
-    image = models.FileField(null=True, blank=True, default="",
+    image = OptimizedImageField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/countries')
 
     def __str__(self):
@@ -68,7 +69,7 @@ class Medician(models.Model):
     cautions = models.TextField(blank=True, null=True)
     usages = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    image = models.FileField(null=True, blank=True, default="",
+    image = OptimizedImageField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/medician')
 
     def __str__(self):
