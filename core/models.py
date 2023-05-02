@@ -210,7 +210,7 @@ class Store (models.Model):
     name = models.CharField(max_length=100)
     phone = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=200)
-    rsponsible = models.CharField(max_length=100)
+    responsible = models.CharField(max_length=100)
     description = models.TextField()
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
