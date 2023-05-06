@@ -35,6 +35,7 @@ class FinalRegisterView(viewsets.ModelViewSet):
 class PrescriptionThroughView(viewsets.ModelViewSet):
     queryset = PrescriptionThrough.objects.all()
     serializer_class = PrescriptionThroughSerializer
+    filterset_fields = ['prescription',]
 
 
 class PatientNameView(viewsets.ModelViewSet):
