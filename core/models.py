@@ -170,7 +170,9 @@ class PrescriptionThrough(models.Model):
 
             if prescription_sum_query == None:
                 result = entrance_sum_query
-            else:
+            elif entrance_sum_query == None:
+                result = prescription_sum_query
+            else: 
                 result = entrance_sum_query - prescription_sum_query
             return result
 
