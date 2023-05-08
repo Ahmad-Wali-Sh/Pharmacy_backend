@@ -81,6 +81,7 @@ class PharmGroupView(viewsets.ModelViewSet):
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
+    filterset_fields = ['prescription_number',]
 
 
 class UnitView(viewsets.ModelViewSet):
