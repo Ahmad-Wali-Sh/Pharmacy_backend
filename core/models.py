@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
+from datetime import date
+import random
 
 
 class Kind(models.Model):
@@ -127,7 +129,7 @@ class DoctorName(models.Model):
 class Prescription (models.Model):
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
-    prescription_number = models.CharField(max_length=60, unique=True)
+    prescription_number = models.CharField(max_length=60, unique=True, null=True, blank=True)
     name = models.ForeignKey(
         PatientName, on_delete=models.CASCADE, null=True, blank=True)
     doctor = models.ForeignKey(
@@ -139,9 +141,24 @@ class Prescription (models.Model):
     zakat = models.FloatField(default=0)
     khairat = models.FloatField(default=0)
     round_number = models.FloatField(default=0)
+    created = models.DateField(auto_now_add=True)
+    id = models.AutoField(primary_key=True)
 
-    def __str__(self):
-        return self.prescription_number
+    # def __str__(self):
+    #     return self.prescription_number
+
+    def save(self, *args, **kwargs):
+
+        objects_count = Prescription.objects.all().count()
+        if Prescription.objects.filter(created = date.today()):
+            objects_count = Prescription.objects.filter(created = date.today()).count()
+            new_number = objects_count + 1
+        else: 
+            new_number = "1"
+            
+        time = date.today().strftime("%y-%m-%d")
+        self.prescription_number = str(time) + "-" + str(new_number)
+        super(Prescription, self).save(*args, **kwargs)
 
 
 class PrescriptionThrough(models.Model):
