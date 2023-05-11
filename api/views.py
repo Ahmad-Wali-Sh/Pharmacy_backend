@@ -1,9 +1,9 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
-    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer
+    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
-    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough
+    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -66,6 +66,7 @@ class PaymentMethodView(viewsets.ModelViewSet):
 class KindView(viewsets.ModelViewSet):
     queryset = Kind.objects.all()
     serializer_class = KindSerializer
+    filterset_fields = ['name_english', 'name_persian']
 
 
 class CountryView(viewsets.ModelViewSet):
@@ -81,6 +82,7 @@ class PharmGroupView(viewsets.ModelViewSet):
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
+    filterset_fields = ['prescription_number',]
 
 
 class UnitView(viewsets.ModelViewSet):
@@ -102,3 +104,12 @@ class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()
     serializer_class = EntranceThroughSerializer
     filterset_fields = ('entrance',)
+
+class OutranceView (viewsets.ModelViewSet):
+    queryset = Outrance.objects.all()
+    serializer_class = OutranceSerializer
+
+class OutranceThroughView (viewsets.ModelViewSet):
+    queryset = OutranceThrough.objects.all()
+    serializer_class = OutranceThroughSerializer
+    filterset_fields = ('outrance',)

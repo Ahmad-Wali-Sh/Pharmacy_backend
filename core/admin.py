@@ -2,7 +2,8 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
-    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough
+    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
+        Outrance
 
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
@@ -13,12 +14,10 @@ class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('register_quantity', 'each_purchase_price',
                        'each_sell_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
                        'total_purchaseـcurrency','total_interest', 'each_price')
-    pass
 
 
 class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('total_price' ,)
-    pass
 
 
 admin.site.register(PharmGroup, ImportAdmin)
@@ -35,6 +34,8 @@ admin.site.register(EntranceThrough, EntranceThrougheAdmin)
 admin.site.register(PaymentMethod, ImportAdmin)
 admin.site.register(FinalRegister, ImportAdmin)
 admin.site.register(Department, ImportAdmin)
+admin.site.register(Outrance, ImportAdmin)
+admin.site.register(OutranceThrough, ImportAdmin)
 admin.site.register(DoctorName, ImportAdmin)
 admin.site.register(PatientName, ImportAdmin)
 admin.site.register(PrescriptionThrough, PrescriptionThroughAdmin)
