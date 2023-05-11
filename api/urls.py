@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from .views import MedicianView, PharmGroupView, CountryView, KindView, PrescriptionView, UnitView, PharmCompanyView, \
     StoreView, FinalRegisterView, PrescriptionThroughView, PatientNameView, DoctorNameView, DepartmentView, CurrencyView, \
-    PaymentMethodView, EntranceThroughView, EntranceView
+    PaymentMethodView, EntranceThroughView, EntranceView, OutranceView, OutranceThroughView
 
 
 
@@ -25,6 +25,8 @@ router.register(r'doctor', DoctorNameView)
 router.register(r'department', DepartmentView)
 router.register(r'currency', CurrencyView)
 router.register(r'payment-method', PaymentMethodView)
+router.register(r'outrance', OutranceView)
+router.register(r'outrance-through', OutranceThroughView)
 
 
 

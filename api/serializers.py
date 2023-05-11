@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
-    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough
+    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
+        Outrance, OutranceThrough
                         
 
 
@@ -101,4 +102,15 @@ class PatientNameSerializer(serializers.ModelSerializer):
 class PrescriptionThroughSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrescriptionThrough
+        fields = '__all__'
+
+
+class OutranceSerializer (serializers.ModelSerializer):
+    class Meta:
+        model = Outrance
+        fields = '__all__'
+
+class OutranceThroughSerializer (serializers.ModelSerializer):
+    class Meta:
+        model = OutranceThrough
         fields = '__all__'
