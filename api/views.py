@@ -6,6 +6,7 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
+import django_filters
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -13,13 +14,19 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+class MedicianFilter(django_filters.FilterSet):
+    generic_name = django_filters.CharFilter(lookup_expr="icontains")
+
+    class Meta:
+        model = Medician
+        fields = ('brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",)
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ('brand_name',)
     search_fields = ['brand_name']
+    filterset_class = MedicianFilter
 
 
 class StoreView(viewsets.ModelViewSet):
