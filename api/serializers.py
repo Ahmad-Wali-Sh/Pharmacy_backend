@@ -35,6 +35,24 @@ class MedicianSeralizer(serializers.ModelSerializer):
         model = Medician
         fields = '__all__'
 
+class MeidicainExcelSerializer(serializers.ModelSerializer):
+    kind = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name_english',
+    )
+    pharm_group = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name_english'
+    )
+    country = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="name"
+    )
+
+    class Meta:
+        model = Medician
+        fields = '__all__'
+
 
 class UnitSeralizer(serializers.ModelSerializer):
     class Meta:
