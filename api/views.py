@@ -93,11 +93,19 @@ class KindView(viewsets.ModelViewSet):
 class CountryView(viewsets.ModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
+    filterset_fields = ['name',]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 
 class PharmGroupView(viewsets.ModelViewSet):
     queryset = PharmGroup.objects.all()
     serializer_class = PharmGroupSeralizer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
+    filterset_fields = ['name_english', 'name_persian']
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 
 class PrescriptionView(viewsets.ModelViewSet):
