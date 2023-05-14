@@ -1,6 +1,6 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
-    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer
+    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough
@@ -25,10 +25,20 @@ class MedicianFilter(django_filters.FilterSet):
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['brand_name']
     filterset_class = MedicianFilter
-
+    ordering_fields = ['id',]
+    ordering = ['id',]
+    
+class MedicianExcelView(viewsets.ModelViewSet):
+    queryset = Medician.objects.all()
+    serializer_class = MeidicainExcelSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['brand_name']
+    filterset_class = MedicianFilter
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 class StoreView(viewsets.ModelViewSet):
     queryset = Store.objects.all()
@@ -74,7 +84,10 @@ class PaymentMethodView(viewsets.ModelViewSet):
 class KindView(viewsets.ModelViewSet):
     queryset = Kind.objects.all()
     serializer_class = KindSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
     filterset_fields = ['name_english', 'name_persian']
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 
 class CountryView(viewsets.ModelViewSet):
