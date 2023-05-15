@@ -24,7 +24,6 @@ class MedicianFilter(django_filters.FilterSet):
         model = Medician
         fields = ('brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",)
 
-
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
@@ -44,6 +43,7 @@ class MedicianExcelView(viewsets.ModelViewSet):
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
+
 
 class StoreView(viewsets.ModelViewSet):
     queryset = Store.objects.all()
