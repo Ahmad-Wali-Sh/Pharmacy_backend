@@ -31,6 +31,7 @@ router.register(r'medician-excel', MedicianExcelView)
 
 
 
+
 urlpatterns = [
     path('', include(router.urls)),
 ]
