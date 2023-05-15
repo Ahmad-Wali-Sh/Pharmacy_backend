@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'import_export',
     'image_optimizer',
-
+    'djoser',
+    'rest_framework.authtoken',
     'api',
     'core',
 ]
@@ -56,10 +57,19 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_framework_xml.renderers.XMLRenderer',
     ),
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.DjangoModelPermissions',
+    ]
 }
 
 OPTIMIZED_IMAGE_METHOD = 'pillow'
 
+DJOSER = {
+    "USER_ID_FIELD": "username"
+}
 
 CORS_ORIGIN_ALLOW_ALL = True
 

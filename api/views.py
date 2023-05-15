@@ -7,12 +7,15 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
+from .permissions import D7896DjangoModelPermissions
 
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+
 
 class MedicianFilter(django_filters.FilterSet):
     generic_name = django_filters.CharFilter(lookup_expr="icontains")
@@ -30,6 +33,7 @@ class MedicianView(viewsets.ModelViewSet):
     filterset_class = MedicianFilter
     ordering_fields = ['id',]
     ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
     
 class MedicianExcelView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -39,46 +43,55 @@ class MedicianExcelView(viewsets.ModelViewSet):
     filterset_class = MedicianFilter
     ordering_fields = ['id',]
     ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 class StoreView(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class FinalRegisterView(viewsets.ModelViewSet):
     queryset = FinalRegister.objects.all()
     serializer_class = FinalRegisterSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PrescriptionThroughView(viewsets.ModelViewSet):
     queryset = PrescriptionThrough.objects.all()
     serializer_class = PrescriptionThroughSerializer
     filterset_fields = ['prescription',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PatientNameView(viewsets.ModelViewSet):
     queryset = PatientName.objects.all()
     serializer_class = PatientNameSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class DoctorNameView(viewsets.ModelViewSet):
     queryset = DoctorName.objects.all()
     serializer_class = DoctorNameSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class CurrencyView(viewsets.ModelViewSet):
     queryset = Currency.objects.all()
     serializer_class = CurrencySerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PaymentMethodView(viewsets.ModelViewSet):
     queryset = PaymentMethod.objects.all()
     serializer_class = PaymentMethodSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class KindView(viewsets.ModelViewSet):
@@ -88,6 +101,7 @@ class KindView(viewsets.ModelViewSet):
     filterset_fields = ['name_english', 'name_persian']
     ordering_fields = ['id',]
     ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class CountryView(viewsets.ModelViewSet):
@@ -97,6 +111,7 @@ class CountryView(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
     ordering_fields = ['id',]
     ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PharmGroupView(viewsets.ModelViewSet):
@@ -106,39 +121,47 @@ class PharmGroupView(viewsets.ModelViewSet):
     filterset_fields = ['name_english', 'name_persian']
     ordering_fields = ['id',]
     ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
     filterset_fields = ['prescription_number',]
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class UnitView(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
     serializer_class = UnitSeralizer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class PharmCompanyView(viewsets.ModelViewSet):
     queryset = PharmCompany.objects.all()
     serializer_class = PharmCompanySeralizer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class EntranceView(viewsets.ModelViewSet):
     queryset = Entrance.objects.all()
     serializer_class = EntranceSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()
     serializer_class = EntranceThroughSerializer
     filterset_fields = ('entrance',)
+    permission_classes = [D7896DjangoModelPermissions]
 
 class OutranceView (viewsets.ModelViewSet):
     queryset = Outrance.objects.all()
     serializer_class = OutranceSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 class OutranceThroughView (viewsets.ModelViewSet):
     queryset = OutranceThrough.objects.all()
     serializer_class = OutranceThroughSerializer
     filterset_fields = ('outrance',)
+    permission_classes = [D7896DjangoModelPermissions]

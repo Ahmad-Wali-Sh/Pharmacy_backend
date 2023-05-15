@@ -3,7 +3,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
 from datetime import date
-import random
+from django.contrib.auth.models import User
+
+
 
 
 class Kind(models.Model):
@@ -12,6 +14,7 @@ class Kind(models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
     description = models.TextField(null=True, blank=True)
+    
 
     def __str__(self):
         return self.name_english
@@ -121,6 +124,7 @@ class DoctorName(models.Model):
     work_time = models.CharField(max_length=100, null=True, blank=True)
     home_address = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
