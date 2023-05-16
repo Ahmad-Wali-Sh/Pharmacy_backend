@@ -68,7 +68,7 @@ REST_FRAMEWORK = {
 OPTIMIZED_IMAGE_METHOD = 'pillow'
 
 DJOSER = {
-    "USER_ID_FIELD": "username"
+    "USER_ID_FIELD": "id"
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
