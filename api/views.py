@@ -123,11 +123,16 @@ class PharmGroupView(viewsets.ModelViewSet):
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
 
+class PrescriptionFilterView(django_filters.FilterSet):
+    created = django_filters.DateTimeFromToRangeFilter() 
+    class Meta:
+        model = Prescription
+        fields =['prescription_number','department', 'created', 'name', 'doctor', 'prescription_number']
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
-    filterset_fields = ['prescription_number',]
+    filterset_class = PrescriptionFilterView
     permission_classes = [D7896DjangoModelPermissions]
 
 
