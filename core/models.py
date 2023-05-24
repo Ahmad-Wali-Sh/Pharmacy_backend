@@ -4,6 +4,7 @@ from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
+from django_jalali.db import models as jmodels
 
 
 
@@ -203,18 +204,18 @@ class PrescriptionThrough(models.Model):
 
 class PharmCompany (models.Model):
     name = models.CharField(max_length=100)
-    ceo = models.CharField(max_length=50)
+    ceo = models.CharField(max_length=50, null=True, blank=True)
     ceo_phone = models.IntegerField(null=True, blank=True)
-    manager = models.CharField(max_length=50)
+    manager = models.CharField(max_length=50, null=True, blank=True)
     manager_phone = models.IntegerField(null=True, blank=True)
-    visitor = models.CharField(max_length=50)
+    visitor = models.CharField(max_length=50, null=True, blank=True)
     visitor_phone = models.IntegerField(null=True, blank=True)
-    companies = ArrayField(models.CharField(max_length=30))
-    company_phone_1 = models.IntegerField()
+    companies = ArrayField(models.CharField(max_length=30, null=True, blank=True), null=True, blank=True)
+    company_phone_1 = models.IntegerField(null=True,  blank=True)
     company_phone_2 = models.IntegerField(null=True, blank=True)
     company_online = models.CharField(max_length=50, null=True, blank=True)
-    address = models.CharField(max_length=150)
-    description = models.TextField()
+    address = models.CharField(max_length=150,  blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -232,9 +233,9 @@ class Currency (models.Model):
 class Store (models.Model):
     name = models.CharField(max_length=100)
     phone = models.IntegerField(null=True, blank=True)
-    address = models.CharField(max_length=200)
-    responsible = models.CharField(max_length=100)
-    description = models.TextField()
+    address = models.CharField(max_length=200, null=True, blank=True)
+    responsible = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
 
@@ -260,14 +261,14 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = models.DateField()
+    factor_date = jmodels.jDateField(null=True, blank=True)
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
     final_register = models.ForeignKey(FinalRegister, on_delete=models.CASCADE)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    deliver_by = models.CharField(max_length=100)
-    recived_by = models.CharField(max_length=100)
+    deliver_by = models.CharField(max_length=100,null=True, blank=True)
+    recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
 
