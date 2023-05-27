@@ -133,3 +133,7 @@ class OutranceThroughSerializer (serializers.ModelSerializer):
     class Meta:
         model = OutranceThrough
         fields = '__all__'
+
+class TrazSerializer (serializers.Serializer):
+    entrances = EntranceThroughSerializer(many=True)
+    prescriptions = PrescriptionThroughSerializer(many=True)

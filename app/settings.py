@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'import_export',
     'image_optimizer',
+    'drf_multiple_model',
     'djoser',
     'rest_framework.authtoken',
     'api',
