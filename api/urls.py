@@ -28,6 +28,7 @@ router.register(r'payment-method', PaymentMethodView)
 router.register(r'outrance', OutranceView)
 router.register(r'outrance-through', OutranceThroughView)
 router.register(r'medician-excel', MedicianExcelView)
+router.register(r'traz', TrazView, basename='traz')
 
 
 

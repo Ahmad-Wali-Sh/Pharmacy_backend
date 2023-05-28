@@ -5,6 +5,7 @@ from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
+from django.utils import timezone
 
 
 
@@ -172,6 +173,7 @@ class PrescriptionThrough(models.Model):
     quantity = models.FloatField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.prescription.prescription_number
@@ -303,6 +305,7 @@ class EntranceThrough(models.Model):
     bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"

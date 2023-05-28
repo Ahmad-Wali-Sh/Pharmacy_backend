@@ -40,13 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
+    'drf_multiple_model',
     'django_filters',
     'corsheaders',
     'import_export',
     'image_optimizer',
-    'drf_multiple_model',
     'djoser',
-    'rest_framework.authtoken',
+
     'api',
     'core',
 ]

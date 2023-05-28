@@ -23,5 +23,4 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('api/traz/',  TrazView.as_view({'get': 'list',}), name='traz')
 ]

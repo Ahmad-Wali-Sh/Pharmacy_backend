@@ -8,12 +8,9 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .permissions import D7896DjangoModelPermissions
-from drf_multiple_model.views import ObjectMultipleModelAPIView
-from drf_multiple_model.views import FlatMultipleModelAPIView
-from rest_framework.views import APIView
-from rest_framework.permissions import DjangoModelPermissions
-from collections import namedtuple
-from rest_framework.response import Response
+
+from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
+
 
 
 
@@ -168,6 +165,7 @@ class EntranceThroughView(viewsets.ModelViewSet):
     filterset_fields = ('entrance',)
     permission_classes = [D7896DjangoModelPermissions]
 
+
 class OutranceView (viewsets.ModelViewSet):
     queryset = Outrance.objects.all()
     serializer_class = OutranceSerializer
@@ -188,19 +186,18 @@ class MultipleModelPermissions(permissions.DjangoModelPermissions):
         return True
 
 
-Traz = namedtuple('traz',('entrances', 'prescriptions'))
 
-class TrazView (viewsets.ViewSet):
+class TrazView (FlatMultipleModelAPIViewSet):
+        
+    querylist = [
+        {'queryset': EntranceThrough.objects.all(), 'serializer_class': EntranceThroughSerializer},
+        {'queryset': PrescriptionThrough.objects.all(), 'serializer_class': PrescriptionThroughSerializer},
+    ]
+    model = EntranceThrough
     filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
     filterset_fields = ('medician',)
-    def list(self, request):
-        traz = Traz(
-            EntranceThrough.objects.all(),
-            PrescriptionThrough.objects.all(),
-        )
-        serializer = TrazSerializer(traz)
-        return Response(serializer.data)
-    permission_classes = [permissions.AllowAny,]
+    ordering_fields = ['id','timestamp']
+    ordering = ['id','timestamp']
     
 
 
