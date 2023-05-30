@@ -192,6 +192,7 @@ class TrazView (FlatMultipleModelAPIViewSet):
     querylist = [
         {'queryset': EntranceThrough.objects.all(), 'serializer_class': EntranceThroughSerializer},
         {'queryset': PrescriptionThrough.objects.all(), 'serializer_class': PrescriptionThroughSerializer},
+        {'queryset': OutranceThrough.objects.all(), 'serializer_class': OutranceThrough},
     ]
     model = EntranceThrough
     filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
