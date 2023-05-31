@@ -656,6 +656,8 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
         result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None: 
+        result = -(prescription_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
