@@ -4,7 +4,7 @@ from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
-
+from django_jalali.db import models as jmodels
 
 
 
@@ -260,14 +260,14 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = models.DateField()
+    factor_date = jmodels.jDateField()
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
     final_register = models.ForeignKey(FinalRegister, on_delete=models.CASCADE)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    deliver_by = models.CharField(max_length=100)
-    recived_by = models.CharField(max_length=100)
+    deliver_by = models.CharField(max_length=100, null=True, blank=True)
+    recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
 
@@ -316,6 +316,7 @@ class EntranceThrough(models.Model):
             (self.discount_money-(self.each_price_factor *
              (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
 
+        
  
         """   محاسبه مجموع خرید"""
 
@@ -345,6 +346,9 @@ class EntranceThrough(models.Model):
 
         self.each_sell_price = round(
             self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
+
+        self.medician.price = self.each_sell_price
+        self.medician.save()
 
         """ محاسبه مجموع فروش"""
 
@@ -382,7 +386,6 @@ class EntranceThrough(models.Model):
         else: self.total_interest = round(simple_interest + self.bonus_interest + \
                 quantity_bonus_interest, round_digit)
 
-       
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
@@ -398,6 +401,8 @@ class EntranceThrough(models.Model):
             else:
                 result = entrance_sum_query - prescription_sum_query
             return result
+        
+        
 
         self.medician.existence = entrance_sum()
         self.medician.save()

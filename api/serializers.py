@@ -4,7 +4,7 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
         Outrance, OutranceThrough
                         
-
+from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta:
@@ -67,6 +67,7 @@ class PharmCompanySeralizer(serializers.ModelSerializer):
 
 
 class EntranceSerializer(serializers.ModelSerializer):
+    factor_date = JDateField()
     class Meta:
         model = Entrance
         fields = '__all__'
