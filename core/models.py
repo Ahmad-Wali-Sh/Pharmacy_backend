@@ -8,7 +8,29 @@ from django_jalali.db import models as jmodels
 from django.utils import timezone
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
+from django.utils.dateparse import parse_datetime
+from django.utils.encoding import force_str
+from django.forms.widgets import DateTimeInput
+from django.utils.translation import gettext_lazy as _, ngettext_lazy
+from django import forms
 
+class ISODateTimeField(forms.DateTimeField):
+
+        widget = DateTimeInput
+        default_error_messages = {
+            'invalid': _('Enter a valid date/time.'),
+        }
+
+        def to_python(self, value):
+            value = value.strip()
+            try:
+                return self.strptime(value, format)
+            except (ValueError, TypeError):
+                raise forms.ValidationError(self.error_messages['invalid'], code='invalid')
+
+        def strptime(self, value, format):
+            """ stackoverflow won't let me save just an indent! """
+            return parse_datetime(force_str(value))
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
@@ -272,7 +294,7 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = jmodels.jDateField(null=True, blank=True)
+    factor_date = models.DateTimeField(auto_now_add=True)
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
