@@ -40,12 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
+    'drf_multiple_model',
     'django_filters',
     'corsheaders',
     'import_export',
     'image_optimizer',
     'djoser',
-    'rest_framework.authtoken',
+
     'api',
     'core',
 ]
@@ -112,7 +114,7 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'Pharmacydb1',
+        'NAME': 'Pharmacydb_v1',
         'USER': 'postgres',
         'PASSWORD': 'Ahmadwali$8',
         'HOST': '127.0.0.1',
@@ -147,9 +149,9 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Kabul'
 
-USE_I18N = True
+USE_I18N = False
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)

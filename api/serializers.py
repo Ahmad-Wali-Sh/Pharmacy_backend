@@ -67,7 +67,8 @@ class PharmCompanySeralizer(serializers.ModelSerializer):
 
 
 class EntranceSerializer(serializers.ModelSerializer):
-    factor_date = JDateField()
+
+    # factor_date = JDateTimeField()
     class Meta:
         model = Entrance
         fields = '__all__'
@@ -133,3 +134,7 @@ class OutranceThroughSerializer (serializers.ModelSerializer):
     class Meta:
         model = OutranceThrough
         fields = '__all__'
+
+class TrazSerializer (serializers.Serializer):
+    entrances = EntranceThroughSerializer(many=True)
+    prescriptions = PrescriptionThroughSerializer(many=True)

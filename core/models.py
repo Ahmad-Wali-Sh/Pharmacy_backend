@@ -6,7 +6,33 @@ from datetime import date
 from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
 
+from django.utils import timezone
+from django.db.models.signals import post_delete, pre_delete
+from django.dispatch import receiver
+from django.utils.dateparse import parse_datetime
+from django.utils.encoding import force_str
+from django.forms.widgets import DateTimeInput
+from django.utils.translation import gettext_lazy as _, ngettext_lazy
+from django import forms
 
+class ISODateTimeField(forms.DateTimeField):
+
+
+        widget = DateTimeInput
+        default_error_messages = {
+            'invalid': _('Enter a valid date/time.'),
+        }
+
+        def to_python(self, value):
+            value = value.strip()
+            try:
+                return self.strptime(value, format)
+            except (ValueError, TypeError):
+                raise forms.ValidationError(self.error_messages['invalid'], code='invalid')
+
+        def strptime(self, value, format):
+            """ stackoverflow won't let me save just an indent! """
+            return parse_datetime(force_str(value))
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
@@ -14,7 +40,6 @@ class Kind(models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
     description = models.TextField(null=True, blank=True)
-    
 
     def __str__(self):
         return self.name_english
@@ -24,7 +49,7 @@ class PharmGroup(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(null=True, blank=True, default="",
-                             upload_to='frontend/public/dist/images/pharm_groub')
+                                upload_to='frontend/public/dist/images/pharm_groub')
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -34,7 +59,7 @@ class PharmGroup(models.Model):
 class Country(models.Model):
     name = models.CharField(max_length=50)
     image = OptimizedImageField(null=True, blank=True, default="",
-                             upload_to='frontend/public/dist/images/countries')
+                                upload_to='frontend/public/dist/images/countries')
 
     def __str__(self):
         return self.name
@@ -75,7 +100,7 @@ class Medician(models.Model):
     usages = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image = OptimizedImageField(null=True, blank=True, default="",
-                             upload_to='frontend/public/dist/images/medician')
+                                upload_to='frontend/public/dist/images/medician')
 
     def __str__(self):
         return self.brand_name
@@ -90,7 +115,8 @@ class Department (models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
 GENDER_CHOICES = (
     ("Male", "Male"),
     ("Female", "Female")
@@ -133,7 +159,8 @@ class DoctorName(models.Model):
 class Prescription (models.Model):
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
-    prescription_number = models.CharField(max_length=60, unique=True, null=True, blank=True)
+    prescription_number = models.CharField(
+        max_length=60, unique=True, null=True, blank=True)
     name = models.ForeignKey(
         PatientName, on_delete=models.CASCADE, null=True, blank=True)
     doctor = models.ForeignKey(
@@ -154,12 +181,13 @@ class Prescription (models.Model):
     def save(self, *args, **kwargs):
 
         objects_count = Prescription.objects.all().count()
-        if Prescription.objects.filter(created = date.today()):
-            objects_count = Prescription.objects.filter(created = date.today()).count()
+        if Prescription.objects.filter(created=date.today()):
+            objects_count = Prescription.objects.filter(
+                created=date.today()).count()
             new_number = objects_count + 1
-        else: 
+        else:
             new_number = "1"
-            
+
         time = date.today().strftime("%y-%m-%d")
         self.prescription_number = str(time) + "-" + str(new_number)
         super(Prescription, self).save(*args, **kwargs)
@@ -171,6 +199,7 @@ class PrescriptionThrough(models.Model):
     quantity = models.FloatField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.prescription.prescription_number
@@ -188,13 +217,19 @@ class PrescriptionThrough(models.Model):
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
+            outrance_sum_query = list(OutranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
-            if prescription_sum_query == None:
-                result = entrance_sum_query
-            elif entrance_sum_query == None:
-                result = prescription_sum_query
-            else: 
+            if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
+                result = -(self.quantity)
+            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+                result = entrance_sum_query - outrance_sum_query
+            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
                 result = entrance_sum_query - prescription_sum_query
+            if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
+                result = -(prescription_sum_query + outrance_sum_query)
+            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = priscription_sum()
@@ -203,18 +238,19 @@ class PrescriptionThrough(models.Model):
 
 class PharmCompany (models.Model):
     name = models.CharField(max_length=100)
-    ceo = models.CharField(max_length=50)
+    ceo = models.CharField(max_length=50, null=True, blank=True)
     ceo_phone = models.IntegerField(null=True, blank=True)
-    manager = models.CharField(max_length=50)
+    manager = models.CharField(max_length=50, null=True, blank=True)
     manager_phone = models.IntegerField(null=True, blank=True)
-    visitor = models.CharField(max_length=50)
+    visitor = models.CharField(max_length=50, null=True, blank=True)
     visitor_phone = models.IntegerField(null=True, blank=True)
-    companies = ArrayField(models.CharField(max_length=30))
-    company_phone_1 = models.IntegerField()
+    companies = ArrayField(models.CharField(
+        max_length=30, null=True, blank=True), null=True, blank=True)
+    company_phone_1 = models.IntegerField(null=True,  blank=True)
     company_phone_2 = models.IntegerField(null=True, blank=True)
     company_online = models.CharField(max_length=50, null=True, blank=True)
-    address = models.CharField(max_length=150)
-    description = models.TextField()
+    address = models.CharField(max_length=150,  blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -232,9 +268,9 @@ class Currency (models.Model):
 class Store (models.Model):
     name = models.CharField(max_length=100)
     phone = models.IntegerField(null=True, blank=True)
-    address = models.CharField(max_length=200)
-    responsible = models.CharField(max_length=100)
-    description = models.TextField()
+    address = models.CharField(max_length=200, null=True, blank=True)
+    responsible = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
 
@@ -260,7 +296,7 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = jmodels.jDateField()
+    factor_date = models.DateTimeField()
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
@@ -302,6 +338,7 @@ class EntranceThrough(models.Model):
     bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -312,16 +349,17 @@ class EntranceThrough(models.Model):
 
         """ محاسبه قیمت فی خرید فاکتور"""
 
-        self.each_price = round(- \
-            (self.discount_money-(self.each_price_factor *
-             (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
+        self.each_price = round(-
+                                (self.discount_money-(self.each_price_factor *
+                                                      (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
 
-        
- 
+
         """   محاسبه مجموع خرید"""
 
-        self.total_purchaseـafghani = round(self.each_price * self.number_in_factor, round_digit)
-        self.total_purchaseـcurrency = round(self.each_price_factor * self.number_in_factor, round_digit)
+        self.total_purchaseـafghani = round(
+            self.each_price * self.number_in_factor, round_digit)
+        self.total_purchaseـcurrency = round(
+            self.each_price_factor * self.number_in_factor, round_digit)
 
         """ محاسبه تعداد ثبت به سیستم"""
 
@@ -339,8 +377,8 @@ class EntranceThrough(models.Model):
         if self.bonus == 0 and self.quantity_bonus == 0:
             self.each_purchase_price = round(simple_each_purchase, round_digit)
         else:
-            self.each_purchase_price = round(bonus_each_purchase_price + \
-                quantity_bonus_each_purchase_price, round_digit)
+            self.each_purchase_price = round(bonus_each_purchase_price +
+                                             quantity_bonus_each_purchase_price, round_digit)
 
         """ محاسبه قیمت فی فروش"""
 
@@ -364,7 +402,8 @@ class EntranceThrough(models.Model):
         if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
             self.total_sell = round(simple_total_sell, round_digit)
         else:
-            self.total_sell = round(bonus_total_sell + quantity_bonus_total_sell, round_digit)
+            self.total_sell = round(
+                bonus_total_sell + quantity_bonus_total_sell, round_digit)
 
         """ محاسبه فایده """
 
@@ -381,6 +420,7 @@ class EntranceThrough(models.Model):
         # Discount Interest on Entrance Without Discount result.
 
         if self.entrance.without_discount == False:
+
             self.total_interest = round(simple_interest + self.bonus_interest + \
                 quantity_bonus_interest + dicount_interest, round_digit) # G30
         else: self.total_interest = round(simple_interest + self.bonus_interest + \
@@ -395,11 +435,19 @@ class EntranceThrough(models.Model):
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
-
-            if prescription_sum_query == None:
+            outrance_sum_query = list(OutranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            
+            if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
                 result = entrance_sum_query
-            else:
+            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+                result = entrance_sum_query - outrance_sum_query
+            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
                 result = entrance_sum_query - prescription_sum_query
+            if entrance_sum_query == None:
+                result = -(prescription_sum_query + outrance_sum_query)
+            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
             return result
         
         
@@ -454,6 +502,7 @@ class OutranceThrough (models.Model):
     bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
@@ -464,15 +513,16 @@ class OutranceThrough (models.Model):
 
         """ محاسبه قیمت فی خرید فاکتور"""
 
-        self.each_price = round(- \
-            (self.discount_money-(self.each_price_factor *
-             (1-self.discount_percent / 100))) * self.outrance.currency.rate, round_digit)
+        self.each_price = round(-
+                                (self.discount_money-(self.each_price_factor *
+                                                      (1-self.discount_percent / 100))) * self.outrance.currency.rate, round_digit)
 
- 
         """   محاسبه مجموع خرید"""
 
-        self.total_purchaseـafghani = round(self.each_price * self.number_in_factor, round_digit)
-        self.total_purchaseـcurrency = round(self.each_price_factor * self.number_in_factor, round_digit)
+        self.total_purchaseـafghani = round(
+            self.each_price * self.number_in_factor, round_digit)
+        self.total_purchaseـcurrency = round(
+            self.each_price_factor * self.number_in_factor, round_digit)
 
         """ محاسبه تعداد ثبت به سیستم"""
 
@@ -490,8 +540,8 @@ class OutranceThrough (models.Model):
         if self.bonus == 0 and self.quantity_bonus == 0:
             self.each_purchase_price = round(simple_each_purchase, round_digit)
         else:
-            self.each_purchase_price = round(bonus_each_purchase_price + \
-                quantity_bonus_each_purchase_price, round_digit)
+            self.each_purchase_price = round(bonus_each_purchase_price +
+                                             quantity_bonus_each_purchase_price, round_digit)
 
         """ محاسبه قیمت فی فروش"""
 
@@ -512,7 +562,8 @@ class OutranceThrough (models.Model):
         if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
             self.total_sell = round(simple_total_sell, round_digit)
         else:
-            self.total_sell = round(bonus_total_sell + quantity_bonus_total_sell, round_digit)
+            self.total_sell = round(
+                bonus_total_sell + quantity_bonus_total_sell, round_digit)
 
         """ محاسبه فایده """
 
@@ -529,27 +580,115 @@ class OutranceThrough (models.Model):
         # Discount Interest on Entrance Without Discount result.
 
         if self.outrance.without_discount == False:
-            self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest + dicount_interest, round_digit) # G30
-        else: self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest, round_digit)
-
-       
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
+        else:
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest, round_digit)
 
         super(OutranceThrough, self).save(*args, **kwargs)
 
         def entrance_sum():
 
-            entrance_sum_query = list(OutranceThrough.objects.filter(
+            entrance_sum_query = list(EntranceThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
-
-            if prescription_sum_query == None:
-                result = entrance_sum_query
-            else:
+            outrance_sum_query = list(OutranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+            
+            if entrance_sum_query == None and prescription_sum_query == None:
+                result = -(self.register_quantity) 
+            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+                result = entrance_sum_query - outrance_sum_query
+            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
                 result = entrance_sum_query - prescription_sum_query
+            if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
+                result = -(prescription_sum_query + outrance_sum_query)
+            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = entrance_sum()
         self.medician.save()
+
+@receiver(post_delete, sender=OutranceThrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+    entrance_sum_query = list(EntranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+    prescription_sum_query = list(PrescriptionThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+    outrance_sum_query = list(OutranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+
+    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
+        result = 0
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
+        result = -(prescription_sum_query)
+    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
+        result = entrance_sum_query
+    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+        result = entrance_sum_query - outrance_sum_query
+    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
+        result = entrance_sum_query - prescription_sum_query
+    if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
+        result = -(prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+
+    instance.medician.existence = result
+    instance.medician.save()
+
+@receiver(post_delete, sender=EntranceThrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+    entrance_sum_query = list(EntranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+    prescription_sum_query = list(PrescriptionThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+    outrance_sum_query = list(OutranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+
+    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
+        result = 0
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
+        result = -(prescription_sum_query)
+    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
+        result = entrance_sum_query
+    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+        result = entrance_sum_query - outrance_sum_query
+    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
+        result = entrance_sum_query - prescription_sum_query
+    if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
+        result = -(prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+
+    instance.medician.existence = result
+    instance.medician.save()
+
+@receiver(post_delete, sender=PrescriptionThrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+    entrance_sum_query = list(EntranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+    prescription_sum_query = list(PrescriptionThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+    outrance_sum_query = list(OutranceThrough.objects.filter(
+    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+
+    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
+        result = 0
+    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
+        result = entrance_sum_query
+    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
+        result = entrance_sum_query - outrance_sum_query
+    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
+        result = entrance_sum_query - prescription_sum_query
+    if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
+        result = -(prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
+        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None: 
+        result = -(prescription_sum_query)
+
+    instance.medician.existence = result
+    instance.medician.save()

@@ -1,6 +1,6 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
-    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer
+    DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough
@@ -8,6 +8,11 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .permissions import D7896DjangoModelPermissions
+
+from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
+
+
+
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -160,6 +165,7 @@ class EntranceThroughView(viewsets.ModelViewSet):
     filterset_fields = ('entrance',)
     permission_classes = [D7896DjangoModelPermissions]
 
+
 class OutranceView (viewsets.ModelViewSet):
     queryset = Outrance.objects.all()
     serializer_class = OutranceSerializer
@@ -170,3 +176,31 @@ class OutranceThroughView (viewsets.ModelViewSet):
     serializer_class = OutranceThroughSerializer
     filterset_fields = ('outrance',)
     permission_classes = [D7896DjangoModelPermissions]
+
+from rest_framework import permissions
+
+class MultipleModelPermissions(permissions.DjangoModelPermissions):
+    def has_permission(self, request, view):
+        # Workaround to ensure DjangoModelPermissions are not applied
+        # to the root view when using DefaultRouter.
+        return True
+
+
+
+class TrazView (FlatMultipleModelAPIViewSet):
+        
+    querylist = [
+        {'queryset': EntranceThrough.objects.all(), 'serializer_class': EntranceThroughSerializer},
+        {'queryset': PrescriptionThrough.objects.all(), 'serializer_class': PrescriptionThroughSerializer},
+        {'queryset': OutranceThrough.objects.all(), 'serializer_class': OutranceThroughSerializer},
+    ]
+    model = EntranceThrough
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
+    filterset_fields = ('medician',)
+    ordering_fields = ['id','timestamp']
+    ordering = ['id','timestamp']
+    
+
+
+
+
