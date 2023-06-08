@@ -54,6 +54,8 @@ class StoreView(viewsets.ModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['name', 'phone', 'address']
 
 
 class FinalRegisterView(viewsets.ModelViewSet):
@@ -157,6 +159,8 @@ class EntranceView(viewsets.ModelViewSet):
     queryset = Entrance.objects.all()
     serializer_class = EntranceSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['factor_number', 'factor_date', 'total_interest', 'company', 'payment_method','final_register', 'store']
 
 
 class EntranceThroughView(viewsets.ModelViewSet):

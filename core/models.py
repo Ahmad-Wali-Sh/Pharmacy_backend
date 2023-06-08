@@ -5,6 +5,7 @@ from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
+
 from django.utils import timezone
 from django.db.models.signals import post_delete, pre_delete
 from django.dispatch import receiver
@@ -15,6 +16,7 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django import forms
 
 class ISODateTimeField(forms.DateTimeField):
+
 
         widget = DateTimeInput
         default_error_messages = {
@@ -294,7 +296,7 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = models.DateTimeField(auto_now_add=True)
+    factor_date = models.DateTimeField()
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
@@ -351,6 +353,7 @@ class EntranceThrough(models.Model):
                                 (self.discount_money-(self.each_price_factor *
                                                       (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
 
+
         """   محاسبه مجموع خرید"""
 
         self.total_purchaseـafghani = round(
@@ -381,6 +384,9 @@ class EntranceThrough(models.Model):
 
         self.each_sell_price = round(
             self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
+
+        self.medician.price = self.each_sell_price
+        self.medician.save()
 
         """ محاسبه مجموع فروش"""
 
@@ -414,11 +420,12 @@ class EntranceThrough(models.Model):
         # Discount Interest on Entrance Without Discount result.
 
         if self.entrance.without_discount == False:
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
-        else:
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest, round_digit)
+
+            self.total_interest = round(simple_interest + self.bonus_interest + \
+                quantity_bonus_interest + dicount_interest, round_digit) # G30
+        else: self.total_interest = round(simple_interest + self.bonus_interest + \
+                quantity_bonus_interest, round_digit)
+
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
@@ -442,6 +449,8 @@ class EntranceThrough(models.Model):
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
                 result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
             return result
+        
+        
 
         self.medician.existence = entrance_sum()
         self.medician.save()
