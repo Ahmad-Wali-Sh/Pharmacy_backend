@@ -112,6 +112,7 @@ class Department (models.Model):
     over_price_percent = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
+    celling_start = models.FloatField(default=0)
 
     def __str__(self):
         return self.name
@@ -171,7 +172,6 @@ class Prescription (models.Model):
     discount_percent = models.FloatField(default=0)
     zakat = models.FloatField(default=0)
     khairat = models.FloatField(default=0)
-    round_number = models.FloatField(default=0)
     created = models.DateField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
 
