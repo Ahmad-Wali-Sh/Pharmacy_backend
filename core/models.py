@@ -7,13 +7,14 @@ from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
 
 from django.utils import timezone
-from django.db.models.signals import post_delete, pre_delete
+from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 from django.utils.encoding import force_str
 from django.forms.widgets import DateTimeInput
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django import forms
+from django.db.models.query import QuerySet
 
 class ISODateTimeField(forms.DateTimeField):
 
@@ -158,6 +159,7 @@ class DoctorName(models.Model):
 
 
 class Prescription (models.Model):
+
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
     prescription_number = models.CharField(
@@ -174,9 +176,10 @@ class Prescription (models.Model):
     khairat = models.FloatField(default=0)
     created = models.DateField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
+    rounded_number = models.FloatField(default=0)
 
-    # def __str__(self):
-    #     return self.prescription_number
+    def __str__(self):
+        return self.prescription_number
 
     def save(self, *args, **kwargs):
 
@@ -187,10 +190,11 @@ class Prescription (models.Model):
             new_number = objects_count + 1
         else:
             new_number = "1"
-
         time = date.today().strftime("%y-%m-%d")
         self.prescription_number = str(time) + "-" + str(new_number)
-        super(Prescription, self).save(*args, **kwargs)
+        super(Prescription, self).save()
+    
+
 
 
 class PrescriptionThrough(models.Model):
@@ -692,3 +696,19 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 
     instance.medician.existence = result
     instance.medician.save()
+
+# @receiver(post_save, sender=Prescription)
+# def prescription_number_generate(sender, instance,**kwargs):
+#         objects_count = Prescription.objects.all().count()
+#         if Prescription.objects.filter(created=date.today()):
+#             objects_count = Prescription.objects.filter(
+#             created=date.today()).count()
+#             new_number = objects_count + 1
+#         else:
+#             new_number = "1"
+
+#         time = date.today().strftime("%y-%m-%d")
+#         instance.prescription_number = str(time) + "-" + str(new_number)
+#         post_save.disconnect(sender=Prescription)
+#         instance.save()
+#         post_save.connect(sender=Prescription)
