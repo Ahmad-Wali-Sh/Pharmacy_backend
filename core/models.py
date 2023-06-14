@@ -159,11 +159,10 @@ class DoctorName(models.Model):
 
 
 class Prescription (models.Model):
-
     department = models.ForeignKey(
         Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
     prescription_number = models.CharField(
-        max_length=60, unique=True, null=True, blank=True)
+        max_length=60, unique=True, null=True, blank=True, editable=False)
     name = models.ForeignKey(
         PatientName, on_delete=models.CASCADE, null=True, blank=True)
     doctor = models.ForeignKey(
@@ -191,8 +190,12 @@ class Prescription (models.Model):
         else:
             new_number = "1"
         time = date.today().strftime("%y-%m-%d")
-        self.prescription_number = str(time) + "-" + str(new_number)
-        super(Prescription, self).save()
+        if self.prescription_number:
+            pass
+            super(Prescription, self).save()
+        else:
+            self.prescription_number = str(time) + "-" + str(new_number)
+            super(Prescription, self).save()
     
 
 
@@ -300,7 +303,7 @@ class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
-    factor_date = models.DateTimeField()
+    factor_date = models.DateTimeField(default=timezone.now)
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     total_interest = models.IntegerField()
@@ -697,18 +700,3 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     instance.medician.existence = result
     instance.medician.save()
 
-# @receiver(post_save, sender=Prescription)
-# def prescription_number_generate(sender, instance,**kwargs):
-#         objects_count = Prescription.objects.all().count()
-#         if Prescription.objects.filter(created=date.today()):
-#             objects_count = Prescription.objects.filter(
-#             created=date.today()).count()
-#             new_number = objects_count + 1
-#         else:
-#             new_number = "1"
-
-#         time = date.today().strftime("%y-%m-%d")
-#         instance.prescription_number = str(time) + "-" + str(new_number)
-#         post_save.disconnect(sender=Prescription)
-#         instance.save()
-#         post_save.connect(sender=Prescription)
