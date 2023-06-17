@@ -24,6 +24,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class MedicianFilter(django_filters.FilterSet):
     generic_name = django_filters.CharFilter(lookup_expr="icontains")
+    barcode = django_filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
         model = Medician
@@ -33,7 +34,7 @@ class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['brand_name']
+    search_fields = ['brand_name', 'barcode']
     filterset_class = MedicianFilter
     ordering_fields = ['id',]
     ordering = ['id',]
