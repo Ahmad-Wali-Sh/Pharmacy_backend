@@ -15,6 +15,7 @@ from django.forms.widgets import DateTimeInput
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django import forms
 from django.db.models.query import QuerySet
+from django.core.exceptions import ValidationError
 
 class ISODateTimeField(forms.DateTimeField):
 
@@ -72,6 +73,31 @@ class Unit(models.Model):
     def __str__(self):
         return self.name
 
+UNIQUE_ARRAY_FIELDS = ('barcode',)
+
+class MyManager(models.Manager):
+    def prevent_duplicates_in_array_fields(self, model, array_field):
+        def duplicate_check(_lookup_params):
+            fields = self.model._meta.get_fields()
+            for unique_field in UNIQUE_ARRAY_FIELDS:
+                unique_field_index = [getattr(field, 'barcode', '') for field in fields]
+                try:
+                    # if model doesn't have the unique field, then proceed to the next loop iteration
+                    unique_field_index = unique_field_index.index(unique_field)
+                except ValueError:
+                    continue
+            all_items_in_db = [item for sublist in self.values_list(fields[unique_field_index].barcode).exclude(**_lookup_params) for item in sublist]
+            all_items_in_db = [item for sublist in all_items_in_db for item in sublist]
+            if not set(array_field).isdisjoint(all_items_in_db):
+                raise ValidationError('{} contains items already in the database'.format(array_field))
+        if model.id:
+            lookup_params = {'id': model.id}
+        else:   
+            lookup_params = {}
+        duplicate_check(lookup_params)
+
+
+
 
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
@@ -91,7 +117,8 @@ class Medician(models.Model):
     country = models.ForeignKey(
         Country, on_delete=models.CASCADE, null=True, blank=True)
     company = models.CharField(max_length=50, blank=True, null=True)
-    barcode = models.CharField(max_length=100, blank=True, null=True)
+    barcode = ArrayField(models.CharField(
+        max_length=200, blank=True, null=True, default=list) )
     price = models.FloatField()
     existence = models.FloatField(default=0, null=True)
     minmum_existence = models.FloatField()
@@ -103,9 +130,15 @@ class Medician(models.Model):
     description = models.TextField(blank=True, null=True)
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/medician')
+    objects = MyManager()
 
     def __str__(self):
         return self.brand_name
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
+        super().save(*args, **kwargs)
 
 
 class Department (models.Model):
