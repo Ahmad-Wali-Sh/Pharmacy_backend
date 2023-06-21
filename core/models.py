@@ -17,24 +17,26 @@ from django import forms
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
 
+
 class ISODateTimeField(forms.DateTimeField):
 
+    widget = DateTimeInput
+    default_error_messages = {
+        'invalid': _('Enter a valid date/time.'),
+    }
 
-        widget = DateTimeInput
-        default_error_messages = {
-            'invalid': _('Enter a valid date/time.'),
-        }
+    def to_python(self, value):
+        value = value.strip()
+        try:
+            return self.strptime(value, format)
+        except (ValueError, TypeError):
+            raise forms.ValidationError(
+                self.error_messages['invalid'], code='invalid')
 
-        def to_python(self, value):
-            value = value.strip()
-            try:
-                return self.strptime(value, format)
-            except (ValueError, TypeError):
-                raise forms.ValidationError(self.error_messages['invalid'], code='invalid')
+    def strptime(self, value, format):
+        """ stackoverflow won't let me save just an indent! """
+        return parse_datetime(force_str(value))
 
-        def strptime(self, value, format):
-            """ stackoverflow won't let me save just an indent! """
-            return parse_datetime(force_str(value))
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
@@ -92,11 +94,9 @@ class Unit(models.Model):
 #                 raise ValidationError('{} contains items already in the database'.format(array_field))
 #         if model.id:
 #             lookup_params = {'id': model.id}
-#         else:   
+#         else:
 #             lookup_params = {}
 #         duplicate_check(lookup_params)
-
-
 
 
 class Medician(models.Model):
@@ -105,7 +105,8 @@ class Medician(models.Model):
         max_length=100, blank=True, null=True), null=True, blank=True, default=list)
     # barcode = ArrayField(models.CharField(
     #     max_length=200, blank=True, null=True, unique=True), default=list,null=True, blank=True)
-    barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    barcode = models.CharField(
+        max_length=255, null=True, blank=True, unique=True)
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, blank=True)
     pharm_group = models.ForeignKey(
@@ -135,7 +136,7 @@ class Medician(models.Model):
 
     def __str__(self):
         return self.brand_name
-    
+
     # def save(self, *args, **kwargs):
     #     self.full_clean()
     #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
@@ -231,8 +232,6 @@ class Prescription (models.Model):
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
             super(Prescription, self).save()
-    
-
 
 
 class PrescriptionThrough(models.Model):
@@ -271,7 +270,8 @@ class PrescriptionThrough(models.Model):
             if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = priscription_sum()
@@ -394,7 +394,21 @@ class EntranceThrough(models.Model):
         self.each_price = round(-
                                 (self.discount_money-(self.each_price_factor *
                                                       (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
-
+        """
+        discount_money = تخیف پولی
+        discount_percent = تخفیف فیصدی
+        total_purchase_afghani = مجموع قیمت خرید به افغانی
+        total_purchase_currenry = مجموع قیمت خرید به ارز
+        number_in_factor = تعداد در فاکتور
+        each_price_factor = قیمت در فاکتور
+        each_price = قیمت فی خرید
+        register_quantity = تعداد ثبت
+        bonus = بونوس
+        interest_money = فایده پولی
+        interest_percent = فایده فیصدی
+        
+        
+        """
 
         """   محاسبه مجموع خرید"""
 
@@ -412,15 +426,24 @@ class EntranceThrough(models.Model):
 
         simple_each_purchase = self.total_purchaseـafghani / \
             (self.number_in_factor * self.each_quantity)  # G15
+
+
         bonus_each_purchase_price = (
             (self.each_price / (self.number_in_factor * self.each_quantity)) * self.number_in_factor)*self.bonus  # G16
+
+
         quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
-            (self.number_in_factor * self.each_quantity) + self.quantity_bonus))*self.quantity_bonus  # G17
+            (self.number_in_factor) + self.quantity_bonus))  # G17
+
+
         if self.bonus == 0 and self.quantity_bonus == 0:
             self.each_purchase_price = round(simple_each_purchase, round_digit)
+
         else:
             self.each_purchase_price = round(bonus_each_purchase_price +
                                              quantity_bonus_each_purchase_price, round_digit)
+
+        # self.each_purchase_price = (self.total_purchaseـafghani) / (self.number_in_factor + self.quantity_bonus)
 
         """ محاسبه قیمت فی فروش"""
 
@@ -439,13 +462,13 @@ class EntranceThrough(models.Model):
              self.bonus) * self.bonus  # G23
         quantity_bonus_total_sell = self.each_sell_price * \
             ((self.each_quantity * self.number_in_factor) +
-             self.quantity_bonus) * self.quantity_bonus  # G24
+             self.quantity_bonus) # G24
 
         if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
             self.total_sell = round(simple_total_sell, round_digit)
         else:
             self.total_sell = round(
-                bonus_total_sell + quantity_bonus_total_sell, round_digit)
+                quantity_bonus_total_sell, round_digit)
 
         """ محاسبه فایده """
 
@@ -463,11 +486,11 @@ class EntranceThrough(models.Model):
 
         if self.entrance.without_discount == False:
 
-            self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest + dicount_interest, round_digit) # G30
-        else: self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest, round_digit)
-
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
+        else:
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest, round_digit)
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
@@ -479,7 +502,7 @@ class EntranceThrough(models.Model):
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            
+
             if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
                 result = entrance_sum_query
             if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
@@ -489,10 +512,9 @@ class EntranceThrough(models.Model):
             if entrance_sum_query == None:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
-        
-        
 
         self.medician.existence = entrance_sum()
         self.medician.save()
@@ -638,9 +660,9 @@ class OutranceThrough (models.Model):
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            
+
             if entrance_sum_query == None and prescription_sum_query == None:
-                result = -(self.register_quantity) 
+                result = -(self.register_quantity)
             if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
                 result = entrance_sum_query - outrance_sum_query
             if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
@@ -648,20 +670,22 @@ class OutranceThrough (models.Model):
             if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = entrance_sum()
         self.medician.save()
 
+
 @receiver(post_delete, sender=OutranceThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -676,19 +700,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
+
 
 @receiver(post_delete, sender=EntranceThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -703,19 +729,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
 
+
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -728,10 +756,10 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None: 
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
         result = -(prescription_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
-

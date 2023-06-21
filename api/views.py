@@ -1,6 +1,7 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer
+    
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough
@@ -10,9 +11,6 @@ import django_filters
 from .permissions import D7896DjangoModelPermissions
 
 from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
-
-
-
 
 
 class StandardResultsSetPagination(PageNumberPagination):
