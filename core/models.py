@@ -332,10 +332,15 @@ class FinalRegister (models.Model):
     def __str__(self):
         return self.name
 
+WHOLESALE_CHOICE = (
+    ("WHOLESALE", "WHOLESALE"),
+    ("SINGULAR", "SINGULAR")
+)
+
 
 class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
-    factor_number = models.IntegerField()
+    factor_number = models.IntegerField(null=True, blank=True)
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
     factor_date = models.DateTimeField(default=timezone.now)
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
@@ -347,6 +352,7 @@ class Entrance (models.Model):
     recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
+    wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
 
     def __str__(self):
         return self.company.name
