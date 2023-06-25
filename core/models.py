@@ -131,6 +131,10 @@ class Medician(models.Model):
     description = models.TextField(blank=True, null=True)
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/medician')
+    patient_approved = models.BooleanField(default=False)
+    doctor_approved = models.BooleanField(default=False)
+    batch_number = models.CharField(max_length=100, null=True, blank=True)
+
     # objects = MyManager()
 
     def __str__(self):
@@ -370,7 +374,8 @@ class EntranceThrough(models.Model):
         default=1)  # G9 مجموع خرید افغانی
     total_purchaseـcurrency = models.FloatField(
         default=1)  # G10 مجموع خرید اسعاری
-    each_quantity = models.IntegerField(default=1)  # G11  تعداد در فی فروش
+    each_quantity = models.FloatField(default=1)  # G11  تعداد در فی فروش
+    no_box = models.FloatField(default=1)
     bonus = models.IntegerField(default=0)  # G12 بونوس
     quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
     register_quantity = models.IntegerField(

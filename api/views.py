@@ -174,7 +174,7 @@ class EntranceView(viewsets.ModelViewSet):
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()
     serializer_class = EntranceThroughSerializer
-    filterset_fields = ('entrance',)
+    filterset_fields = ('entrance','medician')
     permission_classes = [D7896DjangoModelPermissions]
 
 
