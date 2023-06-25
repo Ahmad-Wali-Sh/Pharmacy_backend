@@ -26,7 +26,7 @@ class MedicianFilter(django_filters.FilterSet):
 
     class Meta:
         model = Medician
-        fields = ('brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",)
+        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",]
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -55,6 +55,8 @@ class StoreView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['name', 'phone', 'address']
+    search_fields = ['name',]
+
 
 
 class FinalRegisterView(viewsets.ModelViewSet):
@@ -151,7 +153,15 @@ class UnitView(viewsets.ModelViewSet):
 class PharmCompanyView(viewsets.ModelViewSet):
     queryset = PharmCompany.objects.all()
     serializer_class = PharmCompanySeralizer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name',]
     permission_classes = [D7896DjangoModelPermissions]
+
+class EntranceFilterView(django_filters.FilterSet):
+    factor_date = django_filters.DateFromToRangeFilter() 
+    class Meta:
+        model = Entrance
+        fields = ['factor_number', 'factor_date', 'total_interest', 'company', 'payment_method','final_register', 'store']
 
 
 class EntranceView(viewsets.ModelViewSet):
@@ -159,8 +169,7 @@ class EntranceView(viewsets.ModelViewSet):
     serializer_class = EntranceSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['factor_number', 'factor_date', 'total_interest', 'company', 'payment_method','final_register', 'store']
-
+    filterset_class = EntranceFilterView
 
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()
