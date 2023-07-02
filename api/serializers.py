@@ -2,13 +2,24 @@ from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough
+        Outrance, OutranceThrough, City, Market
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta:
         model = PharmGroup
+        fields = '__all__'
+
+
+class MarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Market
+        fields = '__all__'
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
         fields = '__all__'
 
 

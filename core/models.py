@@ -133,7 +133,8 @@ class Medician(models.Model):
                                 upload_to='frontend/public/dist/images/medician')
     patient_approved = models.BooleanField(default=False)
     doctor_approved = models.BooleanField(default=False)
-    batch_number = models.CharField(max_length=100, null=True, blank=True)
+    active = models.BooleanField(default=True)
+    
 
     # objects = MyManager()
 
@@ -215,6 +216,8 @@ class Prescription (models.Model):
     created = models.DateField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
     rounded_number = models.FloatField(default=0)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
 
     def __str__(self):
         return self.prescription_number
@@ -280,6 +283,18 @@ class PrescriptionThrough(models.Model):
         self.medician.existence = priscription_sum()
         self.medician.save()
 
+class City (models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+class Market (models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 
 class PharmCompany (models.Model):
     name = models.CharField(max_length=100)
@@ -296,6 +311,8 @@ class PharmCompany (models.Model):
     company_online = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=150,  blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    city = models.ForeignKey(City, on_delete=models.CASCADE, null=True, blank=True)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -357,6 +374,8 @@ class Entrance (models.Model):
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
     wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
 
     def __str__(self):
         return self.company.name
@@ -391,6 +410,7 @@ class EntranceThrough(models.Model):
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
     timestamp = models.DateTimeField(auto_now_add=True)
+    batch_number = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
