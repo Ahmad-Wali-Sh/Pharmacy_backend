@@ -438,20 +438,19 @@ class EntranceThrough(models.Model):
             (self.number_in_factor * self.each_quantity)  # G15
 
 
-        bonus_each_purchase_price = (
-            (self.each_price / (self.number_in_factor * self.each_quantity)) * self.number_in_factor)*self.bonus  # G16
-
+        bonus_each_purchase_price = self.total_purchaseـafghani / ((self.number_in_factor * self.each_quantity) + self.quantity_bonus )
+            
+        print(self.total_purchaseـafghani)
 
         quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
             (self.number_in_factor) + self.quantity_bonus))  # G17
 
 
         if self.bonus == 0 and self.quantity_bonus == 0:
-            self.each_purchase_price = round(simple_each_purchase, round_digit)
+            self.each_purchase_price = round(simple_each_purchase, 1)
 
         else:
-            self.each_purchase_price = round(bonus_each_purchase_price +
-                                             quantity_bonus_each_purchase_price, round_digit)
+            self.each_purchase_price = round(bonus_each_purchase_price, 1)
 
         # self.each_purchase_price = (self.total_purchaseـafghani) / (self.number_in_factor + self.quantity_bonus)
 
