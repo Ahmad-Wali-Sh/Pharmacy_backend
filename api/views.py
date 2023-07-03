@@ -1,12 +1,12 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market
+    City, Market, Revenue, RevenueTrough
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -72,6 +72,18 @@ class CityView(viewsets.ModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
     permission_classes = [D7896DjangoModelPermissions]
+
+class RevenueView(viewsets.ModelViewSet):
+    queryset = Revenue.objects.all()
+    serializer_class = RevenueSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+
+class RevenueThroughView(viewsets.ModelViewSet):
+    queryset = RevenueTrough.objects.all()
+    serializer_class = RevenueTrhoughSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['revenue',]
 
 class MarketView(viewsets.ModelViewSet):
     queryset = Market.objects.all()
@@ -148,7 +160,7 @@ class PrescriptionFilterView(django_filters.FilterSet):
     created = django_filters.DateTimeFromToRangeFilter() 
     class Meta:
         model = Prescription
-        fields =['prescription_number','department', 'created', 'name', 'doctor', 'prescription_number']
+        fields =['prescription_number','department', 'created', 'name', 'doctor', 'prescription_number', 'sold']
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()

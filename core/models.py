@@ -218,6 +218,7 @@ class Prescription (models.Model):
     rounded_number = models.FloatField(default=0)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
+    sold = models.BooleanField(default=False)
 
     def __str__(self):
         return self.prescription_number
@@ -282,6 +283,18 @@ class PrescriptionThrough(models.Model):
 
         self.medician.existence = priscription_sum()
         self.medician.save()
+
+        prescription_through_total = list(PrescriptionThrough.objects.filter(
+            prescription_id=self.prescription.id).aggregate(Sum('total_price')
+        ).values())[0]
+
+        if prescription_through_total:
+            self.prescription.grand_total = prescription_through_total
+            self.prescription.save()
+        else:
+            self.prescription.grand_total = 0
+            self.prescription.save()
+
 
 class City (models.Model):
     name = models.CharField(max_length=100)
@@ -790,5 +803,36 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
         result = -(prescription_sum_query)
 
+    prescription_through_total = list(PrescriptionThrough.objects.filter(
+            prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+        ).values())[0]
+
+    if prescription_through_total:
+        instance.prescription.grand_total = prescription_through_total
+        instance.prescription.save()
+    else:
+        instance.prescription.grand_total = 0
+        instance.prescription.save()
+
     instance.medician.existence = result
     instance.medician.save()
+
+class Revenue (models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    total = models.FloatField(default=0)
+    active = models.BooleanField(default=True)
+
+
+class RevenueTrough (models.Model):
+    revenue = models.ForeignKey(Revenue, on_delete=models.CASCADE)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    sold = models.BooleanField(default=False)
+
+
+    def save(self, *args, **kwargs):
+        
+        if self.sold == True:
+            self.prescription.sold = True
+            self.prescription.save()
+        super(RevenueTrough, self).save()

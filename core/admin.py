@@ -3,7 +3,7 @@ from import_export.admin import ImportExportModelAdmin
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
-        Outrance, City, Market
+        Outrance, City, Market, Revenue, RevenueTrough
 
 from django_jalali.admin.filters import JDateFieldListFilter
 import django_jalali.admin as jadmin
@@ -49,6 +49,8 @@ admin.site.register(DoctorName, ImportAdmin)
 admin.site.register(City, ImportAdmin)
 admin.site.register(Market, ImportAdmin)
 admin.site.register(PatientName, ImportAdmin)
+admin.site.register(Revenue, ImportAdmin)
+admin.site.register(RevenueTrough, ImportAdmin)
 admin.site.register(PrescriptionThrough, PrescriptionThroughAdmin)
 
 # Register your models here.
