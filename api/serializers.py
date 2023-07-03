@@ -2,13 +2,31 @@ from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough
+        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
     class Meta:
         model = PharmGroup
+        fields = '__all__'
+
+class RevenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Revenue
+        fields = '__all__'
+
+
+
+
+class MarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Market
+        fields = '__all__'
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
         fields = '__all__'
 
 
@@ -28,6 +46,14 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = '__all__'
+
+class RevenueTrhoughSerializer(serializers.ModelSerializer):
+    prescription = serializers.PrimaryKeyRelatedField(
+        queryset= Prescription.objects.all()
+    )
+    class Meta:
+        model = RevenueTrough
+        fields = '__all__'     
 
 
 class MedicianSeralizer(serializers.ModelSerializer):
