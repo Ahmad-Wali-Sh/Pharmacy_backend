@@ -836,3 +836,9 @@ class RevenueTrough (models.Model):
             self.prescription.sold = True
             self.prescription.save()
         super(RevenueTrough, self).save()
+
+
+@receiver(post_delete, sender=RevenueTrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+    instance.prescription.sold = False
+    instance.prescription.save()
