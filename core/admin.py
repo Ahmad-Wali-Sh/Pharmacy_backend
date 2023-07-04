@@ -3,10 +3,19 @@ from import_export.admin import ImportExportModelAdmin
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
-        Outrance
+        Outrance, City, Market, Revenue, RevenueTrough
 
 from django_jalali.admin.filters import JDateFieldListFilter
 import django_jalali.admin as jadmin
+
+from django.contrib.auth.admin import UserAdmin
+from .models import User 
+
+
+UserAdmin.list_display += ('image',)
+UserAdmin.list_filter += ('image',)
+UserAdmin.fieldsets += (('Extra Fields', {'fields': ('image', )}),)
+
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     pass 
@@ -28,7 +37,7 @@ class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
 
-
+admin.site.register(User, UserAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, ImportAdmin)
 admin.site.register(Kind, ImportAdmin)
@@ -46,7 +55,11 @@ admin.site.register(Department, ImportAdmin)
 admin.site.register(Outrance, ImportAdmin)
 admin.site.register(OutranceThrough, ImportAdmin)
 admin.site.register(DoctorName, ImportAdmin)
+admin.site.register(City, ImportAdmin)
+admin.site.register(Market, ImportAdmin)
 admin.site.register(PatientName, ImportAdmin)
+admin.site.register(Revenue, ImportAdmin)
+admin.site.register(RevenueTrough, ImportAdmin)
 admin.site.register(PrescriptionThrough, PrescriptionThroughAdmin)
 
 # Register your models here.

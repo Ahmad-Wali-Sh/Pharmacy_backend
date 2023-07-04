@@ -16,25 +16,33 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django import forms
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
+
+class User(AbstractUser):
+    image = models.ImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/users')
+    REQUIRED_FIELDS = ['image', 'email']
+
 
 class ISODateTimeField(forms.DateTimeField):
 
+    widget = DateTimeInput
+    default_error_messages = {
+        'invalid': _('Enter a valid date/time.'),
+    }
 
-        widget = DateTimeInput
-        default_error_messages = {
-            'invalid': _('Enter a valid date/time.'),
-        }
+    def to_python(self, value):
+        value = value.strip()
+        try:
+            return self.strptime(value, format)
+        except (ValueError, TypeError):
+            raise forms.ValidationError(
+                self.error_messages['invalid'], code='invalid')
 
-        def to_python(self, value):
-            value = value.strip()
-            try:
-                return self.strptime(value, format)
-            except (ValueError, TypeError):
-                raise forms.ValidationError(self.error_messages['invalid'], code='invalid')
+    def strptime(self, value, format):
+        """ stackoverflow won't let me save just an indent! """
+        return parse_datetime(force_str(value))
 
-        def strptime(self, value, format):
-            """ stackoverflow won't let me save just an indent! """
-            return parse_datetime(force_str(value))
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
@@ -42,6 +50,7 @@ class Kind(models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
     description = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_english
@@ -53,6 +62,7 @@ class PharmGroup(models.Model):
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/pharm_groub')
     description = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_english
@@ -62,6 +72,7 @@ class Country(models.Model):
     name = models.CharField(max_length=50)
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/countries')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -92,11 +103,9 @@ class Unit(models.Model):
 #                 raise ValidationError('{} contains items already in the database'.format(array_field))
 #         if model.id:
 #             lookup_params = {'id': model.id}
-#         else:   
+#         else:
 #             lookup_params = {}
 #         duplicate_check(lookup_params)
-
-
 
 
 class Medician(models.Model):
@@ -131,11 +140,17 @@ class Medician(models.Model):
     description = models.TextField(blank=True, null=True)
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/medician')
+    patient_approved = models.BooleanField(default=False)
+    doctor_approved = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+
     # objects = MyManager()
 
     def __str__(self):
         return self.brand_name
-    
+
     # def save(self, *args, **kwargs):
     #     self.full_clean()
     #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
@@ -149,6 +164,7 @@ class Department (models.Model):
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
     celling_start = models.FloatField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -171,6 +187,7 @@ class PatientName (models.Model):
     address = models.CharField(max_length=150, null=True, blank=True)
     sickness = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -187,7 +204,7 @@ class DoctorName(models.Model):
     work_time = models.CharField(max_length=100, null=True, blank=True)
     home_address = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -211,6 +228,10 @@ class Prescription (models.Model):
     created = models.DateField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
     rounded_number = models.FloatField(default=0)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
+    sold = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.prescription_number
@@ -231,8 +252,6 @@ class Prescription (models.Model):
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
             super(Prescription, self).save()
-    
-
 
 
 class PrescriptionThrough(models.Model):
@@ -242,6 +261,7 @@ class PrescriptionThrough(models.Model):
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.prescription.prescription_number
@@ -271,11 +291,38 @@ class PrescriptionThrough(models.Model):
             if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = priscription_sum()
         self.medician.save()
+
+        prescription_through_total = list(PrescriptionThrough.objects.filter(
+            prescription_id=self.prescription.id).aggregate(Sum('total_price')
+        ).values())[0]
+
+        if prescription_through_total:
+            self.prescription.grand_total = prescription_through_total
+            self.prescription.save()
+        else:
+            self.prescription.grand_total = 0
+            self.prescription.save()
+
+
+class City (models.Model):
+    name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+class Market (models.Model):
+    name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 
 class PharmCompany (models.Model):
@@ -293,6 +340,9 @@ class PharmCompany (models.Model):
     company_online = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=150,  blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    city = models.ForeignKey(City, on_delete=models.CASCADE, null=True, blank=True)
+    market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -302,6 +352,7 @@ class Currency (models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
     description = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -315,6 +366,7 @@ class Store (models.Model):
     description = models.TextField(null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -322,6 +374,7 @@ class Store (models.Model):
 
 class PaymentMethod (models.Model):
     name = models.CharField(max_length=20)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -329,9 +382,15 @@ class PaymentMethod (models.Model):
 
 class FinalRegister (models.Model):
     name = models.CharField(max_length=20)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
+
+WHOLESALE_CHOICE = (
+    ("WHOLESALE", "WHOLESALE"),
+    ("SINGULAR", "SINGULAR")
+)
 
 
 class Entrance (models.Model):
@@ -348,6 +407,10 @@ class Entrance (models.Model):
     recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
+    wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.company.name
@@ -365,7 +428,8 @@ class EntranceThrough(models.Model):
         default=1)  # G9 مجموع خرید افغانی
     total_purchaseـcurrency = models.FloatField(
         default=1)  # G10 مجموع خرید اسعاری
-    each_quantity = models.IntegerField(default=1)  # G11  تعداد در فی فروش
+    each_quantity = models.FloatField(default=1)  # G11  تعداد در فی فروش
+    no_box = models.FloatField(default=1)
     bonus = models.IntegerField(default=0)  # G12 بونوس
     quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
     register_quantity = models.IntegerField(
@@ -381,6 +445,8 @@ class EntranceThrough(models.Model):
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
     timestamp = models.DateTimeField(auto_now_add=True)
+    batch_number = models.CharField(max_length=100, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -394,7 +460,21 @@ class EntranceThrough(models.Model):
         self.each_price = round(-
                                 (self.discount_money-(self.each_price_factor *
                                                       (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
-
+        """
+        discount_money = تخیف پولی
+        discount_percent = تخفیف فیصدی
+        total_purchase_afghani = مجموع قیمت خرید به افغانی
+        total_purchase_currenry = مجموع قیمت خرید به ارز
+        number_in_factor = تعداد در فاکتور
+        each_price_factor = قیمت در فاکتور
+        each_price = قیمت فی خرید
+        register_quantity = تعداد ثبت
+        bonus = بونوس
+        interest_money = فایده پولی
+        interest_percent = فایده فیصدی
+        
+        
+        """
 
         """   محاسبه مجموع خرید"""
 
@@ -412,15 +492,23 @@ class EntranceThrough(models.Model):
 
         simple_each_purchase = self.total_purchaseـafghani / \
             (self.number_in_factor * self.each_quantity)  # G15
-        bonus_each_purchase_price = (
-            (self.each_price / (self.number_in_factor * self.each_quantity)) * self.number_in_factor)*self.bonus  # G16
+
+
+        bonus_each_purchase_price = self.total_purchaseـafghani / ((self.number_in_factor * self.each_quantity) + self.quantity_bonus )
+            
+        print(self.total_purchaseـafghani)
+
         quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
-            (self.number_in_factor * self.each_quantity) + self.quantity_bonus))*self.quantity_bonus  # G17
+            (self.number_in_factor) + self.quantity_bonus))  # G17
+
+
         if self.bonus == 0 and self.quantity_bonus == 0:
-            self.each_purchase_price = round(simple_each_purchase, round_digit)
+            self.each_purchase_price = round(simple_each_purchase, 1)
+
         else:
-            self.each_purchase_price = round(bonus_each_purchase_price +
-                                             quantity_bonus_each_purchase_price, round_digit)
+            self.each_purchase_price = round(bonus_each_purchase_price, 1)
+
+        # self.each_purchase_price = (self.total_purchaseـafghani) / (self.number_in_factor + self.quantity_bonus)
 
         """ محاسبه قیمت فی فروش"""
 
@@ -439,13 +527,13 @@ class EntranceThrough(models.Model):
              self.bonus) * self.bonus  # G23
         quantity_bonus_total_sell = self.each_sell_price * \
             ((self.each_quantity * self.number_in_factor) +
-             self.quantity_bonus) * self.quantity_bonus  # G24
+             self.quantity_bonus) # G24
 
         if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
             self.total_sell = round(simple_total_sell, round_digit)
         else:
             self.total_sell = round(
-                bonus_total_sell + quantity_bonus_total_sell, round_digit)
+                quantity_bonus_total_sell, round_digit)
 
         """ محاسبه فایده """
 
@@ -463,11 +551,11 @@ class EntranceThrough(models.Model):
 
         if self.entrance.without_discount == False:
 
-            self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest + dicount_interest, round_digit) # G30
-        else: self.total_interest = round(simple_interest + self.bonus_interest + \
-                quantity_bonus_interest, round_digit)
-
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
+        else:
+            self.total_interest = round(simple_interest + self.bonus_interest +
+                                        quantity_bonus_interest, round_digit)
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
@@ -479,7 +567,7 @@ class EntranceThrough(models.Model):
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            
+
             if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
                 result = entrance_sum_query
             if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
@@ -489,10 +577,9 @@ class EntranceThrough(models.Model):
             if entrance_sum_query == None:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
-        
-        
 
         self.medician.existence = entrance_sum()
         self.medician.save()
@@ -512,6 +599,7 @@ class Outrance (models.Model):
     recived_by = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.company.name
@@ -545,6 +633,7 @@ class OutranceThrough (models.Model):
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
     timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
@@ -638,9 +727,9 @@ class OutranceThrough (models.Model):
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            
+
             if entrance_sum_query == None and prescription_sum_query == None:
-                result = -(self.register_quantity) 
+                result = -(self.register_quantity)
             if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
                 result = entrance_sum_query - outrance_sum_query
             if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
@@ -648,20 +737,22 @@ class OutranceThrough (models.Model):
             if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
                 result = -(prescription_sum_query + outrance_sum_query)
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+                result = entrance_sum_query - \
+                    (prescription_sum_query + outrance_sum_query)
             return result
 
         self.medician.existence = entrance_sum()
         self.medician.save()
 
+
 @receiver(post_delete, sender=OutranceThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -676,19 +767,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
+
 
 @receiver(post_delete, sender=EntranceThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -703,19 +796,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
 
     instance.medician.existence = result
     instance.medician.save()
 
+
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
     entrance_sum_query = list(EntranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
     prescription_sum_query = list(PrescriptionThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
     outrance_sum_query = list(OutranceThrough.objects.filter(
-    medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
+        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
 
     if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
         result = 0
@@ -728,10 +823,49 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
         result = -(prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - (prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None: 
+        result = entrance_sum_query - \
+            (prescription_sum_query + outrance_sum_query)
+    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
         result = -(prescription_sum_query)
+
+    prescription_through_total = list(PrescriptionThrough.objects.filter(
+            prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+        ).values())[0]
+
+    if prescription_through_total:
+        instance.prescription.grand_total = prescription_through_total
+        instance.prescription.save()
+    else:
+        instance.prescription.grand_total = 0
+        instance.prescription.save()
 
     instance.medician.existence = result
     instance.medician.save()
 
+class Revenue (models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    total = models.FloatField(default=0)
+    active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class RevenueTrough (models.Model):
+    revenue = models.ForeignKey(Revenue, on_delete=models.CASCADE)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    sold = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+    def save(self, *args, **kwargs):
+        
+        if self.sold == True:
+            self.prescription.sold = True
+            self.prescription.save()
+        super(RevenueTrough, self).save()
+
+
+@receiver(post_delete, sender=RevenueTrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+    instance.prescription.sold = False
+    instance.prescription.save()
