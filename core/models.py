@@ -16,6 +16,12 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django import forms
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractUser
+
+class User(AbstractUser):
+    image = models.ImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/users')
+    REQUIRED_FIELDS = ['image', 'email']
 
 
 class ISODateTimeField(forms.DateTimeField):
@@ -44,6 +50,7 @@ class Kind(models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
     description = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_english
@@ -55,6 +62,7 @@ class PharmGroup(models.Model):
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/pharm_groub')
     description = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name_english
@@ -64,6 +72,7 @@ class Country(models.Model):
     name = models.CharField(max_length=50)
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/countries')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -134,6 +143,7 @@ class Medician(models.Model):
     patient_approved = models.BooleanField(default=False)
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     
 
     # objects = MyManager()
@@ -154,6 +164,7 @@ class Department (models.Model):
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
     celling_start = models.FloatField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -176,6 +187,7 @@ class PatientName (models.Model):
     address = models.CharField(max_length=150, null=True, blank=True)
     sickness = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -192,7 +204,7 @@ class DoctorName(models.Model):
     work_time = models.CharField(max_length=100, null=True, blank=True)
     home_address = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -219,6 +231,7 @@ class Prescription (models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
     sold = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.prescription_number
@@ -248,6 +261,7 @@ class PrescriptionThrough(models.Model):
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.prescription.prescription_number
@@ -298,12 +312,14 @@ class PrescriptionThrough(models.Model):
 
 class City (models.Model):
     name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
 class Market (models.Model):
     name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -326,6 +342,7 @@ class PharmCompany (models.Model):
     description = models.TextField(blank=True, null=True)
     city = models.ForeignKey(City, on_delete=models.CASCADE, null=True, blank=True)
     market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -335,6 +352,7 @@ class Currency (models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
     description = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -348,6 +366,7 @@ class Store (models.Model):
     description = models.TextField(null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -355,6 +374,7 @@ class Store (models.Model):
 
 class PaymentMethod (models.Model):
     name = models.CharField(max_length=20)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -362,6 +382,7 @@ class PaymentMethod (models.Model):
 
 class FinalRegister (models.Model):
     name = models.CharField(max_length=20)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -389,6 +410,7 @@ class Entrance (models.Model):
     wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.company.name
@@ -424,6 +446,7 @@ class EntranceThrough(models.Model):
     expire_date = models.DateField()  # G31 تاریخ انقضا
     timestamp = models.DateTimeField(auto_now_add=True)
     batch_number = models.CharField(max_length=100, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -576,6 +599,7 @@ class Outrance (models.Model):
     recived_by = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.company.name
@@ -609,6 +633,7 @@ class OutranceThrough (models.Model):
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
     expire_date = models.DateField()  # G31 تاریخ انقضا
     timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
@@ -821,6 +846,7 @@ class Revenue (models.Model):
     created = models.DateTimeField(auto_now_add=True)
     total = models.FloatField(default=0)
     active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class RevenueTrough (models.Model):
@@ -828,6 +854,7 @@ class RevenueTrough (models.Model):
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     sold = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
     def save(self, *args, **kwargs):

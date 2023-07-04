@@ -1,12 +1,12 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough
+    City, Market, Revenue, RevenueTrough, User
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -51,6 +51,12 @@ class MedicianExcelView(viewsets.ModelViewSet):
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
+
+class UserView (viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    
 
 
 class StoreView(viewsets.ModelViewSet):

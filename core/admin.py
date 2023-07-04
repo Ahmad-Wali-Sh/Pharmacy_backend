@@ -8,6 +8,15 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
 from django_jalali.admin.filters import JDateFieldListFilter
 import django_jalali.admin as jadmin
 
+from django.contrib.auth.admin import UserAdmin
+from .models import User 
+
+
+UserAdmin.list_display += ('image',)
+UserAdmin.list_filter += ('image',)
+UserAdmin.fieldsets += (('Extra Fields', {'fields': ('image', )}),)
+
+
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     pass 
 
@@ -28,7 +37,7 @@ class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
 
-
+admin.site.register(User, UserAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, ImportAdmin)
 admin.site.register(Kind, ImportAdmin)
