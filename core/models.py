@@ -5,6 +5,9 @@ from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
+from django.utils import timezone 
+from datetime import date
+import datetime
 
 from django.utils import timezone
 from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
@@ -845,8 +848,26 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 class Revenue (models.Model):
     created = models.DateTimeField(auto_now_add=True)
     total = models.FloatField(default=0)
+    zakat = models.FloatField(default=0)
+    khairat = models.FloatField(default=0)
+    rounded = models.FloatField(default=0)
+    discount = models.FloatField(default=0)
+    start_time = models.TimeField(auto_now=False, null=True, blank=True)
+    start_end = models.TimeField(auto_now=False, null=True, blank=True)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='employee')
+    revenue_through = models.ManyToManyField(Prescription, through="RevenueTrough")
+
+
+    def save(self, *args, **kwargs):
+
+        if self.active == True: 
+            self.start_time = timezone.now().strftime("%H:%M:%S")
+        else:
+            self.start_end = timezone.now().strftime("%H:%M:%S")
+
+        super(Revenue, self).save()
 
 
 class RevenueTrough (models.Model):
@@ -858,10 +879,12 @@ class RevenueTrough (models.Model):
 
 
     def save(self, *args, **kwargs):
-        
+
+       
         if self.sold == True:
             self.prescription.sold = True
             self.prescription.save()
+
         super(RevenueTrough, self).save()
 
 
