@@ -114,9 +114,9 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'pharmacydb_v2',
+        'NAME': 'Pharmacydb_v2',
         'USER': 'postgres',
-        'PASSWORD': 'Pharmacydb$',
+        'PASSWORD': 'Ahmadwali$8',
         'HOST': '127.0.0.1',
         'PORT': '5432'
     }
