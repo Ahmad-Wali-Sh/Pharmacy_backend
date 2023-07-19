@@ -11,14 +11,16 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .permissions import D7896DjangoModelPermissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 100
+    page_size = 50
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 50
 
 
 
@@ -41,6 +43,7 @@ class MedicianView(viewsets.ModelViewSet):
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
+    pagination_class = StandardResultsSetPagination
     
 class MedicianExcelView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
