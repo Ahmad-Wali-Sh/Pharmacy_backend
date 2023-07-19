@@ -27,8 +27,7 @@ class EntracnceAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 
 class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    readonly_fields = ('register_quantity', 'each_purchase_price',
-                       'each_sell_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
+    readonly_fields = ('register_quantity', 'each_purchase_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
                        'total_purchaseـcurrency','total_interest', 'each_price')
 
 
