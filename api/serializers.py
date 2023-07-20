@@ -141,7 +141,15 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         model = Prescription
         fields = '__all__'
 
-   
+class DepartmentSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    def get_username (self, obj):
+        return obj.user.username
+    class Meta:
+        model = Department
+        fields = '__all__'
+
 
 
 class MedicianSeralizer(serializers.ModelSerializer):
@@ -153,6 +161,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
     class Meta:
         model = Medician
         fields = '__all__'
+        extra_kwargs = {'medicines': {'required': False}}
 
 class MeidicainExcelSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
@@ -256,14 +265,7 @@ class FinalRegisterSerializer(serializers.ModelSerializer):
         model = FinalRegister
         fields = '__all__'
 
-class DepartmentSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
 
-    def get_username (self, obj):
-        return obj.user.username
-    class Meta:
-        model = Department
-        fields = '__all__'
 
 
 
