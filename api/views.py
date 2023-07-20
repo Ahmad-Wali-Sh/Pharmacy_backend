@@ -30,9 +30,10 @@ class MedicianFilter(django_filters.FilterSet):
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
 
+
     class Meta:
         model = Medician
-        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",]
+        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department']
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -216,6 +217,12 @@ class EntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = EntranceFilterView
+
+
+class LastEntranceView(viewsets.ModelViewSet):
+    queryset = Entrance.objects.all().order_by('-id')[:1]
+    serializer_class = EntranceSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()

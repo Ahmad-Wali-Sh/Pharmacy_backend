@@ -112,6 +112,19 @@ class Unit(models.Model):
 #         duplicate_check(lookup_params)
 
 
+class Department (models.Model):
+    name = models.CharField(max_length=240)
+    over_price_money = models.FloatField(default=0)
+    over_price_percent = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+    celling_start = models.FloatField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
@@ -149,6 +162,7 @@ class Medician(models.Model):
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
     
 
     # objects = MyManager()
@@ -162,17 +176,6 @@ class Medician(models.Model):
     #     super().save(*args, **kwargs)
 
 
-class Department (models.Model):
-    name = models.CharField(max_length=240)
-    over_price_money = models.FloatField(default=0)
-    over_price_percent = models.FloatField(default=0)
-    discount_money = models.FloatField(default=0)
-    discount_percent = models.FloatField(default=0)
-    celling_start = models.FloatField(default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
 
 
 GENDER_CHOICES = (
