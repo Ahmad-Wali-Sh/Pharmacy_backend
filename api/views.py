@@ -11,14 +11,16 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .permissions import D7896DjangoModelPermissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 100
+    page_size = 50
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 50
 
 
 
@@ -28,9 +30,10 @@ class MedicianFilter(django_filters.FilterSet):
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
 
+
     class Meta:
         model = Medician
-        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",]
+        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department']
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -41,6 +44,7 @@ class MedicianView(viewsets.ModelViewSet):
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
+    pagination_class = StandardResultsSetPagination
     
 class MedicianExcelView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -213,6 +217,12 @@ class EntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = EntranceFilterView
+
+
+class LastEntranceView(viewsets.ModelViewSet):
+    queryset = Entrance.objects.all().order_by('-id')[:1]
+    serializer_class = EntranceSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all()

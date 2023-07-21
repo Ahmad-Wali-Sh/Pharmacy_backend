@@ -112,6 +112,19 @@ class Unit(models.Model):
 #         duplicate_check(lookup_params)
 
 
+class Department (models.Model):
+    name = models.CharField(max_length=240)
+    over_price_money = models.FloatField(default=0)
+    over_price_percent = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+    celling_start = models.FloatField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
@@ -134,6 +147,7 @@ class Medician(models.Model):
         Country, on_delete=models.CASCADE, null=True, blank=True)
     company = models.CharField(max_length=50, blank=True, null=True)
     price = models.FloatField()
+    last_purchased = models.FloatField(default=0)
     existence = models.FloatField(default=0, null=True)
     minmum_existence = models.FloatField()
     maximum_existence = models.FloatField()
@@ -148,6 +162,7 @@ class Medician(models.Model):
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
     
 
     # objects = MyManager()
@@ -161,17 +176,6 @@ class Medician(models.Model):
     #     super().save(*args, **kwargs)
 
 
-class Department (models.Model):
-    name = models.CharField(max_length=240)
-    over_price_money = models.FloatField(default=0)
-    over_price_percent = models.FloatField(default=0)
-    discount_money = models.FloatField(default=0)
-    discount_percent = models.FloatField(default=0)
-    celling_start = models.FloatField(default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
 
 
 GENDER_CHOICES = (
@@ -461,9 +465,7 @@ class EntranceThrough(models.Model):
 
         """ محاسبه قیمت فی خرید فاکتور"""
 
-        self.each_price = round(-
-                                (self.discount_money-(self.each_price_factor *
-                                                      (1-self.discount_percent / 100))) * self.entrance.currency.rate, round_digit)
+        self.each_price = round(self.each_price_factor * self.entrance.currency.rate, round_digit)
         """
         discount_money = تخیف پولی
         discount_percent = تخفیف فیصدی
@@ -490,7 +492,7 @@ class EntranceThrough(models.Model):
         """ محاسبه تعداد ثبت به سیستم"""
 
         self.register_quantity = round((
-            self.number_in_factor * self.each_quantity) + self.bonus + self.quantity_bonus, round_digit)
+            self.number_in_factor * self.each_quantity), round_digit)
 
         """ محاسبه قیمت فی خریده"""
 
@@ -498,28 +500,26 @@ class EntranceThrough(models.Model):
             (self.number_in_factor * self.each_quantity)  # G15
 
 
-        bonus_each_purchase_price = self.total_purchaseـafghani / ((self.number_in_factor * self.each_quantity) + self.quantity_bonus )
+        # bonus_each_purchase_price = self.total_purchaseـafghani / ((self.number_in_factor * self.each_quantity) + self.quantity_bonus )
             
-        print(self.total_purchaseـafghani)
+        # print(self.total_purchaseـafghani)
 
-        quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
-            (self.number_in_factor) + self.quantity_bonus))  # G17
+        # quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
+        #     (self.number_in_factor) + self.quantity_bonus))  # G17
 
 
-        if self.bonus == 0 and self.quantity_bonus == 0:
-            self.each_purchase_price = round(simple_each_purchase, 1)
+        self.each_purchase_price = round(simple_each_purchase, 1)
 
-        else:
-            self.each_purchase_price = round(bonus_each_purchase_price, 1)
 
         # self.each_purchase_price = (self.total_purchaseـafghani) / (self.number_in_factor + self.quantity_bonus)
 
         """ محاسبه قیمت فی فروش"""
 
-        self.each_sell_price = round(
-            self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
+        # self.each_sell_price = round(
+        #     self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
 
-        self.medician.price = self.each_sell_price
+        # self.medician.price = self.each_sell_price
+        self.medician.last_purchased = self.each_purchase_price
         self.medician.save()
 
         """ محاسبه مجموع فروش"""
@@ -533,11 +533,7 @@ class EntranceThrough(models.Model):
             ((self.each_quantity * self.number_in_factor) +
              self.quantity_bonus) # G24
 
-        if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
-            self.total_sell = round(simple_total_sell, round_digit)
-        else:
-            self.total_sell = round(
-                quantity_bonus_total_sell, round_digit)
+        self.total_sell = round(simple_total_sell, round_digit)
 
         """ محاسبه فایده """
 
@@ -546,20 +542,16 @@ class EntranceThrough(models.Model):
         dicount_interest = (self.each_price_factor *
                             self.entrance.currency.rate)-self.each_price  # G29
 
-        if quantity_bonus_interest == 0:
-            simple_interest = simple_total_sell - self.total_purchaseـafghani
-        else:
-            simple_interest = 0  # G26
+        simple_interest = simple_total_sell - self.total_purchaseـafghani
+
 
         # Discount Interest on Entrance Without Discount result.
 
         if self.entrance.without_discount == False:
 
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
+            self.total_interest = round(simple_interest + dicount_interest, round_digit)  # G30
         else:
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest, round_digit)
+            self.total_interest = round(simple_interest , round_digit)
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
