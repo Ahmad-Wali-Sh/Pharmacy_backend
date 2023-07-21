@@ -25,13 +25,61 @@ class PharmGroupSeralizer(serializers.ModelSerializer):
 
 class RevenueSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    employee_name = serializers.SerializerMethodField()
+
 
     def get_username (self, obj):
         return obj.user.username
+    
+    def get_employee_name (self, obj):
+        return obj.employee.username
 
     class Meta:
         model = Revenue
         fields = '__all__'
+
+class RevenueTrhoughSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    prescription_number = serializers.SerializerMethodField()
+    grand_total = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+    prescription_user = serializers.SerializerMethodField()
+    discount = serializers.SerializerMethodField()
+    zakat = serializers.SerializerMethodField()
+    khairat = serializers.SerializerMethodField()
+    rounded = serializers.SerializerMethodField()
+    
+
+    def get_prescription_user (self,obj):
+        return obj.prescription.user.username
+
+    def get_discount (self,obj):
+        return obj.prescription.discount_percent
+    def get_zakat (self,obj):
+        return obj.prescription.zakat
+    def get_khairat (self,obj):
+        return obj.prescription.khairat
+    def get_rounded (self,obj):
+        return obj.prescription.rounded_number
+
+    def get_username (self, obj):
+        return obj.user.username
+
+    def get_prescription_number (self, obj):
+        return obj.prescription.prescription_number
+
+    def get_grand_total (self, obj):
+        return obj.prescription.grand_total
+
+    def get_department (self, obj):
+        return obj.prescription.department.name
+
+    prescription = serializers.PrimaryKeyRelatedField(
+        queryset= Prescription.objects.all()
+    )
+    class Meta:
+        model = RevenueTrough
+        fields = '__all__'  
 
 
 
@@ -81,26 +129,19 @@ class CountrySerializer(serializers.ModelSerializer):
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
 
     def get_username (self, obj):
         return obj.user.username
+
+    def get_department_name (self, obj):
+        return obj.department.name
 
     class Meta:
         model = Prescription
         fields = '__all__'
 
-class RevenueTrhoughSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-
-    def get_username (self, obj):
-        return obj.user.username
-
-    prescription = serializers.PrimaryKeyRelatedField(
-        queryset= Prescription.objects.all()
-    )
-    class Meta:
-        model = RevenueTrough
-        fields = '__all__'     
+   
 
 
 class MedicianSeralizer(serializers.ModelSerializer):

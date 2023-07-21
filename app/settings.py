@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-4z2-@%cm9ua90#c*7qlxn7bc2wmbwpw77eznu2_#prtjqltt*$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '127.0.0.1:3000']
+ALLOWED_HOSTS = ['127.0.0.1', '127.0.0.1:3000', '192.168.60.3',]
 
 
 # Application definition
@@ -38,12 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 
     'rest_framework',
     'rest_framework.authtoken',
     'drf_multiple_model',
     'django_filters',
-    'corsheaders',
     'import_export',
     'image_optimizer',
     'djoser',
@@ -74,6 +74,8 @@ DJOSER = {
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_CREDENTIALS = True
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -140,7 +142,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 AUTH_USER_MODEL = 'core.User'
 

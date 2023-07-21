@@ -79,9 +79,21 @@ class CityView(viewsets.ModelViewSet):
     serializer_class = CitySerializer
     permission_classes = [D7896DjangoModelPermissions]
 
+class RevenueFilter(django_filters.FilterSet):
+    created = django_filters.DateFromToRangeFilter() 
+
+    class Meta:
+        model = Revenue
+        fields = ['created', 'active','employee', 'revenue_through__prescription_number']
+
+
 class RevenueView(viewsets.ModelViewSet):
     queryset = Revenue.objects.all()
     serializer_class = RevenueSerializer
+    filter_backends = [DjangoFilterBackend,filters.OrderingFilter]
+    filterset_class = RevenueFilter
+    ordering_fields = ['id',]
+    ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
 
 class RevenueThroughView(viewsets.ModelViewSet):
