@@ -455,13 +455,14 @@ class EntranceThrough(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     batch_number = models.CharField(max_length=100, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    lease = models.BooleanField(default=False)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
 
     def save(self, *args, **kwargs):
 
-        round_digit = 1
+        round_digit = 2
 
         """ محاسبه قیمت فی خرید فاکتور"""
 
@@ -524,8 +525,8 @@ class EntranceThrough(models.Model):
 
         """ محاسبه مجموع فروش"""
 
-        simple_total_sell = self.each_sell_price * \
-            self.each_quantity * self.number_in_factor  # G22
+        simple_total_sell = (self.each_sell_price * \
+            self.each_quantity * self.number_in_factor )* self.medician.no_box # G22
         bonus_total_sell = self.each_sell_price * \
             ((self.each_quantity * self.number_in_factor) +
              self.bonus) * self.bonus  # G23
@@ -558,7 +559,8 @@ class EntranceThrough(models.Model):
         def entrance_sum():
 
             entrance_sum_query = list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0] + list(EntranceThrough.objects.filter(
+                medician_id=self.medician.id).aggregate(Sum('quantity_bonus')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
