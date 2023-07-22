@@ -1,12 +1,12 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User
+    City, Market, Revenue, RevenueTrough, User, MedicineWith
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -22,9 +22,13 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 50
 
+def filter_by_ids(queryset, name, value):
+    values = value.split(',')
+    return queryset.filter(id__in=values)
 
 
 class MedicianFilter(django_filters.FilterSet):
+    ids = django_filters.CharFilter(method=filter_by_ids)
     generic_name = django_filters.CharFilter(lookup_expr="icontains")
     barcode = django_filters.CharFilter(lookup_expr="icontains")
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
@@ -33,7 +37,10 @@ class MedicianFilter(django_filters.FilterSet):
 
     class Meta:
         model = Medician
-        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department']
+        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids']
+
+
+
 
 class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -238,6 +245,13 @@ class OutranceView (viewsets.ModelViewSet):
     queryset = Outrance.objects.all()
     serializer_class = OutranceSerializer
     permission_classes = [D7896DjangoModelPermissions]
+
+
+class MedicineWithView (viewsets.ModelViewSet):
+    queryset = MedicineWith.objects.all()
+    serializer_class = MedicineWithSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filterset_fields = ('medicine',)
 
 class OutranceThroughView (viewsets.ModelViewSet):
     queryset = OutranceThrough.objects.all()
