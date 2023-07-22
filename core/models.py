@@ -882,6 +882,17 @@ class RevenueTrough (models.Model):
 
         super(RevenueTrough, self).save()
 
+    class Meta:
+        unique_together = ('revenue', 'prescription' ,)
+
+
+class MedicineWith (models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    includes = models.ManyToManyField(Medician, related_name="medicines")
+
+    def __str__ (self):
+        return self.medicine.brand_name
+
 
 @receiver(post_delete, sender=RevenueTrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
