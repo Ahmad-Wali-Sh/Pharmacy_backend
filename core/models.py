@@ -359,7 +359,7 @@ class PharmCompany (models.Model):
 class Currency (models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -415,6 +415,7 @@ class Entrance (models.Model):
     recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
+    discount_percent = models.FloatField(default=0)
     wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
