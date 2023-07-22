@@ -141,6 +141,9 @@ class CurrencyView(viewsets.ModelViewSet):
     queryset = Currency.objects.all()
     serializer_class = CurrencySerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 
 class PaymentMethodView(viewsets.ModelViewSet):
