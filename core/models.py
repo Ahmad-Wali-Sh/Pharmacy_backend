@@ -419,149 +419,81 @@ class Entrance (models.Model):
     wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+    currency_rate = models.FloatField(default=1)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.company.name
 
+    def save(self, *args,**kwargs):
+        self.currency_rate = self.currency.rate
+
+        super(Entrance, self).save(*args, **kwargs)
 
 class EntranceThrough(models.Model):
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
-    number_in_factor = models.IntegerField()  # G4 تعداد در فاکتور
-    each_price_factor = models.FloatField()  # G8 قیمت فی خرید توسط کاربر
-    each_price = models.FloatField(default=1)  # G5 قیمت فی خرید فاکتور
-    discount_money = models.FloatField(default=0)  # G6 تخفیف خرید پولی
-    discount_percent = models.FloatField(default=0)  # G7 تخفیف خرید فیصدی
-    total_purchaseـafghani = models.FloatField(
-        default=1)  # G9 مجموع خرید افغانی
-    total_purchaseـcurrency = models.FloatField(
-        default=1)  # G10 مجموع خرید اسعاری
-    each_quantity = models.FloatField(default=1)  # G11  تعداد در فی فروش
+    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    number_in_factor = models.IntegerField() 
+    each_price_factor = models.FloatField()  
+    each_price = models.FloatField(default=1) 
+    discount_money = models.FloatField(default=0) 
     no_box = models.FloatField(default=1)
-    bonus = models.IntegerField(default=0)  # G12 بونوس
-    quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
-    register_quantity = models.IntegerField(
-        default=0)  # G14 تعداد ثبت به سیستم جهت موجودی
+    discount_percent = models.FloatField(default=0)  
+    total_purchaseـafghani = models.FloatField(
+        default=1) 
+    total_purchaseـcurrency = models.FloatField(
+        default=1)  
+    total_purchase_currency_before = models.FloatField(default=0)
+    discount_value = models.FloatField(default=0)
+    each_quantity = models.FloatField(default=1) 
+    quantity_bonus = models.FloatField(default=0)  
+    bonus_value = models.FloatField(default=0) 
+    shortage = models.FloatField(default=0)
+    lease = models.BooleanField(default=False)
     each_purchase_price = models.FloatField(
-        default=1)  # G18 قیمت فی خرید جهت ثبت به سیستم
-    interest_money = models.FloatField(default=0)  # G19 فایده پولی
-    interest_percent = models.FloatField(default=20)  # G20 فایده فیصدی
+        default=1)  
     each_sell_price = models.FloatField(
-        default=0)  # G21 قیمت فی فروش جهت ثبت به سیستم
-    total_sell = models.FloatField(default=0)  # G25 مجموع فروش
-    bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
-    total_interest = models.FloatField(default=0)  # G30 مجموع فایده
-    expire_date = models.DateField()  # G31 تاریخ انقضا
+        default=0) 
+    total_sell = models.FloatField(default=0) 
+    interest_percent = models.FloatField(default=20)  
+    register_quantity = models.IntegerField(
+        default=0) 
+    total_interest = models.FloatField(default=0)  
+    expire_date = models.DateField()  
     timestamp = models.DateTimeField(auto_now_add=True)
     batch_number = models.CharField(max_length=100, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    lease = models.BooleanField(default=False)
+    interest_money = models.FloatField(default=0)  
+    bonus_interest = models.FloatField(default=0)
+    rate = models.FloatField(default=1) 
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
 
     def save(self, *args, **kwargs):
 
-        round_digit = 2
-
-        """ محاسبه قیمت فی خرید فاکتور"""
-
-        self.each_price = round(self.each_price_factor * self.entrance.currency.rate, round_digit)
-        """
-        discount_money = تخیف پولی
-        discount_percent = تخفیف فیصدی
-        total_purchase_afghani = مجموع قیمت خرید به افغانی
-        total_purchase_currenry = مجموع قیمت خرید به ارز
-        number_in_factor = تعداد در فاکتور
-        each_price_factor = قیمت در فاکتور
-        each_price = قیمت فی خرید
-        register_quantity = تعداد ثبت
-        bonus = بونوس
-        interest_money = فایده پولی
-        interest_percent = فایده فیصدی
+        round_digit = 1
         
-        
-        """
-
-        """   محاسبه مجموع خرید"""
-
-        self.total_purchaseـafghani = round(
-            self.each_price * self.number_in_factor, round_digit)
-        self.total_purchaseـcurrency = round(
-            self.each_price_factor * self.number_in_factor, round_digit)
-
-        """ محاسبه تعداد ثبت به سیستم"""
-
-        self.register_quantity = round((
-            self.number_in_factor * self.each_quantity), round_digit)
-
-        """ محاسبه قیمت فی خریده"""
-
-        simple_each_purchase = self.total_purchaseـafghani / \
-            (self.number_in_factor * self.each_quantity)  # G15
-
-
-        # bonus_each_purchase_price = self.total_purchaseـafghani / ((self.number_in_factor * self.each_quantity) + self.quantity_bonus )
-            
-        # print(self.total_purchaseـafghani)
-
-        # quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
-        #     (self.number_in_factor) + self.quantity_bonus))  # G17
-
-
-        self.each_purchase_price = round(simple_each_purchase, 1)
-
-
-        # self.each_purchase_price = (self.total_purchaseـafghani) / (self.number_in_factor + self.quantity_bonus)
-
-        """ محاسبه قیمت فی فروش"""
-
-        # self.each_sell_price = round(
-        #     self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
-
-        # self.medician.price = self.each_sell_price
-        self.medician.last_purchased = self.each_purchase_price
-        self.medician.save()
-
-        """ محاسبه مجموع فروش"""
-
-        simple_total_sell = (self.each_sell_price * \
-            self.each_quantity * self.number_in_factor )* self.medician.no_box # G22
-        bonus_total_sell = self.each_sell_price * \
-            ((self.each_quantity * self.number_in_factor) +
-             self.bonus) * self.bonus  # G23
-        quantity_bonus_total_sell = self.each_sell_price * \
-            ((self.each_quantity * self.number_in_factor) +
-             self.quantity_bonus) # G24
-
-        self.total_sell = round(simple_total_sell, round_digit)
-
-        """ محاسبه فایده """
-
-        quantity_bonus_interest = (
-            quantity_bonus_total_sell - self.total_purchaseـafghani) * self.quantity_bonus  # G28
-        dicount_interest = (self.each_price_factor *
-                            self.entrance.currency.rate)-self.each_price  # G29
-
-        simple_interest = simple_total_sell - self.total_purchaseـafghani
-
-
-        # Discount Interest on Entrance Without Discount result.
-
-        if self.entrance.without_discount == False:
-
-            self.total_interest = round(simple_interest + dicount_interest, round_digit)  # G30
+        self.total_purchase_currency_before = round(self.number_in_factor * self.each_price_factor, round_digit)
+        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (1-self.discount_percent / 100), round_digit)
+        self.discount_value = round(self.total_purchase_currency_before - self.total_purchaseـcurrency + self.discount_money, round_digit)
+        if (self.quantity_bonus > 0):
+            self.bonus_value = round((self.total_purchase_currency_before / (self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
         else:
-            self.total_interest = round(simple_interest , round_digit)
+            self.bonus_value = 0
+        self.each_purchase_price = round((self.each_price_factor / self.no_box), round_digit)
+        self.each_price = round(self.each_purchase_price * (1+ self.interest_percent / 100), round_digit)
+        self.total_sell = round(self.each_price * self.no_box * self.number_in_factor, round_digit)
+        self.register_quantity = (self.number_in_factor * self.no_box) + self.quantity_bonus
+        self.rate = self.entrance.currency_rate
+        
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
         def entrance_sum():
 
             entrance_sum_query = list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0] + list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('quantity_bonus')).values())[0]
+                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
             prescription_sum_query = list(PrescriptionThrough.objects.filter(
                 medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
             outrance_sum_query = list(OutranceThrough.objects.filter(
@@ -640,82 +572,6 @@ class OutranceThrough (models.Model):
     def save(self, *args, **kwargs):
 
         round_digit = 1
-
-        """ محاسبه قیمت فی خرید فاکتور"""
-
-        self.each_price = round(-
-                                (self.discount_money-(self.each_price_factor *
-                                                      (1-self.discount_percent / 100))) * self.outrance.currency.rate, round_digit)
-
-        """   محاسبه مجموع خرید"""
-
-        self.total_purchaseـafghani = round(
-            self.each_price * self.number_in_factor, round_digit)
-        self.total_purchaseـcurrency = round(
-            self.each_price_factor * self.number_in_factor, round_digit)
-
-        """ محاسبه تعداد ثبت به سیستم"""
-
-        self.register_quantity = round((
-            self.number_in_factor * self.each_quantity) + self.bonus + self.quantity_bonus, round_digit)
-
-        """ محاسبه قیمت فی خریده"""
-
-        simple_each_purchase = self.total_purchaseـafghani / \
-            (self.number_in_factor * self.each_quantity)  # G15
-        bonus_each_purchase_price = (
-            (self.each_price / (self.number_in_factor * self.each_quantity)) * self.number_in_factor)*self.bonus  # G16
-        quantity_bonus_each_purchase_price = (self.total_purchaseـafghani / (
-            (self.number_in_factor * self.each_quantity) + self.quantity_bonus))*self.quantity_bonus  # G17
-        if self.bonus == 0 and self.quantity_bonus == 0:
-            self.each_purchase_price = round(simple_each_purchase, round_digit)
-        else:
-            self.each_purchase_price = round(bonus_each_purchase_price +
-                                             quantity_bonus_each_purchase_price, round_digit)
-
-        """ محاسبه قیمت فی فروش"""
-
-        self.each_sell_price = round(
-            self.interest_money + (self.each_purchase_price * (1 + self.interest_percent / 100)), round_digit)
-
-        """ محاسبه مجموع فروش"""
-
-        simple_total_sell = self.each_sell_price * \
-            self.each_quantity * self.number_in_factor  # G22
-        bonus_total_sell = self.each_sell_price * \
-            ((self.each_quantity * self.number_in_factor) +
-             self.bonus) * self.bonus  # G23
-        quantity_bonus_total_sell = self.each_sell_price * \
-            ((self.each_quantity * self.number_in_factor) +
-             self.quantity_bonus) * self.quantity_bonus  # G24
-
-        if bonus_total_sell == 0 and quantity_bonus_total_sell == 0:
-            self.total_sell = round(simple_total_sell, round_digit)
-        else:
-            self.total_sell = round(
-                bonus_total_sell + quantity_bonus_total_sell, round_digit)
-
-        """ محاسبه فایده """
-
-        quantity_bonus_interest = (
-            quantity_bonus_total_sell - self.total_purchaseـafghani) * self.quantity_bonus  # G28
-        dicount_interest = (self.each_price_factor *
-                            self.outrance.currency.rate)-self.each_price  # G29
-
-        if quantity_bonus_interest == 0:
-            simple_interest = simple_total_sell - self.total_purchaseـafghani
-        else:
-            simple_interest = 0  # G26
-
-        # Discount Interest on Entrance Without Discount result.
-
-        if self.outrance.without_discount == False:
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest + dicount_interest, round_digit)  # G30
-        else:
-            self.total_interest = round(simple_interest + self.bonus_interest +
-                                        quantity_bonus_interest, round_digit)
-
         super(OutranceThrough, self).save(*args, **kwargs)
 
         def entrance_sum():
