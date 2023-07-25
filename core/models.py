@@ -88,28 +88,6 @@ class Unit(models.Model):
     def __str__(self):
         return self.name
 
-# UNIQUE_ARRAY_FIELDS = ('name','barcode',)
-
-# class MyManager(models.Manager):
-#     def prevent_duplicates_in_array_fields(self, model, array_field):
-#         def duplicate_check(_lookup_params):
-#             fields = self.model._meta.get_fields()
-#             for unique_field in UNIQUE_ARRAY_FIELDS:
-#                 unique_field_index = [getattr(field, 'name', 'barcode') for field in fields]
-#                 try:
-#                     # if model doesn't have the unique field, then proceed to the next loop iteration
-#                     unique_field_index = unique_field_index.index(unique_field)
-#                 except ValueError:
-#                     continue
-#             all_items_in_db = [item for sublist in self.values_list(fields[unique_field_index].name).exclude(**_lookup_params) for item in sublist]
-#             all_items_in_db = [item for sublist in all_items_in_db for item in sublist]
-#             if not set(array_field).isdisjoint(all_items_in_db):
-#                 raise ValidationError('{} contains items already in the database'.format(array_field))
-#         if model.id:
-#             lookup_params = {'id': model.id}
-#         else:
-#             lookup_params = {}
-#         duplicate_check(lookup_params)
 
 
 class Department (models.Model):
@@ -133,7 +111,7 @@ class Medician(models.Model):
     #     max_length=200, blank=True, null=True, unique=True), default=list,null=True, blank=True)
     barcode = models.CharField(max_length=255, null=True, blank=True)
     no_pocket = models.FloatField(null=True, blank=True)
-    no_box = models.FloatField(null=True, blank=True)
+    no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(
         PharmGroup, on_delete=models.CASCADE, null=True, blank=True)
     kind = models.ForeignKey(
@@ -453,7 +431,10 @@ class EntranceThrough(models.Model):
     each_purchase_price = models.FloatField(
         default=1)  
     each_sell_price = models.FloatField(
-        default=0) 
+        default=0)
+    each_sell_price_afg = models.FloatField(
+        default=0
+    )
     total_sell = models.FloatField(default=0) 
     interest_percent = models.FloatField(default=20)  
     register_quantity = models.IntegerField(
@@ -465,7 +446,8 @@ class EntranceThrough(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     interest_money = models.FloatField(default=0)  
     bonus_interest = models.FloatField(default=0)
-    rate = models.FloatField(default=1) 
+    rate = models.FloatField(default=1)
+    rate_name = models.CharField(max_length=40, blank=True, null=True) 
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -475,8 +457,8 @@ class EntranceThrough(models.Model):
         round_digit = 1
         
         self.total_purchase_currency_before = round(self.number_in_factor * self.each_price_factor, round_digit)
-        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (1-self.discount_percent / 100), round_digit)
-        self.discount_value = round(self.total_purchase_currency_before - self.total_purchaseـcurrency + self.discount_money, round_digit)
+        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (1-self.discount_percent / 100) - self.discount_money, round_digit)
+        self.discount_value = round(self.total_purchase_currency_before - self.total_purchaseـcurrency, round_digit)
         if (self.quantity_bonus > 0):
             self.bonus_value = round((self.total_purchase_currency_before / (self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
         else:
@@ -484,9 +466,13 @@ class EntranceThrough(models.Model):
         self.each_purchase_price = round((self.each_price_factor / self.no_box), round_digit)
         self.each_price = round(self.each_purchase_price * (1+ self.interest_percent / 100), round_digit)
         self.total_sell = round(self.each_price * self.no_box * self.number_in_factor, round_digit)
-        self.register_quantity = (self.number_in_factor * self.no_box) + self.quantity_bonus
+        self.register_quantity = ((self.number_in_factor * self.no_box) - (self.shortage * self.no_box)) + self.quantity_bonus
+        self.each_sell_price = round(self.each_sell_price_afg / self.entrance.currency_rate, round_digit)
         self.rate = self.entrance.currency_rate
-        
+        self.rate_name = self.entrance.currency.name
+
+        self.medician.last_purchased = self.each_purchase_price
+        self.medician.save()
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
@@ -510,6 +496,8 @@ class EntranceThrough(models.Model):
             if prescription_sum_query and entrance_sum_query and outrance_sum_query:
                 result = entrance_sum_query - \
                     (prescription_sum_query + outrance_sum_query)
+            if entrance_sum_query:
+                result = entrance_sum_query
             return result
 
         self.medician.existence = entrance_sum()

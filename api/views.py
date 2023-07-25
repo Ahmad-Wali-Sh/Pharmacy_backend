@@ -235,7 +235,7 @@ class LastEntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
 
 class EntranceThroughView(viewsets.ModelViewSet):
-    queryset = EntranceThrough.objects.all().order_by('-id')
+    queryset = EntranceThrough.objects.all().order_by('id')
     serializer_class = EntranceThroughSerializer
     filterset_fields = ('entrance','medician')
     permission_classes = [D7896DjangoModelPermissions]
