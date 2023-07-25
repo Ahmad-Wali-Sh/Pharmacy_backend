@@ -215,19 +215,15 @@ class MedicineWithSerializer(serializers.ModelSerializer):
 
 class EntranceSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
-    currency_rate = serializers.SerializerMethodField()
     currency_name = serializers.SerializerMethodField()
 
     def get_username (self, obj):
         return obj.user.username
     
-    def get_currency_rate (self, obj):
-        return obj.currency.rate
     
     def get_currency_name (self, obj):
         return obj.currency.name
 
-    # factor_date = JDateTimeField()
     class Meta:
         model = Entrance
         fields = '__all__'
