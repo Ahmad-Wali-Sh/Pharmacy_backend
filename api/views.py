@@ -200,6 +200,11 @@ class PrescriptionView(viewsets.ModelViewSet):
     filterset_class = PrescriptionFilterView
     permission_classes = [D7896DjangoModelPermissions]
 
+class LastPrescriptionView(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all().order_by('-id')[:1]
+    serializer_class = PrescriptionSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+
 
 class UnitView(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
