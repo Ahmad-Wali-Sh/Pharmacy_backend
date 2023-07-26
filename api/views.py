@@ -26,18 +26,26 @@ def filter_by_ids(queryset, name, value):
     values = value.split(',')
     return queryset.filter(id__in=values)
 
+class CharArrayFilter(django_filters.BaseCSVFilter, django_filters.CharFilter):
+     pass
+
+class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
+    pass
+
 
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
-    generic_name = django_filters.CharFilter(lookup_expr="icontains")
+    generic_name__in = CharInFilter(field_name='generic_name',lookup_expr="in" )
     barcode = django_filters.CharFilter(lookup_expr="icontains")
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
+    kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
+    country__name = django_filters.CharFilter(lookup_expr='icontains')
 
 
     class Meta:
         model = Medician
-        fields = ['brand_name', 'generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids']
+        fields = ['brand_name','generic_name__in', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name"]
 
 
 
@@ -120,7 +128,7 @@ class MarketView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
 
 class PrescriptionThroughView(viewsets.ModelViewSet):
-    queryset = PrescriptionThrough.objects.all()
+    queryset = PrescriptionThrough.objects.all().order_by("id")
     serializer_class = PrescriptionThroughSerializer
     filterset_fields = ['prescription',]
     permission_classes = [D7896DjangoModelPermissions]

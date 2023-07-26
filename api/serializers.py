@@ -153,7 +153,21 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 
 class MedicianSeralizer(serializers.ModelSerializer):
+    kind_name = serializers.SerializerMethodField()
+    country_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
+
+    def get_kind_name (self, obj):
+        if obj.kind:
+            return obj.kind.name_english
+        else:
+            return ""
+    
+    def get_country_name (self, obj):
+        if obj.country:
+            return obj.country.name
+        else:
+            return ""
 
     def get_username (self, obj):
         return obj.user.username
