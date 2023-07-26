@@ -141,6 +141,7 @@ class Medician(models.Model):
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
+    min_expire_date = models.IntegerField(default=6, blank=True)
     
 
     # objects = MyManager()
