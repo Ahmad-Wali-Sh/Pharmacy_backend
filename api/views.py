@@ -1,12 +1,12 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith
+    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -15,6 +15,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
+from django.contrib.postgres.forms.array import SimpleArrayField
+from django_filters.filters import Filter
+from django.db import models
+
+class ArrayOverlapFilter(Filter):
+    field_class = SimpleArrayField
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("lookup_expr", "overlap")
+        super().__init__(*args, **kwargs)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -25,6 +35,10 @@ class StandardResultsSetPagination(PageNumberPagination):
 def filter_by_ids(queryset, name, value):
     values = value.split(',')
     return queryset.filter(id__in=values)
+    
+def filter_by_generics(queryset, name, value):
+    values = value.split(',')
+    return queryset.filter(generic_name=values)
 
 class CharArrayFilter(django_filters.BaseCSVFilter, django_filters.CharFilter):
      pass
@@ -35,17 +49,19 @@ class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
 
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
-    generic_name__in = CharInFilter(field_name='generic_name',lookup_expr="in" )
+    generic_name = django_filters.CharFilter(method=filter_by_generics)
     barcode = django_filters.CharFilter(lookup_expr="icontains")
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
     country__name = django_filters.CharFilter(lookup_expr='icontains')
+    big_company__name = django_filters.CharFilter(lookup_expr='icontains')
+
 
 
     class Meta:
         model = Medician
-        fields = ['brand_name','generic_name__in', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name"]
+        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'big_company__name']
 
 
 
@@ -54,7 +70,7 @@ class MedicianView(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianSeralizer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['brand_name', 'barcode', 'generic_name', 'ml']
+    search_fields = ["generic_name"]
     filterset_class = MedicianFilter
     ordering_fields = ['id',]
     ordering = ['id',]
@@ -143,6 +159,12 @@ class PatientNameView(viewsets.ModelViewSet):
 class DoctorNameView(viewsets.ModelViewSet):
     queryset = DoctorName.objects.all()
     serializer_class = DoctorNameSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+
+
+class BigCompanyView(viewsets.ModelViewSet):
+    queryset = BigCompany.objects.all()
+    serializer_class = BigCompanySerializer
     permission_classes = [D7896DjangoModelPermissions]
 
 

@@ -102,6 +102,12 @@ class Department (models.Model):
     def __str__(self):
         return self.name
 
+class BigCompany (models.Model):
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
 
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
@@ -142,6 +148,7 @@ class Medician(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
+    big_company = models.ForeignKey(BigCompany, on_delete=models.DO_NOTHING, blank=True, null=True)
     
 
     # objects = MyManager()
