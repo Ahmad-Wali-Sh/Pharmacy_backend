@@ -258,6 +258,12 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
         model = EntranceThrough
         fields = '__all__'
 
+class EntranceThroughExpiresSerializer(serializers.ModelSerializer):
+    medician = MedicianSeralizer()
+    class Meta:
+        model = EntranceThrough
+        fields = ('medician',)
+
 class StoreSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
