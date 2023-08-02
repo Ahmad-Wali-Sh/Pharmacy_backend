@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany
+        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -230,6 +230,12 @@ class MedicineWithSerializer(serializers.ModelSerializer):
 
     class Meta: 
         model = MedicineWith
+        fields = '__all__'
+
+class MedicineConflictSerializer(serializers.ModelSerializer):
+
+    class Meta: 
+        model = MedicineConflict
         fields = '__all__'
 
 

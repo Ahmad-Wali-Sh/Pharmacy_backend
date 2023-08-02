@@ -1,12 +1,12 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany
+    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -309,6 +309,12 @@ class MedicineWithView (viewsets.ModelViewSet):
     serializer_class = MedicineWithSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = ('medicine',)
+
+class MedicineConflictView (viewsets.ModelViewSet):
+    queryset = MedicineConflict.objects.all()
+    serializer_class = MedicineConflictSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filterset_fields = ('medicine_1',)
 
 class OutranceThroughView (viewsets.ModelViewSet):
     queryset = OutranceThrough.objects.all()
