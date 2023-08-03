@@ -745,6 +745,13 @@ class MedicineWith (models.Model):
     def __str__ (self):
         return self.medicine.brand_name
 
+class MedicineConflict (models.Model):
+    medicine_1 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING, related_name="medicine_1")
+    medicine_2 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
+
+    def __str__ (self):
+        return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name 
+
 
 @receiver(post_delete, sender=RevenueTrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):

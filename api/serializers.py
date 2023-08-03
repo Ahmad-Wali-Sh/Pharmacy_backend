@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany
+        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -131,6 +131,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
 
+
     def get_username (self, obj):
         return obj.user.username
 
@@ -162,6 +163,18 @@ class MedicianSeralizer(serializers.ModelSerializer):
     kind_name = serializers.SerializerMethodField()
     country_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+
+
+    def get_medicine_full (self, obj):
+        if (obj.kind and obj.weight): 
+            return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")" + " " + obj.weight
+        if (obj.kind and obj.ml): 
+            return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")"
+        if (obj.kind): 
+            return obj.kind.name_english + "." + obj.brand_name + " " + "(" + str(",".join(map(str, obj.generic_name))) + ")"
+        else:
+            return obj.brand_name
 
     def get_kind_name (self, obj):
         if obj.kind:
@@ -232,6 +245,12 @@ class MedicineWithSerializer(serializers.ModelSerializer):
         model = MedicineWith
         fields = '__all__'
 
+class MedicineConflictSerializer(serializers.ModelSerializer):
+
+    class Meta: 
+        model = MedicineConflict
+        fields = '__all__'
+
 
 class EntranceSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
@@ -251,12 +270,32 @@ class EntranceSerializer(serializers.ModelSerializer):
 
 class EntranceThroughSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    medicine_min_expire = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+
+
+    def get_medicine_full (self, obj):
+        if (obj.medician.kind and obj.medician.weight): 
+            return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")" + " " + obj.medician.weight
+        if (obj.medician.kind): 
+            return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")"
+        else:
+            return obj.medician.brand_name
+    
+    def get_medicine_min_expire (self,obj):
+        return obj.medician.min_expire_date
 
     def get_username (self, obj):
         return obj.user.username
     class Meta:
         model = EntranceThrough
         fields = '__all__'
+
+class EntranceThroughExpiresSerializer(serializers.ModelSerializer):
+    medician = MedicianSeralizer()
+    class Meta:
+        model = EntranceThrough
+        fields = ('medician',)
 
 class StoreSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
@@ -325,6 +364,30 @@ class PatientNameSerializer(serializers.ModelSerializer):
 
 class PrescriptionThroughSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    medicine_cautions = serializers.SerializerMethodField()
+    medicine_usage = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+
+    def get_medicine_full (self, obj):
+        if (obj.medician.kind and obj.medician.weight): 
+            return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")" + " " + obj.medician.weight
+        if (obj.medician.kind): 
+            return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")"
+        else:
+            return obj.medician.brand_name
+
+    def get_medicine_cautions (self, obj):
+        if (obj.medician.cautions):
+            return obj.medician.cautions
+        else:
+            return ""
+
+    def get_medicine_usage (self, obj):
+        if (obj.medician.usages):
+            return obj.medician.usages
+        else:
+            return ""
+
 
     def get_username (self, obj):
         return obj.user.username

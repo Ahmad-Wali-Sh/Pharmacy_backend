@@ -1,18 +1,20 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany
+    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from .permissions import D7896DjangoModelPermissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from dateutil.relativedelta import relativedelta
+from datetime import date
 
 from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
 from django.contrib.postgres.forms.array import SimpleArrayField
@@ -269,11 +271,31 @@ class LastEntranceView(viewsets.ModelViewSet):
     serializer_class = EntranceSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
+class EntranceThroughFilterView(django_filters.FilterSet):
+
+    class Meta: 
+        model = EntranceThrough
+        fields = ['entrance', 'medician','medician__ml']
+
 class EntranceThroughView(viewsets.ModelViewSet):
     queryset = EntranceThrough.objects.all().order_by('id')
     serializer_class = EntranceThroughSerializer
-    filterset_fields = ('entrance','medician')
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['medician__generic_name',]
+    filterset_class = EntranceThroughFilterView
     permission_classes = [D7896DjangoModelPermissions]
+
+class EntranceThroughExpiresView(viewsets.ModelViewSet):
+    serializer_class = EntranceThroughExpiresSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['medician__generic_name',]
+    filterset_class = EntranceThroughFilterView
+    permission_classes = [D7896DjangoModelPermissions]
+
+    def get_queryset(self):
+        medicines = EntranceThrough.objects.filter(expire_date__lte = date.today() + relativedelta(months = 6))
+        return medicines
+
 
 
 class OutranceView (viewsets.ModelViewSet):
@@ -287,6 +309,12 @@ class MedicineWithView (viewsets.ModelViewSet):
     serializer_class = MedicineWithSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = ('medicine',)
+
+class MedicineConflictView (viewsets.ModelViewSet):
+    queryset = MedicineConflict.objects.all()
+    serializer_class = MedicineConflictSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filterset_fields = ('medicine_1',)
 
 class OutranceThroughView (viewsets.ModelViewSet):
     queryset = OutranceThrough.objects.all()
