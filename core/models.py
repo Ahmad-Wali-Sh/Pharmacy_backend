@@ -149,6 +149,9 @@ class Medician(models.Model):
     department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
     big_company = models.ForeignKey(BigCompany, on_delete=models.DO_NOTHING, blank=True, null=True)
+    shorted = models.BooleanField(default=False)
+    to_buy = models.BooleanField(default=False)
+    unsubmited_existence = models.FloatField(default=0)
     
 
     # objects = MyManager()
@@ -735,7 +738,28 @@ class RevenueTrough (models.Model):
         super(RevenueTrough, self).save()
 
     class Meta:
-        unique_together = ('revenue', 'prescription' ,)
+        unique_together = ('revenue', 'prescription',)
+
+class PurchaseList (models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
+    need_quautity = models.FloatField(default=0)
+    company_1 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING)
+    price_1 = models.FloatField(default=0)
+    bonus_1 = models.FloatField(default=0)
+    date_1 = models.DateField()
+    company_2 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING, related_name="company_2")
+    price_2 = models.FloatField(default=0)
+    bonus_2 = models.FloatField(default=0)
+    date_2 = models.DateField()
+    company_3 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING, related_name="company_3")
+    price_3 = models.FloatField(default=0)
+    bonus_3 = models.FloatField(default=0)
+    date_3 = models.DateField()
+    arrival_quantity = models.FloatField(default=0)
+    shortaged = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.medicine.brand_name
 
 
 class MedicineWith (models.Model):

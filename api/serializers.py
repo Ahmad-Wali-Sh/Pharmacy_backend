@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
+        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -81,9 +81,6 @@ class RevenueTrhoughSerializer(serializers.ModelSerializer):
         model = RevenueTrough
         fields = '__all__'  
 
-
-
-
 class MarketSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
@@ -103,6 +100,81 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = '__all__'
+        
+class PurchaseListSerializer(serializers.ModelSerializer):
+    market_1 = serializers.SerializerMethodField()
+    market_2 = serializers.SerializerMethodField()
+    market_3 = serializers.SerializerMethodField()
+    company_1_name = serializers.SerializerMethodField()
+    company_2_name = serializers.SerializerMethodField()
+    company_3_name = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+
+    def get_medicine_full (self, obj):
+        if (obj.medicine.kind and obj.medicine.weight): 
+            return obj.medicine.kind.name_english + "." + obj.medicine.brand_name + " " + obj.medicine.ml + "(" + str(",".join(map(str, obj.medicine.generic_name))) + ")" + " " + obj.medicine.weight
+        if (obj.medicine.kind): 
+            return obj.medicine.kind.name_english + "." + obj.medicine.brand_name + " " + obj.medicine.ml + "(" + str(",".join(map(str, obj.medicine.generic_name))) + ")"
+        else:
+            return obj.medicine.brand_name
+
+    def get_market_1 (self, obj):
+        if (obj.company_1.market):
+            return obj.company_1.market.name
+        else:
+            return ""
+
+    def get_market_2 (self, obj):
+        if (obj.company_2.market):
+            return obj.company_2.market.name
+        else:
+            return ""
+    def get_market_3 (self, obj):
+        if (obj.company_3.market):
+            return obj.company_3.market.name
+        else:
+            return ""
+
+    def get_company_1_name (self, obj):
+        if (obj.company_1):
+            return obj.company_1.name
+        return ""
+    def get_company_2_name (self, obj):
+        if (obj.company_2):
+            return obj.company_2.name
+        return ""
+    def get_company_3_name (self, obj):
+        if (obj.company_3):
+            return obj.company_3.name
+        return ""
+
+    class Meta:
+        model = PurchaseList
+        fields = ['id', 'medicine_full', 'need_quautity', 'company_1_name','market_1', 'price_1', 'bonus_1', 'date_1','company_2_name','market_2', 'price_2', 'bonus_2', 'date_2','company_3_name','market_3', 'price_3', 'bonus_3', 'date_3','arrival_quantity', 'shortaged']
+
+class PurchaseListQuerySerializer(serializers.ModelSerializer):
+    medicine_full = serializers.SerializerMethodField()
+    details = serializers.SerializerMethodField()
+    quantity = serializers.SerializerMethodField()
+
+    def get_quantity (self, obj):
+        return obj.maximum_existence - obj.existence
+
+    def get_details (self, obj):
+        queryset = (EntranceThrough.objects.filter(medician=obj.id).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[:3]
+        return queryset
+          
+
+    def get_medicine_full (self, obj):
+        if (obj.kind and obj.weight): 
+            return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")" + " " + obj.weight
+        if (obj.kind): 
+            return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")"
+        else:
+            return obj.brand_name
+    class Meta:
+        model = Medician
+        fields = ['id', 'medicine_full','quantity', 'details' ]
 
 
 class KindSerializer(serializers.ModelSerializer):

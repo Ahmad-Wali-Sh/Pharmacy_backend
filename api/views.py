@@ -1,12 +1,13 @@
 from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySeralizer, KindSerializer, CountrySerializer, PrescriptionSerializer, UnitSeralizer, \
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
-    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer
+    CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer, \
+    PurchaseListSerializer, PurchaseListQuerySerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict
+    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -20,6 +21,7 @@ from drf_multiple_model.viewsets import FlatMultipleModelAPIViewSet
 from django.contrib.postgres.forms.array import SimpleArrayField
 from django_filters.filters import Filter
 from django.db import models
+from django.db.models import F
 
 class ArrayOverlapFilter(Filter):
     field_class = SimpleArrayField
@@ -110,6 +112,14 @@ class FinalRegisterView(viewsets.ModelViewSet):
     queryset = FinalRegister.objects.all()
     serializer_class = FinalRegisterSerializer
     permission_classes = [D7896DjangoModelPermissions]
+
+class PuchaseListView(viewsets.ModelViewSet):
+    queryset = PurchaseList.objects.all()
+    serializer_class = PurchaseListSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id','company_1__market', 'company_1']
+    ordering = ['id',]
 
 class CityView(viewsets.ModelViewSet):
     queryset = City.objects.all()
@@ -309,6 +319,15 @@ class MedicineWithView (viewsets.ModelViewSet):
     serializer_class = MedicineWithSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = ('medicine',)
+
+class PurchaseListQueryView (viewsets.ModelViewSet):
+    queryset =Medician.objects.filter(to_buy=True) | Medician.objects.filter(existence__lt=F('minmum_existence')).filter(shorted=False)
+    serializer_class = PurchaseListQuerySerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id',]
+    ordering = ['id',]
 
 class MedicineConflictView (viewsets.ModelViewSet):
     queryset = MedicineConflict.objects.all()
