@@ -113,8 +113,6 @@ class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
         max_length=100, blank=True, null=True), null=True, blank=True, default=list)
-    # barcode = ArrayField(models.CharField(
-    #     max_length=200, blank=True, null=True, unique=True), default=list,null=True, blank=True)
     barcode = models.CharField(max_length=255, null=True, blank=True)
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
@@ -152,18 +150,10 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
-    
-
-    # objects = MyManager()
+ 
 
     def __str__(self):
         return self.brand_name
-
-    # def save(self, *args, **kwargs):
-    #     self.full_clean()
-    #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
-    #     super().save(*args, **kwargs)
-
 
 
 
@@ -512,6 +502,8 @@ class EntranceThrough(models.Model):
             return result
 
         self.medician.existence = entrance_sum()
+        if (entrance_sum() >= self.medician.unsubmited_existence):
+            self.medician.unsubmited_existence = 0
         self.medician.save()
 
 

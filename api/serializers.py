@@ -156,6 +156,10 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
     medicine_full = serializers.SerializerMethodField()
     details = serializers.SerializerMethodField()
     quantity = serializers.SerializerMethodField()
+    medicine_unsubmited = serializers.SerializerMethodField()
+
+    def get_medicine_unsubmited (self, obj):
+        return obj.unsubmited_existence
 
     def get_quantity (self, obj):
         return obj.maximum_existence - obj.existence
@@ -174,7 +178,7 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
             return obj.brand_name
     class Meta:
         model = Medician
-        fields = ['id', 'medicine_full','quantity', 'details' ]
+        fields = ['id', 'medicine_full','quantity', 'details','medicine_unsubmited','shorted']
 
 
 class KindSerializer(serializers.ModelSerializer):
