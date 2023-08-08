@@ -5,7 +5,7 @@ from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
 from django_jalali.db import models as jmodels
-from django.utils import timezone 
+from django.utils import timezone
 from datetime import date
 import datetime
 from django.db.models import Count
@@ -21,6 +21,7 @@ from django import forms
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+
 
 class User(AbstractUser):
     image = models.ImageField(
@@ -52,7 +53,8 @@ class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds')
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
+                                optimized_image_resize_method="cover")
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -64,7 +66,8 @@ class PharmGroup(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/pharm_groub')
+                                upload_to='frontend/public/dist/images/pharm_groub', optimized_image_output_size=(500, 500),
+                                optimized_image_resize_method="cover")
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -75,7 +78,8 @@ class PharmGroup(models.Model):
 class Country(models.Model):
     name = models.CharField(max_length=50)
     image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/countries')
+                                upload_to='frontend/public/dist/images/countries', optimized_image_output_size=(500, 500),
+                                optimized_image_resize_method="cover")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -89,7 +93,6 @@ class Unit(models.Model):
         return self.name
 
 
-
 class Department (models.Model):
     name = models.CharField(max_length=240)
     over_price_money = models.FloatField(default=0)
@@ -101,6 +104,7 @@ class Department (models.Model):
 
     def __str__(self):
         return self.name
+
 
 class BigCompany (models.Model):
     name = models.CharField(max_length=200)
@@ -139,22 +143,23 @@ class Medician(models.Model):
     usages = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/medician')
+                                upload_to='frontend/public/dist/images/medician', optimized_image_output_size=(500, 500),
+                                optimized_image_resize_method="cover")
     patient_approved = models.BooleanField(default=False)
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
+    department = models.ForeignKey(
+        Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
-    big_company = models.ForeignKey(BigCompany, on_delete=models.DO_NOTHING, blank=True, null=True)
+    big_company = models.ForeignKey(
+        BigCompany, on_delete=models.DO_NOTHING, blank=True, null=True)
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
- 
 
     def __str__(self):
         return self.brand_name
-
 
 
 GENDER_CHOICES = (
@@ -287,7 +292,7 @@ class PrescriptionThrough(models.Model):
 
         prescription_through_total = list(PrescriptionThrough.objects.filter(
             prescription_id=self.prescription.id).aggregate(Sum('total_price')
-        ).values())[0]
+                                                            ).values())[0]
 
         if prescription_through_total:
             self.prescription.grand_total = prescription_through_total
@@ -303,6 +308,7 @@ class City (models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Market (models.Model):
     name = models.CharField(max_length=100)
@@ -327,8 +333,10 @@ class PharmCompany (models.Model):
     company_online = models.CharField(max_length=50, null=True, blank=True)
     address = models.CharField(max_length=150,  blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    city = models.ForeignKey(City, on_delete=models.CASCADE, null=True, blank=True)
-    market = models.ForeignKey(Market, on_delete=models.CASCADE, null=True, blank=True)
+    city = models.ForeignKey(
+        City, on_delete=models.CASCADE, null=True, blank=True)
+    market = models.ForeignKey(
+        Market, on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -374,6 +382,7 @@ class FinalRegister (models.Model):
     def __str__(self):
         return self.name
 
+
 WHOLESALE_CHOICE = (
     ("WHOLESALE", "WHOLESALE"),
     ("SINGULAR", "SINGULAR")
@@ -395,7 +404,8 @@ class Entrance (models.Model):
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
     discount_percent = models.FloatField(default=0)
-    wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
+    wholesale = models.CharField(
+        max_length=100, choices=WHOLESALE_CHOICE, default=1)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
     currency_rate = models.FloatField(default=1)
@@ -404,51 +414,52 @@ class Entrance (models.Model):
     def __str__(self):
         return self.company.name
 
-    def save(self, *args,**kwargs):
+    def save(self, *args, **kwargs):
         self.currency_rate = self.currency.rate
 
         super(Entrance, self).save(*args, **kwargs)
 
+
 class EntranceThrough(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
     medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    number_in_factor = models.IntegerField() 
-    each_price_factor = models.FloatField()  
-    each_price = models.FloatField(default=1) 
-    discount_money = models.FloatField(default=0) 
+    number_in_factor = models.IntegerField()
+    each_price_factor = models.FloatField()
+    each_price = models.FloatField(default=1)
+    discount_money = models.FloatField(default=0)
     no_box = models.FloatField(default=1)
-    discount_percent = models.FloatField(default=0)  
+    discount_percent = models.FloatField(default=0)
     total_purchaseـafghani = models.FloatField(
-        default=1) 
+        default=1)
     total_purchaseـcurrency = models.FloatField(
-        default=1)  
+        default=1)
     total_purchase_currency_before = models.FloatField(default=0)
     discount_value = models.FloatField(default=0)
-    each_quantity = models.FloatField(default=1) 
-    quantity_bonus = models.FloatField(default=0)  
-    bonus_value = models.FloatField(default=0) 
+    each_quantity = models.FloatField(default=1)
+    quantity_bonus = models.FloatField(default=0)
+    bonus_value = models.FloatField(default=0)
     shortage = models.FloatField(default=0)
     lease = models.BooleanField(default=False)
     each_purchase_price = models.FloatField(
-        default=1)  
+        default=1)
     each_sell_price = models.FloatField(
         default=0)
     each_sell_price_afg = models.FloatField(
         default=0
     )
-    total_sell = models.FloatField(default=0) 
-    interest_percent = models.FloatField(default=20)  
+    total_sell = models.FloatField(default=0)
+    interest_percent = models.FloatField(default=20)
     register_quantity = models.IntegerField(
-        default=0) 
-    total_interest = models.FloatField(default=0)  
-    expire_date = models.DateField()  
+        default=0)
+    total_interest = models.FloatField(default=0)
+    expire_date = models.DateField()
     timestamp = models.DateTimeField(auto_now_add=True)
     batch_number = models.CharField(max_length=100, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    interest_money = models.FloatField(default=0)  
+    interest_money = models.FloatField(default=0)
     bonus_interest = models.FloatField(default=0)
     rate = models.FloatField(default=1)
-    rate_name = models.CharField(max_length=40, blank=True, null=True) 
+    rate_name = models.CharField(max_length=40, blank=True, null=True)
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.entrance.company.name + ".co"
@@ -456,19 +467,28 @@ class EntranceThrough(models.Model):
     def save(self, *args, **kwargs):
 
         round_digit = 1
-        
-        self.total_purchase_currency_before = round(self.number_in_factor * self.each_price_factor, round_digit)
-        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (1-self.discount_percent / 100) - self.discount_money, round_digit)
-        self.discount_value = round(self.total_purchase_currency_before - self.total_purchaseـcurrency, round_digit)
+
+        self.total_purchase_currency_before = round(
+            self.number_in_factor * self.each_price_factor, round_digit)
+        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (
+            1-self.discount_percent / 100) - self.discount_money, round_digit)
+        self.discount_value = round(
+            self.total_purchase_currency_before - self.total_purchaseـcurrency, round_digit)
         if (self.quantity_bonus > 0):
-            self.bonus_value = round((self.total_purchase_currency_before / (self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
+            self.bonus_value = round((self.total_purchase_currency_before / (
+                self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
         else:
             self.bonus_value = 0
-        self.each_purchase_price = round((self.each_price_factor / self.no_box), round_digit)
-        self.each_price = round(self.each_purchase_price * (1+ self.interest_percent / 100), round_digit)
-        self.total_sell = round(self.each_price * self.no_box * self.number_in_factor, round_digit)
-        self.register_quantity = ((self.number_in_factor * self.no_box) - (self.shortage * self.no_box)) + self.quantity_bonus
-        self.each_sell_price = round(self.each_sell_price_afg / self.entrance.currency_rate, round_digit)
+        self.each_purchase_price = round(
+            (self.each_price_factor / self.no_box), round_digit)
+        self.each_price = round(
+            self.each_purchase_price * (1 + self.interest_percent / 100), round_digit)
+        self.total_sell = round(
+            self.each_price * self.no_box * self.number_in_factor, round_digit)
+        self.register_quantity = ((self.number_in_factor * self.no_box) -
+                                  (self.shortage * self.no_box)) + self.quantity_bonus
+        self.each_sell_price = round(
+            self.each_sell_price_afg / self.entrance.currency_rate, round_digit)
         self.rate = self.entrance.currency_rate
         self.rate_name = self.entrance.currency.name
 
@@ -675,8 +695,8 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
         result = -(prescription_sum_query)
 
     prescription_through_total = list(PrescriptionThrough.objects.filter(
-            prescription_id=instance.prescription.id).aggregate(Sum('total_price')
-        ).values())[0]
+        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+                                                            ).values())[0]
 
     if prescription_through_total:
         instance.prescription.grand_total = prescription_through_total
@@ -687,6 +707,7 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 
     instance.medician.existence = result
     instance.medician.save()
+
 
 class Revenue (models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -699,13 +720,14 @@ class Revenue (models.Model):
     start_end = models.TimeField(auto_now=False, null=True, blank=True)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='employee')
-    revenue_through = models.ManyToManyField(Prescription, through="RevenueTrough")
-
+    employee = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='employee')
+    revenue_through = models.ManyToManyField(
+        Prescription, through="RevenueTrough")
 
     def save(self, *args, **kwargs):
 
-        if self.active == True: 
+        if self.active == True:
             self.start_time = timezone.now().strftime("%H:%M:%S")
         else:
             self.start_end = timezone.now().strftime("%H:%M:%S")
@@ -720,9 +742,8 @@ class RevenueTrough (models.Model):
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-
     def save(self, *args, **kwargs):
-       
+
         if self.sold == True:
             self.prescription.sold = True
             self.prescription.save()
@@ -732,6 +753,7 @@ class RevenueTrough (models.Model):
     class Meta:
         unique_together = ('revenue', 'prescription',)
 
+
 class PurchaseList (models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
     need_quautity = models.FloatField(default=0)
@@ -739,11 +761,13 @@ class PurchaseList (models.Model):
     price_1 = models.FloatField(default=0)
     bonus_1 = models.FloatField(default=0)
     date_1 = models.DateField()
-    company_2 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING, related_name="company_2")
+    company_2 = models.ForeignKey(
+        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_2")
     price_2 = models.FloatField(default=0)
     bonus_2 = models.FloatField(default=0)
     date_2 = models.DateField()
-    company_3 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING, related_name="company_3")
+    company_3 = models.ForeignKey(
+        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_3")
     price_3 = models.FloatField(default=0)
     bonus_3 = models.FloatField(default=0)
     date_3 = models.DateField()
@@ -758,15 +782,17 @@ class MedicineWith (models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
     includes = models.ManyToManyField(Medician, related_name="medicines")
 
-    def __str__ (self):
+    def __str__(self):
         return self.medicine.brand_name
 
+
 class MedicineConflict (models.Model):
-    medicine_1 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING, related_name="medicine_1")
+    medicine_1 = models.ForeignKey(
+        Medician, on_delete=models.DO_NOTHING, related_name="medicine_1")
     medicine_2 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
 
-    def __str__ (self):
-        return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name 
+    def __str__(self):
+        return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
 
 @receiver(post_delete, sender=RevenueTrough)
@@ -776,21 +802,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 
     def total_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
-            else:
-                total_revenue_through = 0
-            return total_revenue_through
+        else:
+            total_revenue_through = 0
+        return total_revenue_through
 
     def discount_revenue_through():
         total_revenue_through = list(RevenueTrough.objects.filter(
             revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
         else:
             total_revenue_through = 0
         return total_revenue_through
@@ -801,7 +827,7 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
         else:
             total_revenue_through = 0
         return total_revenue_through
@@ -812,7 +838,7 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
         else:
             total_revenue_through = 0
         return total_revenue_through
@@ -823,7 +849,7 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
         else:
             total_revenue_through = 0
         return total_revenue_through
@@ -842,58 +868,58 @@ def revenue_through_submit(sender, instance, **kwargs):
 
     def total_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
-            else:
-                total_revenue_through = instance.prescription.grand_total
-            return total_revenue_through
+        else:
+            total_revenue_through = instance.prescription.grand_total
+        return total_revenue_through
 
     def discount_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-            else:
-                total_revenue_through = instance.prescription.discount_money
-            return total_revenue_through
+        else:
+            total_revenue_through = instance.prescription.discount_money
+        return total_revenue_through
 
     def khairat_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-            else:
-                total_revenue_through = instance.prescription.khairat
-            return total_revenue_through
+        else:
+            total_revenue_through = instance.prescription.khairat
+        return total_revenue_through
 
     def zakat_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-            else:
-                total_revenue_through = instance.prescription.zakat
-            return total_revenue_through
+        else:
+            total_revenue_through = instance.prescription.zakat
+        return total_revenue_through
 
     def rounded_revenue_through():
 
+        total_revenue_through = list(RevenueTrough.objects.filter(
+            revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
+        if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
                 revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-            if total_revenue_through != None:
-                total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-            else:
-                total_revenue_through = instance.prescription.rounded_number
-            return total_revenue_through
+        else:
+            total_revenue_through = instance.prescription.rounded_number
+        return total_revenue_through
 
     instance.revenue.rounded = rounded_revenue_through()
     instance.revenue.zakat = zakat_revenue_through()
