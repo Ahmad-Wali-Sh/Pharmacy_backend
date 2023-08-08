@@ -243,7 +243,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
 
 
     def get_medicine_full (self, obj):
-        if (obj.kind and obj.weight): 
+        if (obj.kind and obj.weight and obj.ml): 
             return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")" + " " + obj.weight
         if (obj.kind and obj.ml): 
             return obj.kind.name_english + "." + obj.brand_name + " " + obj.ml + "(" + str(",".join(map(str, obj.generic_name))) + ")"
@@ -351,9 +351,9 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
 
 
     def get_medicine_full (self, obj):
-        if (obj.medician.kind and obj.medician.weight): 
+        if (obj.medician.kind and obj.medician.weight and obj.medician.ml): 
             return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")" + " " + obj.medician.weight
-        if (obj.medician.kind): 
+        if (obj.medician.kind and obj.medician.ml): 
             return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")"
         else:
             return obj.medician.brand_name
@@ -445,9 +445,9 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
     medicine_full = serializers.SerializerMethodField()
 
     def get_medicine_full (self, obj):
-        if (obj.medician.kind and obj.medician.weight): 
+        if (obj.medician.kind and obj.medician.weight and obj.medician.ml): 
             return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")" + " " + obj.medician.weight
-        if (obj.medician.kind): 
+        if (obj.medician.kind and obj.medician.ml): 
             return obj.medician.kind.name_english + "." + obj.medician.brand_name + " " + obj.medician.ml + "(" + str(",".join(map(str, obj.medician.generic_name))) + ")"
         else:
             return obj.medician.brand_name
