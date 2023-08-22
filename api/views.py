@@ -184,6 +184,8 @@ class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['id',]
 
 
 class CurrencyView(viewsets.ModelViewSet):
