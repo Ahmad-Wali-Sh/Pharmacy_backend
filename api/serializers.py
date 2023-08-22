@@ -417,9 +417,13 @@ class FinalRegisterSerializer(serializers.ModelSerializer):
 
 class DoctorNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    code_name = serializers.SerializerMethodField()
 
     def get_username (self, obj):
         return obj.user.username
+    
+    def get_code_name (self, obj):
+        return str(obj.id) + "." + obj.name
 
     class Meta:
         model = DoctorName
@@ -428,9 +432,13 @@ class DoctorNameSerializer(serializers.ModelSerializer):
         
 class PatientNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    code_name = serializers.SerializerMethodField()
 
     def get_username (self, obj):
         return obj.user.username
+    
+    def get_code_name (self, obj):
+        return str(obj.id) + "." + obj.name
 
     class Meta:
         model = PatientName
