@@ -243,6 +243,12 @@ class MedicianSeralizer(serializers.ModelSerializer):
     kind_image = serializers.SerializerMethodField()
     country_image = serializers.SerializerMethodField()
     pharm_group_image = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+
+    def get_department_name (self, obj):
+        if (obj.department):
+            return obj.department.name
+        else: ""
 
     def get_kind_image (self, obj):
         if (obj.kind):
