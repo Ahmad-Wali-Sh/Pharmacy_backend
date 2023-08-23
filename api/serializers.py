@@ -240,6 +240,24 @@ class MedicianSeralizer(serializers.ModelSerializer):
     country_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    kind_image = serializers.SerializerMethodField()
+    country_image = serializers.SerializerMethodField()
+    pharm_group_image = serializers.SerializerMethodField()
+
+    def get_kind_image (self, obj):
+        if (obj.kind):
+            return obj.kind.image
+        else: return ""
+    
+    def get_country_image (self, obj):
+        if (obj.country):
+            return obj.country.image
+        else: return ""
+    
+    def get_pharm_group_image (self, obj):
+        if (obj.pharm_group):
+            return obj.pharm_group.image
+        else: return ""
 
 
     def get_medicine_full (self, obj):
