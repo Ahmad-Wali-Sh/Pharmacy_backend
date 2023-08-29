@@ -206,7 +206,16 @@ class CountrySerializer(serializers.ModelSerializer):
 class PrescriptionSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
 
+    def get_patient_name (self, obj):
+        if (obj.name):
+            return str(obj.name.id) + "." + obj.name.name
+
+    def get_doctor_name (self, obj):
+        if (obj.doctor):
+            return str(obj.doctor.id) + "." + obj.doctor.name
 
     def get_username (self, obj):
         return obj.user.username
