@@ -260,17 +260,17 @@ class MedicianSeralizer(serializers.ModelSerializer):
         else: ""
 
     def get_kind_image (self, obj):
-        if (obj.kind):
+        if (obj.kind and obj.kind.image):
             return obj.kind.image
         else: return ""
     
     def get_country_image (self, obj):
-        if (obj.country):
+        if (obj.country and obj.country.image):
             return obj.country.image
         else: return ""
     
     def get_pharm_group_image (self, obj):
-        if (obj.pharm_group):
+        if (obj.pharm_group and obj.pharm_group.image):
             return obj.pharm_group.image
         else: return ""
 
