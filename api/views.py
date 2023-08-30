@@ -54,7 +54,6 @@ class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
     generic_name = django_filters.CharFilter(method=filter_by_generics)
-    barcode = django_filters.CharFilter(lookup_expr="icontains")
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
