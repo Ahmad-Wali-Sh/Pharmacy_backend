@@ -117,7 +117,10 @@ class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
         max_length=100, blank=True, null=True), null=True, blank=True, default=list)
-    barcode = models.CharField(max_length=255, null=True, blank=True)
+    barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    # barcode = ArrayField(
+    #     models.CharField(max_length=255, null=True, blank=True), blank=True, null=True, default=list
+    # )
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(

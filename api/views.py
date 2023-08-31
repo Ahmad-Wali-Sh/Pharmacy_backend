@@ -53,15 +53,13 @@ class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
 
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
-    generic_name = django_filters.CharFilter(method=filter_by_generics)
+    generic_name = django_filters.BaseInFilter(lookup_expr='contains', method=filter_by_generics)
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_persian = django_filters.CharFilter(lookup_expr='icontains')
     country__name = django_filters.CharFilter(lookup_expr='icontains')
     big_company__name = django_filters.CharFilter(lookup_expr='icontains')
-
-
 
     class Meta:
         model = Medician
