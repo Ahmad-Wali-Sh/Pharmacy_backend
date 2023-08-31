@@ -57,6 +57,7 @@ class MedicianFilter(django_filters.FilterSet):
     brand_name = django_filters.CharFilter(lookup_expr="icontains")
     ml = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
+    kind__name_persian = django_filters.CharFilter(lookup_expr='icontains')
     country__name = django_filters.CharFilter(lookup_expr='icontains')
     big_company__name = django_filters.CharFilter(lookup_expr='icontains')
 
@@ -64,7 +65,7 @@ class MedicianFilter(django_filters.FilterSet):
 
     class Meta:
         model = Medician
-        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'big_company__name']
+        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'kind__name_persian','big_company__name']
 
 
 
