@@ -113,14 +113,37 @@ class BigCompany (models.Model):
         return self.name
 
 
+UNIQUE_ARRAY_FIELDS = ('barcode',)
+
+class MyManager(models.Manager):
+    def prevent_duplicates_in_array_fields(self, model, array_field):
+        def duplicate_check(_lookup_params):
+            fields = self.model._meta.get_fields()
+            for unique_field in UNIQUE_ARRAY_FIELDS:
+                unique_field_index = [getattr(field, 'name', '') for field in fields]
+                try:
+                    # if model doesn't have the unique field, then proceed to the next loop iteration
+                    unique_field_index = unique_field_index.index(unique_field)
+                except ValueError:
+                    continue
+            all_items_in_db = [item for sublist in self.values_list(fields[unique_field_index].name).exclude(**_lookup_params) for item in sublist]
+            all_items_in_db = [item for sublist in all_items_in_db for item in sublist]
+            if not set(array_field).isdisjoint(all_items_in_db):
+                raise ValidationError('{} contains items already in the database'.format(array_field))
+        if model.id:
+            lookup_params = {'id': model.id}
+        else:   
+            lookup_params = {}
+        duplicate_check(lookup_params)
+
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
         max_length=100, blank=True, null=True), null=True, blank=True, default=list)
-    barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
-    # barcode = ArrayField(
-    #     models.CharField(max_length=255, null=True, blank=True), blank=True, null=True, default=list
-    # )
+    # barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    barcode = ArrayField(
+        models.CharField(max_length=255, null=True, blank=True), default=list, blank=True, null=True
+    )
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(
@@ -160,9 +183,15 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
+    objects = MyManager()
 
     def __str__(self):
         return self.brand_name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
+        super().save(*args, **kwargs)
 
 
 GENDER_CHOICES = (

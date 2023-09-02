@@ -22,6 +22,7 @@ from django.contrib.postgres.forms.array import SimpleArrayField
 from django_filters.filters import Filter
 from django.db import models
 from django.db.models import F
+from django_filters.fields import Lookup
 
 class ArrayOverlapFilter(Filter):
     field_class = SimpleArrayField
@@ -50,6 +51,11 @@ class CharArrayFilter(django_filters.BaseCSVFilter, django_filters.CharFilter):
 class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
     pass
 
+class ListFilter(Filter):
+    def filter(self, qs, value):
+        value_list = value.split(u',')
+        return super(ListFilter, self).filter(qs, Lookup(value_list, 'in'))
+
 
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
@@ -60,10 +66,14 @@ class MedicianFilter(django_filters.FilterSet):
     kind__name_persian = django_filters.CharFilter(lookup_expr='icontains')
     country__name = django_filters.CharFilter(lookup_expr='icontains')
     big_company__name = django_filters.CharFilter(lookup_expr='icontains')
+    barcode__contains = CharArrayFilter(lookup_expr='contains', field_name='barcode')
 
     class Meta:
         model = Medician
-        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'kind__name_persian','big_company__name']
+        filter_fields = {
+            'barcode' : ['exact', 'icontains']
+        }
+        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode__contains", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'kind__name_persian','big_company__name']
 
 
 
