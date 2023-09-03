@@ -21,6 +21,10 @@ from django import forms
 from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+import barcode
+from barcode.writer import ImageWriter
+from io import BytesIO
+from django.core.files import File
 
 
 class User(AbstractUser):
@@ -54,7 +58,7 @@ class Kind(models.Model):
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
-                                optimized_image_resize_method="cover")
+        optimized_image_resize_method="cover")
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -113,11 +117,43 @@ class BigCompany (models.Model):
         return self.name
 
 
+UNIQUE_ARRAY_FIELDS = ('barcode',)
+
+
+class MyManager(models.Manager):
+    def prevent_duplicates_in_array_fields(self, model, array_field):
+        def duplicate_check(_lookup_params):
+            fields = self.model._meta.get_fields()
+            for unique_field in UNIQUE_ARRAY_FIELDS:
+                unique_field_index = [
+                    getattr(field, 'name', '') for field in fields]
+                try:
+                    # if model doesn't have the unique field, then proceed to the next loop iteration
+                    unique_field_index = unique_field_index.index(unique_field)
+                except ValueError:
+                    continue
+            all_items_in_db = [item for sublist in self.values_list(
+                fields[unique_field_index].name).exclude(**_lookup_params) for item in sublist]
+            all_items_in_db = [
+                item for sublist in all_items_in_db for item in sublist]
+            if not set(array_field).isdisjoint(all_items_in_db):
+                raise ValidationError(
+                    '{} contains items already in the database'.format(array_field))
+        if model.id:
+            lookup_params = {'id': model.id}
+        else:
+            lookup_params = {}
+        duplicate_check(lookup_params)
+
+
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
         max_length=100, blank=True, null=True), null=True, blank=True, default=list)
-    barcode = models.CharField(max_length=255, null=True, blank=True)
+    # barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    barcode = ArrayField(
+        models.CharField(max_length=255, null=True, blank=True), default=list, blank=True, null=True
+    )
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(
@@ -157,9 +193,15 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
+    objects = MyManager()
 
     def __str__(self):
         return self.brand_name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
+        super().save(*args, **kwargs)
 
 
 GENDER_CHOICES = (
@@ -224,11 +266,22 @@ class Prescription (models.Model):
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    refund = models.FloatField(default=0)
+    barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True)
 
     def __str__(self):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
+
+        if (self.id):
+            number = int(float(self.id))
+            EAN = barcode.get_barcode_class('issn')
+            ean = EAN(f'{number}', writer=ImageWriter())
+            buffer = BytesIO()
+            ean.write(buffer)
+            self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
+
 
         objects_count = Prescription.objects.all().count()
         if Prescription.objects.filter(created=date.today()):
@@ -244,6 +297,8 @@ class Prescription (models.Model):
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
             super(Prescription, self).save()
+
+        return super().save(*args, **kwargs)
 
 
 class PrescriptionThrough(models.Model):
@@ -294,12 +349,22 @@ class PrescriptionThrough(models.Model):
             prescription_id=self.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
 
+        last_revenue = list(RevenueTrough.objects.filter(
+            prescription_id=self.prescription.id).aggregate(Sum('purchased')
+                                                            ).values())[0]
+
+        if (self.prescription.sold == True and last_revenue):
+            self.prescription.sold = False
+            self.prescription.refund = prescription_through_total - last_revenue
         if prescription_through_total:
             self.prescription.grand_total = prescription_through_total
-            self.prescription.save()
         else:
             self.prescription.grand_total = 0
-            self.prescription.save()
+
+        if (last_revenue == prescription_through_total):
+            self.prescription.sold = True
+
+        self.prescription.save()
 
 
 class City (models.Model):
@@ -739,10 +804,17 @@ class RevenueTrough (models.Model):
     revenue = models.ForeignKey(Revenue, on_delete=models.CASCADE)
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
+    purchased = models.FloatField(default=0)
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
+        if (self.prescription.refund == 0):
+            self.purchased = self.prescription.grand_total
+        if (self.prescription.refund != 0):
+            self.purchased = self.prescription.refund
+            self.prescription.sold = True
+            self.prescription.refund = 0
 
         if self.sold == True:
             self.prescription.sold = True
@@ -750,8 +822,8 @@ class RevenueTrough (models.Model):
 
         super(RevenueTrough, self).save()
 
-    class Meta:
-        unique_together = ('revenue', 'prescription',)
+    # class Meta:
+    #     unique_together = ('revenue', 'prescription',)
 
 
 class PurchaseList (models.Model):
@@ -794,19 +866,61 @@ class MedicineConflict (models.Model):
     def __str__(self):
         return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
+@receiver(post_delete, sender=PrescriptionThrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+
+    prescription_through_total = list(PrescriptionThrough.objects.filter(
+        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+                                                            ).values())[0]
+
+    last_revenue = list(RevenueTrough.objects.filter(
+        prescription_id=instance.prescription.id).aggregate(Sum('purchased')
+                                                            ).values())[0]
+
+    # if (instance.prescription.sold == True and last_revenue):
+    #     grand_total_price = instance.prescription.grand_total
+    if (prescription_through_total and last_revenue):
+        instance.prescription.sold = False
+        instance.prescription.refund = prescription_through_total - last_revenue
+    elif (last_revenue): 
+        instance.prescription.sold = False
+        instance.prescription.refund = - last_revenue
+    else :
+        instance.prescription.sold = False
+        instance.prescription.refund = 0
+
+    instance.prescription.save()
 
 @receiver(post_delete, sender=RevenueTrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
-    instance.prescription.sold = False
+
+    prescription_through_total = list(PrescriptionThrough.objects.filter(
+    prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+                                                            ).values())[0]
+
+    last_revenue = list(RevenueTrough.objects.filter(
+        prescription_id=instance.prescription.id).aggregate(Sum('purchased')
+                                                            ).values())[0]
+
+    if (prescription_through_total and last_revenue):
+        instance.prescription.sold = False
+        instance.prescription.refund = prescription_through_total - last_revenue
+    elif (last_revenue): 
+        instance.prescription.sold = False
+        instance.prescription.refund = - last_revenue
+    else :
+        instance.prescription.sold = False
+        instance.prescription.refund = 0
+
     instance.prescription.save()
 
     def total_revenue_through():
 
         total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+            revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
         else:
             total_revenue_through = 0
         return total_revenue_through
@@ -854,13 +968,15 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             total_revenue_through = 0
         return total_revenue_through
 
-    instance.revenue.rounded = rounded_revenue_through()
 
+
+    instance.revenue.rounded = rounded_revenue_through()
     instance.revenue.zakat = zakat_revenue_through()
     instance.revenue.khairat = khairat_revenue_through()
     instance.revenue.discount = discount_revenue_through()
     instance.revenue.total = total_revenue_through()
     instance.revenue.save()
+
 
 
 @receiver(post_save, sender=RevenueTrough)
@@ -869,10 +985,10 @@ def revenue_through_submit(sender, instance, **kwargs):
     def total_revenue_through():
 
         total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+            revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
         if total_revenue_through != None:
             total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__grand_total')).values())[0]
+                revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
         else:
             total_revenue_through = instance.prescription.grand_total
         return total_revenue_through

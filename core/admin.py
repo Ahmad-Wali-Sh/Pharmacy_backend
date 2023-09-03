@@ -18,6 +18,8 @@ UserAdmin.fieldsets += (('Extra Fields', {'fields': ('image', )}),)
 
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    skip_admin_log = True
+    IMPORT_EXPORT_SKIP_ADMIN_CONFIRM = False
     pass 
 
 class EntracnceAdmin(ImportExportModelAdmin, admin.ModelAdmin):
