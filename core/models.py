@@ -275,15 +275,6 @@ class Prescription (models.Model):
     
     def save(self, *args, **kwargs):
 
-        if (self.id):
-            number = int(float(self.id))
-            EAN = barcode.get_barcode_class('issn')
-            ean = EAN(f'{number}', writer=ImageWriter())
-            buffer = BytesIO()
-            ean.write(buffer)
-            print(ean.get_fullcode())
-            self.barcode_str = ean.get_fullcode()
-            self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
 
         objects_count = Prescription.objects.all().count()
@@ -299,6 +290,14 @@ class Prescription (models.Model):
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
 
+        number = Prescription.objects.all().count() + 1
+        print(number)
+        EAN = barcode.get_barcode_class('issn')
+        ean = EAN(f'{number}', writer=ImageWriter())
+        buffer = BytesIO()
+        ean.write(buffer)
+        # self.barcode_str = ean.get_fullcode()
+        self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
         return super().save(*args, **kwargs)
 
