@@ -244,7 +244,7 @@ class PrescriptionFilterView(django_filters.FilterSet):
     created = django_filters.DateTimeFromToRangeFilter() 
     class Meta:
         model = Prescription
-        fields =['prescription_number','department', 'created', 'name', 'doctor', 'prescription_number', 'sold']
+        fields =['prescription_number','department', 'created', 'name', 'doctor', 'prescription_number', 'sold', 'barcode_str']
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
