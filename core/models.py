@@ -267,11 +267,12 @@ class Prescription (models.Model):
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     refund = models.FloatField(default=0)
-    barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True)
+    barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
+    barcode_str = models.CharField(default=0, max_length=255, blank=True, editable=False)
 
     def __str__(self):
         return self.prescription_number
-
+    
     def save(self, *args, **kwargs):
 
         if (self.id):
@@ -280,6 +281,8 @@ class Prescription (models.Model):
             ean = EAN(f'{number}', writer=ImageWriter())
             buffer = BytesIO()
             ean.write(buffer)
+            print(ean.get_fullcode())
+            self.barcode_str = ean.get_fullcode()
             self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
 
@@ -293,10 +296,9 @@ class Prescription (models.Model):
         time = date.today().strftime("%y-%m-%d")
         if self.prescription_number:
             pass
-            super(Prescription, self).save()
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
-            super(Prescription, self).save()
+
 
         return super().save(*args, **kwargs)
 
