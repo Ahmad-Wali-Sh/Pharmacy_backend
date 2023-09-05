@@ -8,8 +8,8 @@ from django_jalali.db import models as jmodels
 from django.utils import timezone
 from datetime import date
 import datetime
+import random
 from django.db.models import Count
-
 from django.utils import timezone
 from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
 from django.dispatch import receiver
@@ -266,9 +266,10 @@ class Prescription (models.Model):
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(default=timezone.now, editable=False)
     refund = models.FloatField(default=0)
     barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
-    barcode_str = models.CharField(default=0, max_length=255, blank=True, editable=False)
+    barcode_str = models.CharField(max_length=255, blank=True, editable=False)
 
     def __str__(self):
         return self.prescription_number
@@ -290,14 +291,14 @@ class Prescription (models.Model):
         else:
             self.prescription_number = str(time) + "-" + str(new_number)
 
-        number = Prescription.objects.all().count() + 1
-        print(number)
-        EAN = barcode.get_barcode_class('issn')
-        ean = EAN(f'{number}', writer=ImageWriter())
-        buffer = BytesIO()
-        ean.write(buffer)
-        # self.barcode_str = ean.get_fullcode()
-        self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
+        if (self.barcode_str == ''):
+            number = random.randint(1000000000000, 9999999999999)
+            EAN = barcode.get_barcode_class('upc')
+            ean = EAN(f'{number}', writer=ImageWriter())
+            buffer = BytesIO()
+            ean.write(buffer)
+            self.barcode_str = ean.get_fullcode()
+            self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
         return super().save(*args, **kwargs)
 
@@ -357,6 +358,8 @@ class PrescriptionThrough(models.Model):
         if (self.prescription.sold == True and last_revenue):
             self.prescription.sold = False
             self.prescription.refund = prescription_through_total - last_revenue
+        if (self.prescription.sold == True):
+            self.prescription.sold = False
         if prescription_through_total:
             self.prescription.grand_total = prescription_through_total
         else:

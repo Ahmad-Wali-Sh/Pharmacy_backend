@@ -414,7 +414,8 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     medicine_full = serializers.SerializerMethodField()
 
 
-    def get_medicine_full (self, obj):
+    def get_medicine_full (self, res):
+        obj = res.medician
         kind_name = ""
         country_name = ""
         big_company_name = ''
