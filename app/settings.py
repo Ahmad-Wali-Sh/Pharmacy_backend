@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-4z2-@%cm9ua90#c*7qlxn7bc2wmbwpw77eznu2_#prtjqltt*$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', '127.0.0.1:3000', '192.168.60.3',]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -117,9 +117,9 @@ WSGI_APPLICATION = 'app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'Pharmacydb_v3',
-        'USER': 'postgres',
-        'PASSWORD': 'Ahmadwali$8',
+        'NAME': os.environ['DATABASE_NAME'],
+        'USER': os.environ['DATABASE_USER'],
+        'PASSWORD': os.environ['DATABASE_PASSWORD'],
         'HOST': '127.0.0.1',
         'PORT': '5432'
     }
