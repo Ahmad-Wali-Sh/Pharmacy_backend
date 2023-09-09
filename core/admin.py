@@ -1,5 +1,7 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
+from import_export import fields, resources
+from import_export.widgets import ForeignKeyWidget
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
@@ -27,6 +29,16 @@ class EntracnceAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         ('factor_date', JDateFieldListFilter),
     )
 
+class MedicineImport(resources.ModelResource):
+    kind = fields.Field(
+        column_name='kind',
+        attribute='kind',
+        widget=ForeignKeyWidget(Kind, 'name_english')
+    )
+
+    class Meta:
+        model = Medician
+
 
 class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('register_quantity', 'each_purchase_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
@@ -36,11 +48,12 @@ class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('total_price' ,)
 
-
+class MedicineAdmin(ImportExportModelAdmin):
+    resource_class = MedicineImport
 
 admin.site.register(User, UserAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
-admin.site.register(Medician, ImportAdmin)
+admin.site.register(Medician, MedicineAdmin)
 admin.site.register(Kind, ImportAdmin)
 admin.site.register(Country, ImportAdmin)
 admin.site.register(Unit, ImportAdmin)

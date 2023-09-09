@@ -6,6 +6,7 @@ from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription,
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -276,6 +277,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
     country_image = serializers.SerializerMethodField()
     pharm_group_image = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
+
     def get_department_name (self, obj):
         if (obj.department):
             return obj.department.name
