@@ -762,6 +762,8 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             (prescription_sum_query + outrance_sum_query)
     if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
         result = -(prescription_sum_query)
+    else:
+        result = instance.medician.existence
 
     prescription_through_total = list(PrescriptionThrough.objects.filter(
         prescription_id=instance.prescription.id).aggregate(Sum('total_price')
