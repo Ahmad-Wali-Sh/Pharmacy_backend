@@ -246,13 +246,13 @@ class DoctorName(models.Model):
 
 class Prescription (models.Model):
     department = models.ForeignKey(
-        Department, on_delete=models.CASCADE)  # انتخاب بخش فروش
+        Department, on_delete=models.RESTRICT)  # انتخاب بخش فروش
     prescription_number = models.CharField(
         max_length=60, unique=True, null=True, blank=True, editable=False)
     name = models.ForeignKey(
-        PatientName, on_delete=models.CASCADE, null=True, blank=True)
+        PatientName, on_delete=models.RESTRICT, null=True, blank=True)
     doctor = models.ForeignKey(
-        DoctorName, on_delete=models.CASCADE, null=True, blank=True)
+        DoctorName, on_delete=models.RESTRICT, null=True, blank=True)
     medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
@@ -265,7 +265,7 @@ class Prescription (models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
     sold = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
     timestamp = models.DateTimeField(default=timezone.now, editable=False)
     refund = models.FloatField(default=0)
     barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)

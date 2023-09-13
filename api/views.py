@@ -169,15 +169,27 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
     filterset_fields = ['prescription',]
     permission_classes = [D7896DjangoModelPermissions]
 
+class PatientFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = PatientName
+        fields = ['name', 'contact_number', 'id', 'gender', "tazkira_number"]
+
+
 
 class PatientNameView(viewsets.ModelViewSet):
-    queryset = PatientName.objects.all()
+    queryset = PatientName.objects.all().order_by('id')
     serializer_class = PatientNameSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = PatientFilter
     permission_classes = [D7896DjangoModelPermissions]
+
+        
 
 
 class DoctorNameView(viewsets.ModelViewSet):
-    queryset = DoctorName.objects.all()
+    queryset = DoctorName.objects.all().order_by('id')
     serializer_class = DoctorNameSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
