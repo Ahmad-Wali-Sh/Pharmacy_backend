@@ -118,18 +118,21 @@ class PurchaseListSerializer(serializers.ModelSerializer):
         big_company_name = ''
         generics = ''
         ml = ''
+        weight = ''
         if (obj.kind):
-            kind_name = obj.kind.name_english + " "
+            kind_name = obj.kind.name_english + "."
         if (obj.country):
-            kind_name = obj.country.name + " "
+            country_name = obj.country.name
         if (obj.big_company):
-            big_company_name = obj.big_company.name 
+            big_company_name = obj.big_company.name + " "
         if (obj.generic_name):
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" + " "
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" 
         if (obj.ml):
-            ml = obj.ml + " "
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
 
-        return obj.brand_name + ' ' + ml + kind_name + country_name + big_company_name
+        return kind_name + obj.brand_name + ' ' + obj.ml + " " + weight + ' ' + big_company_name + country_name
 
     def get_market_1 (self, obj):
         if (obj.company_1.market):
@@ -182,24 +185,28 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
         return queryset
           
 
-    def get_medicine_full (self, obj):
+    def get_medicine_full (self, res):
+        obj = res
         kind_name = ""
         country_name = ""
         big_company_name = ''
         generics = ''
         ml = ''
+        weight = ''
         if (obj.kind):
-            kind_name = obj.kind.name_english + " "
+            kind_name = obj.kind.name_english + "."
         if (obj.country):
-            kind_name = obj.country.name + " "
+            country_name = obj.country.name
         if (obj.big_company):
-            big_company_name = obj.big_company.name 
-        if (obj.ml):
-            ml = obj.ml + " "
+            big_company_name = obj.big_company.name + " "
         if (obj.generic_name):
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" + " "
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" 
+        if (obj.ml):
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
 
-        return obj.brand_name + ' ' + ml + kind_name + country_name + big_company_name
+        return kind_name + obj.brand_name + ' ' + obj.ml + " " + weight + ' ' + big_company_name + country_name
     class Meta:
         model = Medician
         fields = ['id', 'medicine_full','quantity', 'details','medicine_unsubmited','shorted']
@@ -299,24 +306,28 @@ class MedicianSeralizer(serializers.ModelSerializer):
         else: return ""
 
 
-    def get_medicine_full (self, obj):
+    def get_medicine_full (self, res):
+        obj = res
         kind_name = ""
         country_name = ""
         big_company_name = ''
         generics = ''
         ml = ''
+        weight = ''
         if (obj.kind):
-            kind_name = obj.kind.name_english + " "
+            kind_name = obj.kind.name_english + "."
         if (obj.country):
-            kind_name = obj.country.name + " "
+            country_name = obj.country.name
         if (obj.big_company):
-            big_company_name = obj.big_company.name 
+            big_company_name = obj.big_company.name + " "
         if (obj.generic_name):
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" + " "
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" 
         if (obj.ml):
-            ml = obj.ml + " "
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
 
-        return obj.brand_name + " " + ml + kind_name + country_name + big_company_name
+        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
 
     def get_kind_name (self, obj):
         if obj.kind:
@@ -423,18 +434,21 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
         big_company_name = ''
         generics = ''
         ml = ''
+        weight = ''
         if (obj.kind):
-            kind_name = obj.kind.name_english + " "
+            kind_name = obj.kind.name_english + "."
         if (obj.country):
-            kind_name = obj.country.name + " "
+            country_name = obj.country.name
         if (obj.big_company):
-            big_company_name = obj.big_company.name 
+            big_company_name = obj.big_company.name + " "
         if (obj.generic_name):
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" + " "
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} " 
         if (obj.ml):
-            ml = obj.ml + " "
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
 
-        return obj.brand_name + ' ' + ml + kind_name + country_name + big_company_name
+        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
     
     def get_medicine_min_expire (self,obj):
         return obj.medician.min_expire_date
@@ -537,18 +551,21 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
         big_company_name = ''
         generics = ''
         ml = ''
+        weight = ''
         if (obj.kind):
-            kind_name = obj.kind.name_english + " "
+            kind_name = obj.kind.name_english + "."
         if (obj.country):
-            kind_name = obj.country.name + " "
+            country_name = obj.country.name
         if (obj.big_company):
-            big_company_name = obj.big_company.name 
+            big_company_name = obj.big_company.name + " "
         if (obj.generic_name):
-            generics = " {" + str(",".join(map(str, obj.generic_name))) + "} " 
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} " 
         if (obj.ml):
-            ml = obj.ml
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
 
-        return obj.brand_name + ' ' + ml + generics + kind_name + country_name + big_company_name
+        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + generics + big_company_name + country_name
 
     def get_medicine_cautions (self, obj):
         if (obj.medician.cautions):

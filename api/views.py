@@ -185,12 +185,19 @@ class PatientNameView(viewsets.ModelViewSet):
     filterset_class = PatientFilter
     permission_classes = [D7896DjangoModelPermissions]
 
-        
+class DoctorFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = DoctorName
+        fields = ['name', 'contact_number', 'id', 'expertise']        
 
 
 class DoctorNameView(viewsets.ModelViewSet):
     queryset = DoctorName.objects.all().order_by('id')
     serializer_class = DoctorNameSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = DoctorFilter
     permission_classes = [D7896DjangoModelPermissions]
 
 
@@ -204,7 +211,8 @@ class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [D7896DjangoModelPermissions]
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.OrderingFilter,DjangoFilterBackend]
+    filterset_fields= ['name',]
     ordering_fields = ['id',]
 
 
