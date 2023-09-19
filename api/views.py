@@ -23,6 +23,7 @@ from django_filters.filters import Filter
 from django.db import models
 from django.db.models import F
 from django_filters.fields import Lookup
+from django.db.models import Q
 
 class ArrayOverlapFilter(Filter):
     field_class = SimpleArrayField
@@ -60,7 +61,8 @@ class ListFilter(Filter):
 class MedicianFilter(django_filters.FilterSet):
     ids = django_filters.CharFilter(method=filter_by_ids)
     generic_name = django_filters.BaseInFilter(lookup_expr='contains', method=filter_by_generics)
-    brand_name = django_filters.CharFilter(lookup_expr="icontains")
+    brand_name = django_filters.CharFilter(lookup_expr="istartswith")
+    all = django_filters.CharFilter(method='all_filter', label='allSearch')
     ml = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_english = django_filters.CharFilter(lookup_expr='icontains')
     kind__name_persian = django_filters.CharFilter(lookup_expr='icontains')
@@ -68,12 +70,23 @@ class MedicianFilter(django_filters.FilterSet):
     big_company__name = django_filters.CharFilter(lookup_expr='icontains')
     barcode__contains = CharArrayFilter(lookup_expr='contains', field_name='barcode')
 
+    def all_filter (self, queryset, name, value):
+        return queryset.filter(
+            Q(brand_name__icontains=value) |
+            Q(generic_name__icontains=value) |
+            Q(ml__icontains=value) |
+            Q(country__name__icontains=value) |
+            Q(kind__name_english=value) |
+            Q(kind__name_persian=value) |
+            Q(big_company__name=value)               
+            )
+
     class Meta:
         model = Medician
         filter_fields = {
             'barcode' : ['exact', 'icontains']
         }
-        fields = ['brand_name','generic_name', 'no_pocket', "ml", "location", "barcode__contains", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'kind__name_persian','big_company__name']
+        fields = ['brand_name','all','generic_name', 'no_pocket', "ml", "location", "barcode__contains", "company","price","existence","pharm_group","kind", "country",'department', 'id', 'ids', "kind__name_english", "country__name", 'kind__name_persian','big_company__name']
 
 
 
