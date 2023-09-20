@@ -157,16 +157,16 @@ class Medician(models.Model):
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(
-        PharmGroup, on_delete=models.CASCADE, null=True, blank=True)
+        PharmGroup, on_delete=models.RESTRICT, null=True, blank=True)
     kind = models.ForeignKey(
-        Kind, on_delete=models.CASCADE, null=True, blank=True)
+        Kind, on_delete=models.RESTRICT, null=True, blank=True)
     ml = models.CharField(max_length=50, null=True, blank=True)
     unit = models.ForeignKey(
-        Unit, on_delete=models.CASCADE, null=True, blank=True)
+        Unit, on_delete=models.DO_NOTHING, null=True, blank=True)
     weight = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=30, blank=True, null=True)
     country = models.ForeignKey(
-        Country, on_delete=models.CASCADE, null=True, blank=True)
+        Country, on_delete=models.RESTRICT, null=True, blank=True)
     company = models.CharField(max_length=50, blank=True, null=True)
     price = models.FloatField()
     last_purchased = models.FloatField(default=0)
@@ -184,12 +184,12 @@ class Medician(models.Model):
     patient_approved = models.BooleanField(default=False)
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
     department = models.ForeignKey(
-        Department, related_name='medicines', blank=True, on_delete=models.CASCADE, null=True)
+        Department, related_name='medicines', blank=True, on_delete=models.DO_NOTHING, null=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
     big_company = models.ForeignKey(
-        BigCompany, on_delete=models.DO_NOTHING, blank=True, null=True)
+        BigCompany, on_delete=models.RESTRICT, blank=True, null=True)
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)

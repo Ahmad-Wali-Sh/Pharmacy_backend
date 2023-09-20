@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import io
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
@@ -292,17 +293,16 @@ class MedicianSeralizer(serializers.ModelSerializer):
 
     def get_kind_image (self, obj):
         if (obj.kind and obj.kind.image):
-            return obj.kind.image
-        else: return ""
+            return 'http://127.0.0.1:8000/' + str(obj.kind.image)
     
     def get_country_image (self, obj):
         if (obj.country and obj.country.image):
-            return obj.country.image
+            return 'http://127.0.0.1:8000/' + str(obj.country.image)
         else: return ""
     
     def get_pharm_group_image (self, obj):
         if (obj.pharm_group and obj.pharm_group.image):
-            return obj.pharm_group.image
+            return 'http://127.0.0.1:8000/' + str(obj.pharm_group.image)
         else: return ""
 
 

@@ -243,12 +243,16 @@ class PaymentMethodView(viewsets.ModelViewSet):
     serializer_class = PaymentMethodSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
+class KindFilter(django_filters.FilterSet):
+    name_english = django_filters.CharFilter(lookup_expr='icontains')
+    name_persian = django_filters.CharFilter(lookup_expr='icontains')
+
 
 class KindView(viewsets.ModelViewSet):
     queryset = Kind.objects.all()
     serializer_class = KindSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
-    filterset_fields = ['name_english', 'name_persian']
+    filterset_class = KindFilter
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
