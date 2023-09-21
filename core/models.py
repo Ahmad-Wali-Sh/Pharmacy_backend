@@ -60,7 +60,7 @@ class Kind(models.Model):
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
         optimized_image_resize_method="cover")
     description = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name_english
@@ -73,7 +73,7 @@ class PharmGroup(models.Model):
                                 upload_to='frontend/public/dist/images/pharm_groub', optimized_image_output_size=(500, 500),
                                 optimized_image_resize_method="cover")
     description = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name_english
@@ -84,7 +84,7 @@ class Country(models.Model):
     image = OptimizedImageField(null=True, blank=True, default="",
                                 upload_to='frontend/public/dist/images/countries', optimized_image_output_size=(500, 500),
                                 optimized_image_resize_method="cover")
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -104,7 +104,7 @@ class Department (models.Model):
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
     celling_start = models.FloatField(default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -221,7 +221,7 @@ class PatientName (models.Model):
     address = models.CharField(max_length=150, null=True, blank=True)
     sickness = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -238,7 +238,7 @@ class DoctorName(models.Model):
     work_time = models.CharField(max_length=100, null=True, blank=True)
     home_address = models.CharField(max_length=100, null=True, blank=True)
     discription = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -304,13 +304,13 @@ class Prescription (models.Model):
 
 
 class PrescriptionThrough(models.Model):
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    medician = models.ForeignKey(Medician, on_delete=models.RESTRICT)
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
     quantity = models.FloatField(default=0)
     each_price = models.FloatField(default=0)
     total_price = models.FloatField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.prescription.prescription_number
@@ -373,7 +373,7 @@ class PrescriptionThrough(models.Model):
 
 class City (models.Model):
     name = models.CharField(max_length=100)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -381,7 +381,7 @@ class City (models.Model):
 
 class Market (models.Model):
     name = models.CharField(max_length=100)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -403,10 +403,10 @@ class PharmCompany (models.Model):
     address = models.CharField(max_length=150,  blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     city = models.ForeignKey(
-        City, on_delete=models.CASCADE, null=True, blank=True)
+        City, on_delete=models.RESTRICT, null=True, blank=True)
     market = models.ForeignKey(
-        Market, on_delete=models.CASCADE, null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+        Market, on_delete=models.RESTRICT, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -416,7 +416,7 @@ class Currency (models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
     description = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -430,7 +430,7 @@ class Store (models.Model):
     description = models.TextField(null=True, blank=True)
     image = models.FileField(null=True, blank=True, default="",
                              upload_to='frontend/public/dist/images/stores')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -438,7 +438,7 @@ class Store (models.Model):
 
 class PaymentMethod (models.Model):
     name = models.CharField(max_length=20)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -446,7 +446,7 @@ class PaymentMethod (models.Model):
 
 class FinalRegister (models.Model):
     name = models.CharField(max_length=20)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
@@ -459,15 +459,15 @@ WHOLESALE_CHOICE = (
 
 
 class Entrance (models.Model):
-    company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
+    company = models.ForeignKey(PharmCompany, on_delete=models.RESTRICT)
     factor_number = models.IntegerField(null=True, blank=True)
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
     factor_date = models.DateTimeField(default=timezone.now)
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.RESTRICT)
+    currency = models.ForeignKey(Currency, on_delete=models.RESTRICT)
     total_interest = models.IntegerField()
-    final_register = models.ForeignKey(FinalRegister, on_delete=models.CASCADE)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    final_register = models.ForeignKey(FinalRegister, on_delete=models.RESTRICT)
+    store = models.ForeignKey(Store, on_delete=models.RESTRICT)
     deliver_by = models.CharField(max_length=100, null=True, blank=True)
     recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -478,7 +478,7 @@ class Entrance (models.Model):
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
     currency_rate = models.FloatField(default=1)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.company.name
@@ -490,8 +490,8 @@ class Entrance (models.Model):
 
 
 class EntranceThrough(models.Model):
-    entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    entrance = models.ForeignKey(Entrance, on_delete=models.RESTRICT)
+    medician = models.ForeignKey(Medician, on_delete=models.RESTRICT)
     number_in_factor = models.IntegerField()
     each_price_factor = models.FloatField()
     each_price = models.FloatField(default=1)
@@ -524,7 +524,7 @@ class EntranceThrough(models.Model):
     expire_date = models.DateField()
     timestamp = models.DateTimeField(auto_now_add=True)
     batch_number = models.CharField(max_length=100, null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
     interest_money = models.FloatField(default=0)
     bonus_interest = models.FloatField(default=0)
     rate = models.FloatField(default=1)
@@ -790,9 +790,9 @@ class Revenue (models.Model):
     start_time = models.TimeField(auto_now=False, null=True, blank=True)
     start_end = models.TimeField(auto_now=False, null=True, blank=True)
     active = models.BooleanField(default=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
     employee = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='employee')
+        User, on_delete=models.RESTRICT, related_name='employee')
     revenue_through = models.ManyToManyField(
         Prescription, through="RevenueTrough")
 
@@ -807,12 +807,12 @@ class Revenue (models.Model):
 
 
 class RevenueTrough (models.Model):
-    revenue = models.ForeignKey(Revenue, on_delete=models.CASCADE)
-    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT)
+    prescription = models.ForeignKey(Prescription, on_delete=models.RESTRICT)
     created = models.DateTimeField(auto_now_add=True)
     purchased = models.FloatField(default=0)
     sold = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def save(self, *args, **kwargs):
         if (self.prescription.refund == 0):
@@ -857,7 +857,7 @@ class PurchaseList (models.Model):
 
 
 class MedicineWith (models.Model):
-    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    medicine = models.ForeignKey(Medician, on_delete=models.RESTRICT)
     includes = models.ManyToManyField(Medician, related_name="medicines")
 
     def __str__(self):

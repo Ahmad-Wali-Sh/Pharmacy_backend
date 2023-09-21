@@ -130,7 +130,7 @@ class StoreView(viewsets.ModelViewSet):
 
 
 class FinalRegisterView(viewsets.ModelViewSet):
-    queryset = FinalRegister.objects.all()
+    queryset = FinalRegister.objects.all().order_by('id')
     serializer_class = FinalRegisterSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
@@ -143,7 +143,7 @@ class PuchaseListView(viewsets.ModelViewSet):
     ordering = ['id',]
 
 class CityView(viewsets.ModelViewSet):
-    queryset = City.objects.all()
+    queryset = City.objects.all().order_by('id')
     serializer_class = CitySerializer
     permission_classes = [D7896DjangoModelPermissions]
 
@@ -172,7 +172,7 @@ class RevenueThroughView(viewsets.ModelViewSet):
     filterset_fields = ['revenue',]
 
 class MarketView(viewsets.ModelViewSet):
-    queryset = Market.objects.all()
+    queryset = Market.objects.all().order_by('id')
     serializer_class = MarketSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
@@ -215,7 +215,7 @@ class DoctorNameView(viewsets.ModelViewSet):
 
 
 class BigCompanyView(viewsets.ModelViewSet):
-    queryset = BigCompany.objects.all()
+    queryset = BigCompany.objects.all().order_by('id')
     serializer_class = BigCompanySerializer
     permission_classes = [D7896DjangoModelPermissions]
 
@@ -239,7 +239,7 @@ class CurrencyView(viewsets.ModelViewSet):
 
 
 class PaymentMethodView(viewsets.ModelViewSet):
-    queryset = PaymentMethod.objects.all()
+    queryset = PaymentMethod.objects.all().order_by('id')
     serializer_class = PaymentMethodSerializer
     permission_classes = [D7896DjangoModelPermissions]
 

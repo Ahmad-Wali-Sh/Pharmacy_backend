@@ -385,6 +385,18 @@ class UnitSeralizer(serializers.ModelSerializer):
 
 class PharmCompanySeralizer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
+    market_name = serializers.SerializerMethodField()
+    city_name = serializers.SerializerMethodField()
+
+    def get_market_name (self, obj): 
+        if (obj.market): 
+            return obj.market.name
+        else: return ''
+
+    def get_city_name (self, obj): 
+        if (obj.city): 
+            return obj.city.name
+        else: return ''
 
     def get_username (self, obj):
         return obj.user.username
