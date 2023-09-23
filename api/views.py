@@ -24,6 +24,9 @@ from django.db import models
 from django.db.models import F
 from django_filters.fields import Lookup
 from django.db.models import Q
+from rest_framework import generics
+from rest_framework.decorators import action
+from rest_framework.request import Request
 
 class ArrayOverlapFilter(Filter):
     field_class = SimpleArrayField
@@ -171,6 +174,8 @@ class RevenueThroughView(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['revenue',]
 
+
+
 class MarketView(viewsets.ModelViewSet):
     queryset = Market.objects.all().order_by('id')
     serializer_class = MarketSerializer
@@ -181,6 +186,15 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
     serializer_class = PrescriptionThroughSerializer
     filterset_fields = ['prescription',]
     permission_classes = [D7896DjangoModelPermissions]
+
+    @action(methods=['DELETE', 'GET'], detail=False,)
+    def delete(self, request:Request):
+        delete_id = request.GET['prescription']
+        print(request.GET['prescription'])
+        delete_prescriptions = self.queryset.filter(prescription=delete_id)
+        delete_prescriptions.delete()
+        return Response(self.serializer_class(delete_prescriptions, many=True).data)
+    
 
 class PatientFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')

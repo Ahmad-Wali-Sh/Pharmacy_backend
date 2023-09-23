@@ -207,7 +207,7 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + obj.ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
     class Meta:
         model = Medician
         fields = ['id', 'medicine_full','quantity', 'details','medicine_unsubmited','shorted']
@@ -561,7 +561,7 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
         kind_name = ""
         country_name = ""
         big_company_name = ''
-        generics = ''
+        generics = ""
         ml = ''
         weight = ''
         if (obj.kind):
