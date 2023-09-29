@@ -2,12 +2,12 @@ from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySer
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
     CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer, \
-    PurchaseListSerializer, PurchaseListQuerySerializer
+    PurchaseListSerializer, PurchaseListQuerySerializer, PurchaseListManualSerializer
     
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList
+    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -425,6 +425,13 @@ class TrazView (FlatMultipleModelAPIViewSet):
     ordering_fields = ['id','timestamp']
     ordering = ['id','timestamp']
     
+
+class PurchaseListManualView (viewsets.ModelViewSet):
+    queryset = PurchaseListManual.objects.all().order_by('-id')
+    serializer_class = PurchaseListManualSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter,filters.OrderingFilter]
+    filterset_fields = ('approved', 'medicine', 'created')
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 

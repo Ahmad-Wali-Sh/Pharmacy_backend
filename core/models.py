@@ -4,27 +4,24 @@ from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
 from datetime import date
 from django.contrib.auth.models import User
-from django_jalali.db import models as jmodels
 from django.utils import timezone
 from datetime import date
-import datetime
 import random
-from django.db.models import Count
 from django.utils import timezone
-from django.db.models.signals import post_delete, pre_delete, pre_save, post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 from django.utils.encoding import force_str
 from django.forms.widgets import DateTimeInput
-from django.utils.translation import gettext_lazy as _, ngettext_lazy
+from django.utils.translation import gettext_lazy as _
 from django import forms
-from django.db.models.query import QuerySet
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
 import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
 from django.core.files import File
+from django.db.models import Q
 
 
 class User(AbstractUser):
@@ -1050,3 +1047,28 @@ def revenue_through_submit(sender, instance, **kwargs):
     instance.revenue.discount = discount_revenue_through()
     instance.revenue.total = total_revenue_through()
     instance.revenue.save()
+
+class PurchaseListManual (models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    quantity = models.FloatField()
+    arrival = models.FloatField(default=0)
+    approved = models.BooleanField(default=False)
+    shortaged = models.BooleanField(default=False)
+    created = models.DateField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return self.medicine.brand_name
+    
+    def update_model(self, *args, **kwargs):
+        queryset = PurchaseListManual.objects.filter(approved=False).filter(medicine=self.medicine).filter(~Q(id=self.id))
+        if queryset:
+            raise Exception("This Item is Already Set.")
+        else: super(PurchaseListManual, self).save(*args, **kwargs)
+
+    def save (self, *args, **kwargs):
+        if (self.arrival > 0):
+            self.approved = True
+        if (self.arrival == 0):
+            self.approved = False
+        self.update_model()

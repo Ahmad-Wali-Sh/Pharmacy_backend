@@ -5,7 +5,7 @@ from import_export.widgets import ForeignKeyWidget
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
-        Outrance, City, Market, Revenue, RevenueTrough, MedicineWith, BigCompany, MedicineConflict, PurchaseList
+        Outrance, City, Market, Revenue, RevenueTrough, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 
 from django_jalali.admin.filters import JDateFieldListFilter
 import django_jalali.admin as jadmin
@@ -61,6 +61,7 @@ admin.site.register(Prescription, ImportAdmin)
 admin.site.register(PharmCompany, ImportAdmin)
 admin.site.register(Entrance, EntracnceAdmin)
 admin.site.register(Store, ImportAdmin)
+admin.site.register(PurchaseListManual, ImportAdmin)
 admin.site.register(MedicineWith, ImportAdmin)
 admin.site.register(Currency, ImportAdmin)
 admin.site.register(EntranceThrough, EntranceThrougheAdmin)

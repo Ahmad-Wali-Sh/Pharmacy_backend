@@ -3,7 +3,7 @@ import io
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList
+        Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
                         
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -515,10 +515,6 @@ class FinalRegisterSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
-
-
 class DoctorNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     code_name = serializers.SerializerMethodField()
@@ -548,7 +544,46 @@ class PatientNameSerializer(serializers.ModelSerializer):
         model = PatientName
         fields = '__all__'
 
-        
+class PurchaseListManualSerializer (serializers.ModelSerializer):
+    details = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+    existence = serializers.SerializerMethodField()
+
+    def get_existence (self, obj):
+        return obj.medicine.existence
+
+    def get_medicine_full (self, res):
+        obj = res.medicine
+        kind_name = ""
+        country_name = ""
+        big_company_name = ''
+        generics = ""
+        ml = ''
+        weight = ''
+        if (obj.kind):
+            kind_name = obj.kind.name_english + "."
+        if (obj.country):
+            country_name = obj.country.name
+        if (obj.big_company):
+            big_company_name = obj.big_company.name + " "
+        if (obj.generic_name):
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} " 
+        if (obj.ml):
+            ml = obj.ml 
+        if (obj.weight):
+            weight = obj.weight 
+
+        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
+
+
+    
+
+    def get_details (self, obj):
+        queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[:3]
+        return queryset
+    class Meta:
+        model = PurchaseListManual
+        fields = '__all__'
 
 class PrescriptionThroughSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
@@ -623,3 +658,4 @@ class OutranceThroughSerializer (serializers.ModelSerializer):
 class TrazSerializer (serializers.Serializer):
     entrances = EntranceThroughSerializer(many=True)
     prescriptions = PrescriptionThroughSerializer(many=True)
+
