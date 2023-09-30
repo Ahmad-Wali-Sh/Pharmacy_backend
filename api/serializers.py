@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import io
+from django.db.models import F
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
@@ -50,7 +51,12 @@ class RevenueTrhoughSerializer(serializers.ModelSerializer):
     zakat = serializers.SerializerMethodField()
     khairat = serializers.SerializerMethodField()
     rounded = serializers.SerializerMethodField()
-    
+    patient_name = serializers.SerializerMethodField()
+
+    def get_patient_name (self, obj):
+        if (obj.prescription.name):
+            return str(obj.prescription.name.id) + "." + obj.prescription.name.name
+
 
     def get_prescription_user (self,obj):
         return obj.prescription.user.username
@@ -545,9 +551,24 @@ class PatientNameSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PurchaseListManualSerializer (serializers.ModelSerializer):
-    details = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     existence = serializers.SerializerMethodField()
+    details_1 = serializers.SerializerMethodField()
+    details_2 = serializers.SerializerMethodField()
+    details_3 = serializers.SerializerMethodField()
+
+    def get_details_1 (self, obj):
+        queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[0:1]
+        data = list(queryset)
+        return data
+    def get_details_2 (self, obj):
+        queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[1:2]
+        data = list(queryset)
+        return data
+    def get_details_3 (self, obj):
+        queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[2:3]
+        data = list(queryset)
+        return data
 
     def get_existence (self, obj):
         return obj.medicine.existence
@@ -575,12 +596,6 @@ class PurchaseListManualSerializer (serializers.ModelSerializer):
 
         return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
 
-
-    
-
-    def get_details (self, obj):
-        queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name', 'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[:3]
-        return queryset
     class Meta:
         model = PurchaseListManual
         fields = '__all__'

@@ -265,15 +265,14 @@ class Prescription (models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     timestamp = models.DateTimeField(default=timezone.now, editable=False)
     refund = models.FloatField(default=0)
-    barcode = models.ImageField(upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
+    barcode = models.ImageField(
+        upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
     barcode_str = models.CharField(max_length=255, blank=True, editable=False)
 
     def __str__(self):
         return self.prescription_number
-    
+
     def save(self, *args, **kwargs):
-
-
 
         objects_count = Prescription.objects.all().count()
         if Prescription.objects.filter(created=date.today()):
@@ -460,10 +459,12 @@ class Entrance (models.Model):
     factor_number = models.IntegerField(null=True, blank=True)
     medicians = models.ManyToManyField(Medician, through='EntranceThrough')
     factor_date = models.DateTimeField(default=timezone.now)
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.RESTRICT)
+    payment_method = models.ForeignKey(
+        PaymentMethod, on_delete=models.RESTRICT)
     currency = models.ForeignKey(Currency, on_delete=models.RESTRICT)
     total_interest = models.IntegerField()
-    final_register = models.ForeignKey(FinalRegister, on_delete=models.RESTRICT)
+    final_register = models.ForeignKey(
+        FinalRegister, on_delete=models.RESTRICT)
     store = models.ForeignKey(Store, on_delete=models.RESTRICT)
     deliver_by = models.CharField(max_length=100, null=True, blank=True)
     recived_by = models.CharField(max_length=100, null=True, blank=True)
@@ -730,7 +731,8 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if prescription_sum_query and entrance_sum_query and outrance_sum_query:
         result = entrance_sum_query - \
             (prescription_sum_query + outrance_sum_query)
-    else: result = 0
+    else:
+        result = 0
 
     instance.medician.existence = result
     instance.medician.save()
@@ -794,23 +796,31 @@ class Revenue (models.Model):
     revenue_through = models.ManyToManyField(
         Prescription, through="RevenueTrough")
 
-    def save(self, *args, **kwargs):
+    def update_model(self, *args, **kwargs):
+        checkifopen = Revenue.objects.filter(employee=self.employee).filter(
+            active=True).filter(~Q(id=self.id))
+        print(checkifopen)
+        if checkifopen:
+            raise Exception('There is Already an Open Revenue...')
+            pass
+        else:
+            super(Revenue, self).save(*args, **kwargs)
 
+    def save(self, *args, **kwargs):
         if self.active == True:
             self.start_time = timezone.now().strftime("%H:%M:%S")
         else:
             self.start_end = timezone.now().strftime("%H:%M:%S")
-
-        super(Revenue, self).save()
+        self.update_model()
 
 
 class RevenueTrough (models.Model):
-    revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT)
-    prescription = models.ForeignKey(Prescription, on_delete=models.RESTRICT)
+    revenue = models.ForeignKey(Revenue, on_delete=models.DO_NOTHING)
+    prescription = models.ForeignKey(Prescription, on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True)
     purchased = models.FloatField(default=0)
     sold = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def save(self, *args, **kwargs):
         if (self.prescription.refund == 0):
@@ -870,6 +880,7 @@ class MedicineConflict (models.Model):
     def __str__(self):
         return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
+
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
 
@@ -886,20 +897,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if (prescription_through_total and last_revenue):
         instance.prescription.sold = False
         instance.prescription.refund = prescription_through_total - last_revenue
-    elif (last_revenue): 
+    elif (last_revenue):
         instance.prescription.sold = False
         instance.prescription.refund = - last_revenue
-    else :
+    else:
         instance.prescription.sold = False
         instance.prescription.refund = 0
 
     instance.prescription.save()
 
+
 @receiver(post_delete, sender=RevenueTrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
 
     prescription_through_total = list(PrescriptionThrough.objects.filter(
-    prescription_id=instance.prescription.id).aggregate(Sum('total_price')
+        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
 
     last_revenue = list(RevenueTrough.objects.filter(
@@ -909,10 +921,10 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     if (prescription_through_total and last_revenue):
         instance.prescription.sold = False
         instance.prescription.refund = prescription_through_total - last_revenue
-    elif (last_revenue): 
+    elif (last_revenue):
         instance.prescription.sold = False
         instance.prescription.refund = - last_revenue
-    else :
+    else:
         instance.prescription.sold = False
         instance.prescription.refund = 0
 
@@ -972,15 +984,12 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             total_revenue_through = 0
         return total_revenue_through
 
-
-
     instance.revenue.rounded = rounded_revenue_through()
     instance.revenue.zakat = zakat_revenue_through()
     instance.revenue.khairat = khairat_revenue_through()
     instance.revenue.discount = discount_revenue_through()
     instance.revenue.total = total_revenue_through()
     instance.revenue.save()
-
 
 
 @receiver(post_save, sender=RevenueTrough)
@@ -1048,6 +1057,7 @@ def revenue_through_submit(sender, instance, **kwargs):
     instance.revenue.total = total_revenue_through()
     instance.revenue.save()
 
+
 class PurchaseListManual (models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
     quantity = models.FloatField()
@@ -1059,16 +1069,22 @@ class PurchaseListManual (models.Model):
 
     def __str__(self):
         return self.medicine.brand_name
-    
+
     def update_model(self, *args, **kwargs):
-        queryset = PurchaseListManual.objects.filter(approved=False).filter(medicine=self.medicine).filter(~Q(id=self.id))
+        queryset = PurchaseListManual.objects.filter(approved=False).filter(
+            medicine=self.medicine).filter(~Q(id=self.id))
         if queryset:
             raise Exception("This Item is Already Set.")
-        else: super(PurchaseListManual, self).save(*args, **kwargs)
+        else:
+            super(PurchaseListManual, self).save(*args, **kwargs)
 
-    def save (self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         if (self.arrival > 0):
             self.approved = True
+            self.medicine.unsubmited_existence = self.arrival
+            self.medicine.save()
         if (self.arrival == 0):
             self.approved = False
+            self.medicine.unsubmited_existence = self.arrival
+            self.medicine.save()
         self.update_model()
