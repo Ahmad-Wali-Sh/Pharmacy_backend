@@ -22,6 +22,7 @@ from barcode.writer import ImageWriter
 from io import BytesIO
 from django.core.files import File
 from django.db.models import Q
+import datetime
 
 
 class User(AbstractUser):
@@ -182,8 +183,8 @@ class Medician(models.Model):
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
-    department = models.ForeignKey(
-        Department, related_name='medicines', blank=True, on_delete=models.DO_NOTHING, null=True)
+    department = models.ManyToManyField(
+        Department, related_name='medicines', blank=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
     big_company = models.ForeignKey(
         BigCompany, on_delete=models.RESTRICT, blank=True, null=True)
@@ -789,6 +790,7 @@ class Revenue (models.Model):
     discount = models.FloatField(default=0)
     start_time = models.TimeField(auto_now=False, null=True, blank=True)
     start_end = models.TimeField(auto_now=False, null=True, blank=True)
+    start_end_date = models.DateField(null=True, blank=True, auto_now=True)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     employee = models.ForeignKey(
@@ -809,6 +811,7 @@ class Revenue (models.Model):
     def save(self, *args, **kwargs):
         if self.active == True:
             self.start_time = timezone.now().strftime("%H:%M:%S")
+            self.start_end_date = ""
         else:
             self.start_end = timezone.now().strftime("%H:%M:%S")
         self.update_model()

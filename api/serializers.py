@@ -291,6 +291,14 @@ class MedicianSeralizer(serializers.ModelSerializer):
     country_image = serializers.SerializerMethodField()
     pharm_group_image = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all(), many=True)
+
+    def create(self, validated_data):
+            department = validated_data.pop('department', [])
+            instance = super().create(validated_data)
+            for l in department:
+                instance.department.create(department=l)
+            return instance
 
     def get_department_name (self, obj):
         if (obj.department):
