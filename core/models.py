@@ -184,7 +184,7 @@ class Medician(models.Model):
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     department = models.ManyToManyField(
-        Department, related_name='medicines', blank=True)
+        Department, blank=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
     big_company = models.ForeignKey(
         BigCompany, on_delete=models.RESTRICT, blank=True, null=True)
