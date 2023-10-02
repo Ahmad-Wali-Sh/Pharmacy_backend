@@ -52,7 +52,7 @@ class ISODateTimeField(forms.DateTimeField):
 
 
 class Kind(models.Model):
-    name_english = models.CharField(max_length=60, null=True, blank=True)
+    name_english = models.CharField(max_length=60, null=True, blank=True, unique=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
@@ -194,7 +194,7 @@ class Medician(models.Model):
     # objects = MyManager()
 
     def __str__(self):
-        return self.brand_name
+        return str(self.brand_name)
 
     # def save(self, *args, **kwargs):
     #     self.full_clean()
