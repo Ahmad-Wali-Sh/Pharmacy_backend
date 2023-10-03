@@ -35,6 +35,21 @@ class MedicineImport(resources.ModelResource):
         attribute='kind',
         widget=ForeignKeyWidget(Kind, 'name_english')
     )
+    big_company = fields.Field(
+        column_name='big_company',
+        attribute='big_company',
+        widget=ForeignKeyWidget(BigCompany, 'name')
+    )
+    pharm_group = fields.Field(
+        column_name='pharm_group',
+        attribute='pharm_group',
+        widget=ForeignKeyWidget(PharmGroup, 'name_english')
+    )
+    country = fields.Field(
+        column_name='country',
+        attribute='country',
+        widget=ForeignKeyWidget(Country, 'name')
+    )
 
     class Meta:
         model = Medician
