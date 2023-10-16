@@ -28,7 +28,7 @@ import datetime
 class User(AbstractUser):
     image = models.ImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/users')
-    REQUIRED_FIELDS = ['image', 'email']
+    REQUIRED_FIELDS = ['image', 'email', 'first_name', 'last_name']
 
 
 class ISODateTimeField(forms.DateTimeField):

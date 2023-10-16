@@ -12,8 +12,8 @@ from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username',)
-        read_only_fields = ('username',)
+        fields = ('id', 'username','first_name')
+        read_only_fields = ('username','first_name')
         read_and_write_fields = ('id',)
 
 class PharmGroupSeralizer(serializers.ModelSerializer):
