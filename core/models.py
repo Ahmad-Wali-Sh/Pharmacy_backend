@@ -147,7 +147,7 @@ class MyManager(models.Manager):
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
-        max_length=100, blank=True, null=True), null=True, blank=True, default=list)
+        max_length=400, blank=True, null=True), null=True, blank=True, default=list)
     # barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
     barcode = ArrayField(
         models.CharField(max_length=255, null=True, blank=True), default=list, blank=True, null=True
@@ -168,7 +168,7 @@ class Medician(models.Model):
     company = models.CharField(max_length=50, blank=True, null=True)
     price = models.FloatField()
     last_purchased = models.FloatField(default=0)
-    existence = models.FloatField(default=0, null=True)
+    existence = models.FloatField(default=0, null=True, blank=True)
     minmum_existence = models.FloatField(blank=True, null=True, default=0)
     maximum_existence = models.FloatField(blank=True, null=True, default=0)
     must_advised = models.BooleanField(default=False)
