@@ -47,11 +47,15 @@ INSTALLED_APPS = [
     'import_export',
     'image_optimizer',
     'djoser',
+    'dbbackup',
 
     'api',
     'core',
     'django_cleanup.apps.CleanupConfig',
 ]
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': 'app/backups/'}
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
