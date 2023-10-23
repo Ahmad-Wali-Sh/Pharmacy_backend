@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
+    path('ledger/', include('django_ledger.urls', namespace='django_ledger')),
 ]

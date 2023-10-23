@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'django_ledger',
 
-    'django_crontab',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_multiple_model',
@@ -59,12 +59,6 @@ DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': 'app/backups/'}
 DBBACKUP_CLEANUP_KEEP = 4
 DBBACKUP_CLEANUP_KEEP_MEDIA = 2
-
-
-CRONJOBS = [
-    ('*/2 * * * *', 'app.cron.my_backend_job'),
-]
-
 
 
 REST_FRAMEWORK = {
@@ -172,7 +166,7 @@ TIME_ZONE = 'Asia/Kabul'
 
 USE_I18N = False
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
