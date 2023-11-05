@@ -132,13 +132,18 @@ class UserView (viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [D7896DjangoModelPermissions]
 
+class StoreFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    phone = django_filters.CharFilter(lookup_expr='icontains')
+    address = django_filters.CharFilter(lookup_expr='icontains')
+
 
 class StoreView(viewsets.ModelViewSet):
     queryset = Store.objects.all().order_by('id')
     serializer_class = StoreSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['name', 'phone', 'address']
+    filterset_class = StoreFilter
     search_fields = ['name',]
 
 
@@ -155,11 +160,15 @@ class PuchaseListView(viewsets.ModelViewSet):
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['id', 'company_1__market', 'company_1']
     ordering = ['id',]
-
+    
+class CityFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
 
 class CityView(viewsets.ModelViewSet):
     queryset = City.objects.all().order_by('id')
     serializer_class = CitySerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = CityFilter
     permission_classes = [D7896DjangoModelPermissions]
 
 
@@ -190,10 +199,15 @@ class RevenueThroughView(viewsets.ModelViewSet):
     filterset_fields = ['revenue',]
 
 
+class MarketFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
 class MarketView(viewsets.ModelViewSet):
     queryset = Market.objects.all().order_by('id')
     serializer_class = MarketSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MarketFilter
 
 
 class PrescriptionThroughView(viewsets.ModelViewSet):
@@ -242,10 +256,18 @@ class DoctorNameView(viewsets.ModelViewSet):
     filterset_class = DoctorFilter
     permission_classes = [D7896DjangoModelPermissions]
 
+class BigCompanyFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = BigCompany
+        fields = ['name',]
 
 class BigCompanyView(viewsets.ModelViewSet):
     queryset = BigCompany.objects.all().order_by('id')
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     serializer_class = BigCompanySerializer
+    filterset_class = BigCompanyFilter
     permission_classes = [D7896DjangoModelPermissions]
 
 
@@ -267,10 +289,17 @@ class CurrencyView(viewsets.ModelViewSet):
     ordering = ['id',]
 
 
+class PaymentFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
+
 class PaymentMethodView(viewsets.ModelViewSet):
     queryset = PaymentMethod.objects.all().order_by('id')
     serializer_class = PaymentMethodSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend,
+                       filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = PaymentFilter
 
 
 class KindFilter(django_filters.FilterSet):
@@ -288,16 +317,23 @@ class KindView(viewsets.ModelViewSet):
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
 
+class CountryFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+
 
 class CountryView(viewsets.ModelViewSet):
     queryset = Country.objects.all().order_by('id')
     serializer_class = CountrySerializer
-    filterset_fields = ['name',]
+    filterset_class = CountryFilter
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
+
+class PharmGroupFilter(django_filters.FilterSet):
+    name_english = django_filters.CharFilter(lookup_expr='icontains')
+    name_persian = django_filters.CharFilter(lookup_expr='icontains')
 
 
 class PharmGroupView(viewsets.ModelViewSet):
@@ -305,7 +341,7 @@ class PharmGroupView(viewsets.ModelViewSet):
     serializer_class = PharmGroupSeralizer
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['name_english', 'name_persian']
+    filterset_class = PharmGroupFilter
     ordering_fields = ['id',]
     ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
