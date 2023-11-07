@@ -139,7 +139,7 @@ class PurchaseListSerializer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + obj.ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + obj.ml + ' ' + big_company_name + country_name + " " + weight
 
     def get_market_1 (self, obj):
         if (obj.company_1.market):
@@ -213,7 +213,7 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml + ' ' + big_company_name + country_name + " " + weight
     class Meta:
         model = Medician
         fields = ['id', 'medicine_full','quantity', 'details','medicine_unsubmited','shorted']
@@ -336,7 +336,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml  + ' ' + big_company_name + country_name + " " + weight
 
     def get_kind_name (self, obj):
         if obj.kind:
@@ -469,7 +469,7 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml + ' ' + big_company_name + country_name + " " + weight
     
     def get_medicine_min_expire (self,obj):
         return obj.medician.min_expire_date
@@ -597,7 +597,7 @@ class PurchaseListManualSerializer (serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml + ' ' + big_company_name + country_name + " " + weight
 
     class Meta:
         model = PurchaseListManual
@@ -630,7 +630,7 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
         if (obj.weight):
             weight = obj.weight 
 
-        return kind_name + obj.brand_name + ' ' + ml + " " + weight + ' ' + generics + big_company_name + country_name
+        return kind_name + obj.brand_name + ' ' + ml + ' ' + generics + big_company_name + country_name + " " + weight
 
     def get_medicine_cautions (self, obj):
         if (obj.medician.cautions):
