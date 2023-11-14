@@ -483,7 +483,8 @@ class Entrance (models.Model):
         return self.company.name
 
     def save(self, *args, **kwargs):
-        self.currency_rate = self.currency.rate
+        if (self.currency_rate == ''):
+            self.currency_rate = self.currency.rate
 
         super(Entrance, self).save(*args, **kwargs)
 
