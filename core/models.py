@@ -191,15 +191,15 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
-    # objects = MyManager()
+    objects = MyManager()
 
     def __str__(self):
         return str(self.brand_name)
 
-    # def save(self, *args, **kwargs):
-    #     self.full_clean()
-    #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
+        super().save(*args, **kwargs)
 
 
 GENDER_CHOICES = (
