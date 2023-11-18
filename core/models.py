@@ -455,6 +455,7 @@ WHOLESALE_CHOICE = (
 )
 
 
+
 class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.RESTRICT)
     factor_number = models.IntegerField(null=True, blank=True)
@@ -474,8 +475,6 @@ class Entrance (models.Model):
     discount_percent = models.FloatField(default=0)
     wholesale = models.CharField(
         max_length=100, choices=WHOLESALE_CHOICE, default=1)
-    image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
     currency_rate = models.FloatField(default=1)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -488,6 +487,10 @@ class Entrance (models.Model):
 
         super(Entrance, self).save(*args, **kwargs)
 
+class EntranceImage(models.Model):
+    entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
 
 class EntranceThrough(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.RESTRICT)
