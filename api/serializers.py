@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.core import serializers as core_serializers
 import io
 from django.db.models import F
+from django.db.models import Sum
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
@@ -456,6 +457,11 @@ class EntranceSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     currency_name = serializers.SerializerMethodField()
     entrance_image = serializers.SerializerMethodField()
+    entrance_total = serializers.SerializerMethodField()
+
+    def get_entrance_total (self, obj):
+        total = list(EntranceThrough.objects.filter(entrance=obj.id).aggregate(Sum('total_purchaseـcurrency')).values())[0]
+        return total
 
     def get_entrance_image(self, obj):
         entrance_image_obj = EntranceImage.objects.filter(entrance=obj.id)

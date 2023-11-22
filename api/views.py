@@ -219,7 +219,6 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
     @action(methods=['DELETE', 'GET'], detail=False,)
     def delete(self, request: Request):
         delete_id = request.GET['prescription']
-        print(request.GET['prescription'])
         delete_prescriptions = self.queryset.filter(prescription=delete_id)
         delete_prescriptions.delete()
         return Response(self.serializer_class(delete_prescriptions, many=True).data)

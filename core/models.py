@@ -805,7 +805,6 @@ class Revenue (models.Model):
     def update_model(self, *args, **kwargs):
         checkifopen = Revenue.objects.filter(employee=self.employee).filter(
             active=True).filter(~Q(id=self.id))
-        print(checkifopen)
         if checkifopen:
             raise Exception('There is Already an Open Revenue...')
             pass
