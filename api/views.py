@@ -3,12 +3,12 @@ from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySer
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
     CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer, \
-    PurchaseListSerializer, PurchaseListQuerySerializer, PurchaseListManualSerializer
+    PurchaseListSerializer, PurchaseListQuerySerializer, PurchaseListManualSerializer, EntranceImageSeriazlier
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
+    City, Market, Revenue, RevenueTrough, User, EntranceImage, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -219,7 +219,6 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
     @action(methods=['DELETE', 'GET'], detail=False,)
     def delete(self, request: Request):
         delete_id = request.GET['prescription']
-        print(request.GET['prescription'])
         delete_prescriptions = self.queryset.filter(prescription=delete_id)
         delete_prescriptions.delete()
         return Response(self.serializer_class(delete_prescriptions, many=True).data)
@@ -398,6 +397,13 @@ class EntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = EntranceFilterView
+
+class EntranceImageView(viewsets.ModelViewSet):
+    queryset = EntranceImage.objects.all().order_by('id')
+    serializer_class = EntranceImageSeriazlier
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['entrance',]
 
 
 class LastEntranceView(viewsets.ModelViewSet):
