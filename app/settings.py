@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'image_optimizer',
     'djoser',
     'dbbackup',
+    'single_session',
 
     'api',
     'core',
@@ -83,6 +84,7 @@ DJOSER = {
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 CORS_ALLOW_CREDENTIALS = True
 

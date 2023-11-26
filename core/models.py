@@ -52,7 +52,8 @@ class ISODateTimeField(forms.DateTimeField):
 
 
 class Kind(models.Model):
-    name_english = models.CharField(max_length=60, null=True, blank=True, unique=True)
+    name_english = models.CharField(
+        max_length=60, null=True, blank=True, unique=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
@@ -455,7 +456,6 @@ WHOLESALE_CHOICE = (
 )
 
 
-
 class Entrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.RESTRICT)
     factor_number = models.IntegerField(null=True, blank=True)
@@ -475,22 +475,24 @@ class Entrance (models.Model):
     discount_percent = models.FloatField(default=0)
     wholesale = models.CharField(
         max_length=100, choices=WHOLESALE_CHOICE, default=1)
-    currency_rate = models.FloatField(default=1)
+    currency_rate = models.FloatField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.company.name
 
     def save(self, *args, **kwargs):
-        if (self.currency_rate == ''):
+        if (self.currency_rate == None):
             self.currency_rate = self.currency.rate
 
         super(Entrance, self).save(*args, **kwargs)
+
 
 class EntranceImage(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+
 
 class EntranceThrough(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.RESTRICT)
