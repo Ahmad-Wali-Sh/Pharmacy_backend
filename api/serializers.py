@@ -233,7 +233,7 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
     class Meta:
         model = Medician
         fields = ['id', 'medicine_full', 'quantity',
-                  'details', 'medicine_unsubmited', 'shorted']
+                  'details', 'medicine_unsubmited', 'shorted', 'existence']
 
 
 class KindSerializer(serializers.ModelSerializer):
