@@ -6,7 +6,7 @@ from django.db.models import Sum
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-    Outrance, OutranceThrough, City, Market, Revenue, RevenueTrough, EntranceImage, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
+    Outrance, OutranceThrough, City, Market,MedicineBarcode, Revenue, RevenueTrough, EntranceImage, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -235,6 +235,11 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
         fields = ['id', 'medicine_full', 'quantity',
                   'details', 'medicine_unsubmited', 'shorted', 'existence']
 
+class MedicineBarcodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineBarcode
+        fields = '__all__'
+
 
 class KindSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
@@ -307,6 +312,8 @@ class MedicianSeralizer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     kind_image = serializers.SerializerMethodField()
+    barcoder = serializers.PrimaryKeyRelatedField(
+        queryset=MedicineBarcode.objects.all(), many=True)
     country_image = serializers.SerializerMethodField()
     pharm_group_image = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
@@ -318,6 +325,12 @@ class MedicianSeralizer(serializers.ModelSerializer):
             return obj.department.name
         else:
             ""
+
+    # def get_barcoder(self, obj):
+    #     query = MedicineBarcode.objects.filter(medicine=obj.id)
+    #     json_entrance_image = MedicineBarcodeSerializer(
+    #         query, many=True)
+    #     return json_entrance_image.data
 
     def get_kind_image(self, obj):
         if (obj.kind and obj.kind.image):
