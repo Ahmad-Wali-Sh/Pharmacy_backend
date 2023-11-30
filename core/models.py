@@ -144,8 +144,7 @@ class MyManager(models.Manager):
             lookup_params = {}
         duplicate_check(lookup_params)
 
-class MedicineBarcode(models.Model):
-    barcode = models.CharField(max_length=100, unique=True)
+
 
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
@@ -194,7 +193,6 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
-    barcoder = models.ManyToManyField(MedicineBarcode)
     # objects = MyManager()
 
     def __str__(self):
@@ -205,6 +203,9 @@ class Medician(models.Model):
     #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
     #     super().save(*args, **kwargs)
 
+class MedicineBarcode(models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    barcode = models.CharField(max_length=100, unique=True)
 
 
 

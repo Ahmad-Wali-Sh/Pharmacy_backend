@@ -235,10 +235,7 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
         fields = ['id', 'medicine_full', 'quantity',
                   'details', 'medicine_unsubmited', 'shorted', 'existence']
 
-class MedicineBarcodeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MedicineBarcode
-        fields = '__all__'
+
 
 
 class KindSerializer(serializers.ModelSerializer):
@@ -306,14 +303,14 @@ class BigCompanySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+
 class MedicianSeralizer(serializers.ModelSerializer):
     kind_name = serializers.SerializerMethodField()
     country_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     kind_image = serializers.SerializerMethodField()
-    barcoder = serializers.PrimaryKeyRelatedField(
-        queryset=MedicineBarcode.objects.all(), many=True)
     country_image = serializers.SerializerMethodField()
     pharm_group_image = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
@@ -326,11 +323,6 @@ class MedicianSeralizer(serializers.ModelSerializer):
         else:
             ""
 
-    # def get_barcoder(self, obj):
-    #     query = MedicineBarcode.objects.filter(medicine=obj.id)
-    #     json_entrance_image = MedicineBarcodeSerializer(
-    #         query, many=True)
-    #     return json_entrance_image.data
 
     def get_kind_image(self, obj):
         if (obj.kind and obj.kind.image):
@@ -390,6 +382,18 @@ class MedicianSeralizer(serializers.ModelSerializer):
         model = Medician
         fields = '__all__'
         extra_kwargs = {'medicines': {'required': False}}
+
+class MedicineBarcodeSerializer(serializers.ModelSerializer):
+    medician = serializers.SerializerMethodField()
+
+    def get_medician (self, obj):
+        entrance_image_obj = obj.medicine
+        json_entrance_image = MedicianSeralizer(
+            entrance_image_obj)
+        return json_entrance_image.data
+    class Meta:
+        model = MedicineBarcode
+        fields = '__all__'
 
 
 class MeidicainExcelSerializer(serializers.ModelSerializer):

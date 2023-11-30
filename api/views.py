@@ -103,14 +103,12 @@ class MedicianFilter(django_filters.FilterSet):
 
 
 class MedicianView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().order_by('id')
+    queryset = Medician.objects.all().order_by('-id')
     serializer_class = MedicianSeralizer
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["generic_name"]
     filterset_class = MedicianFilter
-    ordering_fields = ['id',]
-    ordering = ['id',]
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
 
@@ -120,6 +118,7 @@ class MedicineBarcodeView(viewsets.ModelViewSet):
     serializer_class = MedicineBarcodeSerializer
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['barcode', 'medicine']
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
 
