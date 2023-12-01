@@ -3,12 +3,12 @@ from .serializers import PharmGroupSeralizer, MedicianSeralizer, PharmCompanySer
     StoreSerializer, CurrencySerializer, EntranceSerializer, EntranceThroughSerializer, PaymentMethodSerializer, FinalRegisterSerializer, DepartmentSerializer, \
     DoctorNameSerializer, PatientNameSerializer, PrescriptionThroughSerializer, OutranceSerializer, OutranceThroughSerializer, MeidicainExcelSerializer, TrazSerializer, \
     CitySerializer, MarketSerializer, RevenueSerializer, RevenueTrhoughSerializer, UserSerializer, MedicineWithSerializer, BigCompanySerializer, EntranceThroughExpiresSerializer, MedicineConflictSerializer, \
-    PurchaseListSerializer, PurchaseListQuerySerializer, PurchaseListManualSerializer, EntranceImageSeriazlier
+    PurchaseListSerializer, PurchaseListQuerySerializer, MedicineBarcodeSerializer, PurchaseListManualSerializer, EntranceImageSeriazlier
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, Outrance, OutranceThrough, \
-    City, Market, Revenue, RevenueTrough, User, EntranceImage, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
+    City, Market, Revenue, RevenueTrough, User, MedicineBarcode, EntranceImage, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -103,14 +103,22 @@ class MedicianFilter(django_filters.FilterSet):
 
 
 class MedicianView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().order_by('id')
+    queryset = Medician.objects.all().order_by('-id')
     serializer_class = MedicianSeralizer
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["generic_name"]
     filterset_class = MedicianFilter
-    ordering_fields = ['id',]
-    ordering = ['id',]
+    permission_classes = [D7896DjangoModelPermissions]
+    pagination_class = StandardResultsSetPagination
+
+
+class MedicineBarcodeView(viewsets.ModelViewSet):
+    queryset = MedicineBarcode.objects.all().order_by('id')
+    serializer_class = MedicineBarcodeSerializer
+    filter_backends = [DjangoFilterBackend,
+                       filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['barcode', 'medicine']
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
 

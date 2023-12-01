@@ -145,6 +145,7 @@ class MyManager(models.Manager):
         duplicate_check(lookup_params)
 
 
+
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(models.CharField(
@@ -201,6 +202,11 @@ class Medician(models.Model):
     #     self.full_clean()
     #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
     #     super().save(*args, **kwargs)
+
+class MedicineBarcode(models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    barcode = models.CharField(max_length=100, unique=True)
+
 
 
 GENDER_CHOICES = (
