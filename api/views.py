@@ -463,12 +463,13 @@ class MedicineWithView (viewsets.ModelViewSet):
 
 
 class PurchaseListQueryView (viewsets.ModelViewSet):
-    queryset = Medician.objects.filter(to_buy=True).filter(shorted=False) | Medician.objects.filter(
-        existence__lt=F('minmum_existence')).filter(shorted=False)
+    queryset = Medician.objects.filter(to_buy=True) | Medician.objects.filter(
+        existence__lt=F('minmum_existence'))
     serializer_class = PurchaseListQuerySerializer
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filterset_fields = ['shorted',]
     ordering_fields = ['id',]
     ordering = ['id',]
 
