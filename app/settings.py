@@ -57,6 +57,7 @@ INSTALLED_APPS = [
 
 DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 DBBACKUP_STORAGE_OPTIONS = {'location': 'app/backups/'}
+DBBACKUP_MEDIA_PATH = '/frontend/'
 DBBACKUP_CLEANUP_KEEP = 4
 DBBACKUP_CLEANUP_KEEP_MEDIA = 2
 
@@ -96,6 +97,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'app.urls.StaticMediaMiddleware',
 ]
 
 
@@ -173,7 +175,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-MEDIA_ROOT = os.path.join(BASE_DIR, '')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'frontend/')
 
 STATIC_URL = 'static/'
 
