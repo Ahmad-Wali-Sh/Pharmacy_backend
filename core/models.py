@@ -554,17 +554,18 @@ class EntranceThrough(models.Model):
             1-self.discount_percent / 100) - self.discount_money, round_digit)
         self.discount_value = round(
             self.total_purchase_currency_before - self.total_purchaseـcurrency, round_digit)
-        if (self.quantity_bonus > 0):
-            self.bonus_value = round((self.total_purchase_currency_before / (
-                self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
-        else:
-            self.bonus_value = 0
+        # if (self.quantity_bonus > 0):
+        #     self.bonus_value = round((self.total_purchase_currency_before / (
+        #         self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
+        # else:
+        #     self.bonus_value = 0
         self.each_purchase_price = round(
             (self.each_price_factor / self.no_box), round_digit)
+        self.bonus_value = self.each_price_factor * self.quantity_bonus
         self.each_price = round(
             self.each_purchase_price * (1 + self.interest_percent / 100), round_digit)
         self.total_sell = round(
-            self.each_price * self.no_box * self.number_in_factor, round_digit)
+            self.each_price * self.no_box * self.number_in_factor + self.bonus_value, round_digit)
         self.register_quantity = ((self.number_in_factor * self.no_box) -
                                   (self.shortage * self.no_box)) + self.quantity_bonus
         self.each_sell_price = round(
