@@ -15,7 +15,9 @@ core/migrations/
 
 *backups/
 
-*migrations/
+**migrations/
+
+core/migrations/
 
 # Distribution / packaging
 .Python

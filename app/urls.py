@@ -23,18 +23,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.authtoken')),
-]
-
-class StaticMediaMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = self.get_response(request)
-        
-        # Conditionally include the static function for serving media files
-        if settings.DEBUG and '/frontend/' in request.path:
-            urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-        return response
+    path('auth/', include('djoser.urls.authtoken')),    
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
