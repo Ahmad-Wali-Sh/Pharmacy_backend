@@ -23,6 +23,7 @@ from io import BytesIO
 from django.core.files import File
 from django.db.models import Q
 import datetime
+from jdatetime import datetime as jdatetime
 
 
 class User(AbstractUser):
@@ -281,19 +282,27 @@ class Prescription (models.Model):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
+        today_jalali = jdatetime.now().strftime("%Y-%m")
 
-        objects_count = Prescription.objects.all().count()
-        if Prescription.objects.filter(created=date.today()):
-            objects_count = Prescription.objects.filter(
-                created=date.today()).count()
-            new_number = objects_count + 1
+        objects_count = Prescription.objects.filter(
+            created__year=date.today().year,
+            created__month=date.today().month
+        ).count()
+
+        if objects_count > 0:
+            count_of_month = objects_count + 1
         else:
-            new_number = "1"
-        time = date.today().strftime("%y-%m-%d")
-        if self.prescription_number:
-            pass
-        else:
-            self.prescription_number = str(time) + "-" + str(new_number)
+            count_of_month = 1
+
+        if not self.prescription_number:
+            if count_of_month == 1:
+                self.prescription_number = f"{today_jalali}-{count_of_month}"
+            else:
+                # Format count_of_month without leading zeros if less than 10
+                if count_of_month < 10:
+                    self.prescription_number = f"{today_jalali}-{count_of_month}"
+                else:
+                    self.prescription_number = f"{today_jalali}-{count_of_month:02d}"
 
         if (self.barcode_str == ''):
             number = random.randint(1000000000000, 9999999999999)
