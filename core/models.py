@@ -555,7 +555,7 @@ class EntranceThrough(models.Model):
 
     def save(self, *args, **kwargs):
 
-        round_digit = 1
+        round_digit = 2
 
         self.total_purchase_currency_before = round(
             self.number_in_factor * self.each_price_factor, round_digit)
