@@ -356,7 +356,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
         generics = ''
         ml = ''
         weight = ''
-        if (obj.kind):
+        if (obj.kind.name_english):
             kind_name = obj.kind.name_english + "."
         if (obj.country):
             country_name = obj.country.name
@@ -528,7 +528,7 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
         generics = ''
         ml = ''
         weight = ''
-        if (obj.kind):
+        if (obj.kind.name_english):
             kind_name = obj.kind.name_english + "."
         if (obj.country):
             country_name = obj.country.name
@@ -672,7 +672,7 @@ class PurchaseListManualSerializer (serializers.ModelSerializer):
         generics = ""
         ml = ''
         weight = ''
-        if (obj.kind):
+        if (obj.kind.name_english):
             kind_name = obj.kind.name_english + "."
         if (obj.country):
             country_name = obj.country.name
@@ -708,7 +708,7 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
         generics = ""
         ml = ''
         weight = ''
-        if (obj.kind):
+        if (obj.kind.name_english):
             kind_name = obj.kind.name_english + "."
         if (obj.country):
             country_name = obj.country.name
