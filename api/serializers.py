@@ -6,7 +6,7 @@ from django.db.models import Sum
 
 from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
     Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, \
-    Outrance, OutranceThrough, City, Market,MedicineBarcode, Revenue, RevenueTrough, EntranceImage, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
+    Outrance, OutranceThrough, City, Market,MedicineBarcode, Revenue, PrescriptionImage, RevenueTrough, EntranceImage, User, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
 
 from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
 
@@ -265,6 +265,14 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     department_name = serializers.SerializerMethodField()
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
+    prescription_image = serializers.SerializerMethodField()
+    
+    
+    def get_prescription_image(self, obj):
+        entrance_image_obj = PrescriptionImage.objects.filter(prescription=obj.id)
+        json_entrance_image = PrescriptionImageSerializer(
+            entrance_image_obj, many=True)
+        return json_entrance_image.data
 
     def get_patient_name(self, obj):
         if (obj.name):
@@ -501,6 +509,10 @@ class EntranceImageSeriazlier(serializers.ModelSerializer):
     class Meta:
         model = EntranceImage
         fields = '__all__'
+class PrescriptionImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionImage
+        fields = '__all__'
 
 
 class EntranceThroughSerializer(serializers.ModelSerializer):
@@ -685,6 +697,8 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
     medicine_cautions = serializers.SerializerMethodField()
     medicine_usage = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    medicine_no_box = serializers.SerializerMethodField()
+    medicine_no_quantity = serializers.SerializerMethodField()
 
     def get_medicine_full(self, res):
         obj = res.medician
@@ -714,6 +728,19 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
             return obj.medician.cautions
         else:
             return ""
+        
+    def get_medicine_no_box(self, obj):
+        if (obj.medician.no_box):
+            return obj.medician.no_box
+        else:
+            return ""
+        
+    def get_medicine_no_quantity(self, obj):
+        if (obj.medician.no_pocket):
+            return obj.medician.no_pocket
+        else:
+            return ""
+
 
     def get_medicine_usage(self, obj):
         if (obj.medician.usages):

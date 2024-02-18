@@ -5,7 +5,7 @@ from .views import MedicianView, PharmGroupView, CountryView, KindView, Prescrip
     StoreView, FinalRegisterView, PrescriptionThroughView, PatientNameView, DoctorNameView, DepartmentView, CurrencyView, \
     PaymentMethodView, EntranceThroughView, EntranceView, OutranceView, OutranceThroughView, MedicianExcelView, TrazView, \
     CityView, MarketView, RevenueThroughView, RevenueView, LastEntranceView, MedicineWithView, LastPrescriptionView, BigCompanyView, \
-    EntranceThroughExpiresView, MedicineConflictView, MedicineBarcodeView, PuchaseListView, EntranceImageView, PurchaseListQueryView, PurchaseListManualView
+    EntranceThroughExpiresView, MedicineConflictView, MedicineBarcodeView, PuchaseListView, PrescriptionImageView, EntranceImageView, PurchaseListQueryView, PurchaseListManualView
 
 
 
@@ -20,6 +20,7 @@ router.register(r'medicine-barcode', MedicineBarcodeView)
 router.register(r'pharm-companies', PharmCompanyView)
 router.register(r'entrance', EntranceView)
 router.register(r'entrance-image', EntranceImageView)
+router.register(r'prescription-image', PrescriptionImageView)
 router.register(r'entrance-throug', EntranceThroughView)
 router.register(r'store', StoreView)
 router.register(r'final-register', FinalRegisterView)

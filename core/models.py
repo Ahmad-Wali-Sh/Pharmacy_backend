@@ -314,6 +314,11 @@ class Prescription (models.Model):
             self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
         return super().save(*args, **kwargs)
+    
+class PrescriptionImage(models.Model):
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
+    image = OptimizedImageField(
+        null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
 
 
 class PrescriptionThrough(models.Model):
@@ -507,6 +512,8 @@ class EntranceImage(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
     image = OptimizedImageField(
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+
+
 
 
 class EntranceThrough(models.Model):
