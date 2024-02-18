@@ -519,11 +519,17 @@ class TrazView (FlatMultipleModelAPIViewSet):
     ordering_fields = ['id', 'timestamp']
     ordering = ['id', 'timestamp']
 
+class PurchaseListFilter (django_filters.FilterSet):
+    created = django_filters.DateTimeFromToRangeFilter(field_name='created')
+
+    class Meta:
+        model = PurchaseListManual
+        fields = ['approved', 'medicine', 'created']
 
 class PurchaseListManualView (viewsets.ModelViewSet):
     queryset = PurchaseListManual.objects.all().order_by('-id')
     serializer_class = PurchaseListManualSerializer
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ('approved', 'medicine', 'created')
+    filterset_class = PurchaseListFilter
     permission_classes = [D7896DjangoModelPermissions]

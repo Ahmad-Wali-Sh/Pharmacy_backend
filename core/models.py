@@ -1095,7 +1095,7 @@ class PurchaseListManual (models.Model):
     arrival = models.FloatField(default=0)
     approved = models.BooleanField(default=False)
     shortaged = models.BooleanField(default=False)
-    created = models.DateField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
