@@ -62,8 +62,8 @@ class Kind(models.Model):
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
-    def __str__(self):
-        return self.name_persian
+    # def __str__(self):
+    #     return self.name_persian
 
 
 class PharmGroup(models.Model):
