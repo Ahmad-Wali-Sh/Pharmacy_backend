@@ -350,26 +350,25 @@ class MedicianSeralizer(serializers.ModelSerializer):
 
     def get_medicine_full(self, res):
         obj = res
-        kind_name = ""
-        country_name = ""
-        big_company_name = ''
-        generics = ''
-        ml = ''
-        weight = ''
-        if (obj.kind.name_english):
-            kind_name = obj.kind.name_english + "."
-        if (obj.country):
-            country_name = obj.country.name
-        if (obj.big_company):
-            big_company_name = obj.big_company.name + " "
-        if (obj.generic_name):
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "}"
-        if (obj.ml):
-            ml = obj.ml
-        if (obj.weight):
-            weight = obj.weight
-
-        return kind_name + obj.brand_name + ' ' + ml + ' ' + big_company_name + country_name + " " + weight
+        
+        # Initialize variables
+        kind_name = obj.kind.name_english + "." if obj.kind and obj.kind.name_english else ""
+        country_name = obj.country.name if obj.country else ""
+        big_company_name = obj.big_company.name + " " if obj.big_company else ""
+        generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" if obj.generic_name else ""
+        ml = obj.ml if obj.ml else ""
+        weight = obj.weight if obj.weight else ""
+        
+        # Construct the full medicine name
+        medicine_full = (
+            kind_name +
+            obj.brand_name + ' ' +
+            ml + ' ' +
+            big_company_name +
+            country_name + " " +
+            weight
+        )
+        return medicine_full
 
     def get_kind_name(self, obj):
         if obj.kind:
