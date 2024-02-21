@@ -63,7 +63,7 @@ class Kind(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
-        return self.name_english
+        return self.name_persian
 
 
 class PharmGroup(models.Model):
