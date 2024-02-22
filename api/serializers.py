@@ -22,8 +22,10 @@ class UserSerializer(serializers.ModelSerializer):
 class PharmGroupSeralizer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = PharmGroup
@@ -34,8 +36,10 @@ class RevenueSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     employee_name = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_employee_name(self, obj):
         return obj.employee.username
@@ -76,8 +80,10 @@ class RevenueTrhoughSerializer(serializers.ModelSerializer):
     def get_rounded(self, obj):
         return obj.prescription.rounded_number
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_prescription_number(self, obj):
         return obj.prescription.prescription_number
@@ -100,8 +106,10 @@ class RevenueTrhoughSerializer(serializers.ModelSerializer):
 class MarketSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Market
@@ -111,8 +119,10 @@ class MarketSerializer(serializers.ModelSerializer):
 class CitySerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = City
@@ -241,8 +251,10 @@ class PurchaseListQuerySerializer(serializers.ModelSerializer):
 class KindSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Kind
@@ -252,8 +264,10 @@ class KindSerializer(serializers.ModelSerializer):
 class CountrySerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Country
@@ -282,8 +296,10 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         if (obj.doctor):
             return str(obj.doctor.id) + "." + obj.doctor.name
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_department_name(self, obj):
         return obj.department.name
@@ -296,8 +312,10 @@ class PrescriptionSerializer(serializers.ModelSerializer):
 class DepartmentSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Department
@@ -382,8 +400,10 @@ class MedicianSeralizer(serializers.ModelSerializer):
         else:
             return ""
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Medician
@@ -406,8 +426,10 @@ class MedicineBarcodeSerializer(serializers.ModelSerializer):
 class MeidicainExcelSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     kind = serializers.SlugRelatedField(
         read_only=True,
@@ -430,8 +452,10 @@ class MeidicainExcelSerializer(serializers.ModelSerializer):
 class UnitSeralizer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Unit
@@ -455,8 +479,10 @@ class PharmCompanySeralizer(serializers.ModelSerializer):
         else:
             return ''
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = PharmCompany
@@ -493,8 +519,10 @@ class EntranceSerializer(serializers.ModelSerializer):
             entrance_image_obj, many=True)
         return json_entrance_image.data
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_currency_name(self, obj):
         return obj.currency.name
@@ -518,6 +546,10 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     medicine_min_expire = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+
+    def get_description (self, res):
+        return res.entrance.description
 
     def get_medicine_full(self, res):
         obj = res.medician
@@ -545,8 +577,10 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     def get_medicine_min_expire(self, obj):
         return obj.medician.min_expire_date
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = EntranceThrough
@@ -564,8 +598,10 @@ class EntranceThroughExpiresSerializer(serializers.ModelSerializer):
 class StoreSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Store
@@ -575,8 +611,10 @@ class StoreSerializer(serializers.ModelSerializer):
 class CurrencySerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Currency
@@ -586,8 +624,10 @@ class CurrencySerializer(serializers.ModelSerializer):
 class PaymentMethodSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = PaymentMethod
@@ -597,8 +637,10 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
 class FinalRegisterSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = FinalRegister
@@ -609,8 +651,10 @@ class DoctorNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     code_name = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_code_name(self, obj):
         return str(obj.id) + "." + obj.name
@@ -624,8 +668,10 @@ class PatientNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     code_name = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     def get_code_name(self, obj):
         return str(obj.id) + "." + obj.name
@@ -698,6 +744,14 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
     medicine_full = serializers.SerializerMethodField()
     medicine_no_box = serializers.SerializerMethodField()
     medicine_no_quantity = serializers.SerializerMethodField()
+    prescription_number = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+
+    def get_department_name (self, res):
+        return res.prescription.department.name
+
+    def get_prescription_number (self, res):
+        return res.prescription.prescription_number
 
     def get_medicine_full(self, res):
         obj = res.medician
@@ -747,8 +801,10 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
         else:
             return ""
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = PrescriptionThrough
@@ -758,8 +814,10 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
 class OutranceSerializer (serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = Outrance
@@ -769,8 +827,10 @@ class OutranceSerializer (serializers.ModelSerializer):
 class OutranceThroughSerializer (serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
-    def get_username(self, obj):
-        return obj.user.username
+    def get_username(self, res):
+        if (res.user and res.user.first_name):
+            return res.user.first_name
+        else: return ''
 
     class Meta:
         model = OutranceThrough
