@@ -69,12 +69,14 @@ class MedicineImport(resources.ModelResource):
         return super().save_instance(instance, using_transactions=using_transactions, dry_run=dry_run, *args, **kwargs)
 
     def before_import_row(self, row, **kwargs):
-        kind_name = row['kind']
-        try:
-            Kind.objects.get(name_persian=kind_name)
-        except Kind.DoesNotExist:
-            admin_user = User.objects.get(username="admin")
-            Kind.objects.create(name_persian=kind_name, user=admin_user)
+        if ('kind' in row):
+            kind_name = row['kind']
+            try:
+                Kind.objects.get(name_persian=kind_name)
+            except Kind.DoesNotExist:
+                admin_user = User.objects.get(username="admin")
+                Kind.objects.create(name_persian=kind_name, user=admin_user)
+        else: pass
 
 class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ('register_quantity', 'each_purchase_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
