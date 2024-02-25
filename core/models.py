@@ -577,15 +577,15 @@ class EntranceThrough(models.Model):
         #     self.bonus_value = 0
         self.each_purchase_price = round(
             (self.each_price_factor / self.no_box), round_digit)
-        self.bonus_value = self.each_price_factor * self.quantity_bonus
         self.each_price = round(
             self.each_purchase_price * (1 + self.interest_percent / 100), round_digit)
-        self.total_sell = round(
-            self.each_price * self.no_box * self.number_in_factor + self.bonus_value, round_digit)
         self.register_quantity = ((self.number_in_factor * self.no_box) -
                                   (self.shortage * self.no_box)) + self.quantity_bonus
         self.each_sell_price = round(
             self.each_sell_price_afg / self.entrance.currency_rate, round_digit)
+        self.bonus_value = self.each_sell_price * self.quantity_bonus
+        self.total_sell = round(
+            self.each_price * self.no_box * self.number_in_factor + self.bonus_value, round_digit)
         self.rate = self.entrance.currency_rate
         self.rate_name = self.entrance.currency.name
 

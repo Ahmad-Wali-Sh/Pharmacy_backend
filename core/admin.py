@@ -55,16 +55,18 @@ class MedicineImport(resources.ModelResource):
         model = Medician
 
     def save_instance(self, instance, using_transactions=True, dry_run=False, *args, **kwargs):
-        kind_name = instance.kind
-        try:
-            # Try to get the related Kind object by name_persian
-            kind = Kind.objects.get(name_persian=kind_name)
-        except Kind.DoesNotExist:
-            # If Kind does not exist, create a new one
-            admin_user = User.objects.get(username="admin")
-            kind = Kind(name_persian=kind_name, user=admin_user)
-            kind.save()
-        instance.kind = kind
+        if (instance.kind):
+            kind_name = instance.kind
+
+            try:
+                # Try to get the related Kind object by name_persian
+                kind = Kind.objects.get(name_persian=kind_name)
+            except Kind.DoesNotExist:
+                # If Kind does not exist, create a new one
+                admin_user = User.objects.get(username="admin")
+                kind = Kind(name_persian=kind_name, user=admin_user)
+                kind.save()
+            instance.kind = kind    
 
         return super().save_instance(instance, using_transactions=using_transactions, dry_run=dry_run, *args, **kwargs)
 
