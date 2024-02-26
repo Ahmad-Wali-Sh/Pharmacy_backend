@@ -57,7 +57,6 @@ class MedicineImport(resources.ModelResource):
     def save_instance(self, instance, using_transactions=True, dry_run=False, *args, **kwargs):
         if (instance.kind):
             kind_name = instance.kind
-
             try:
                 # Try to get the related Kind object by name_persian
                 kind = Kind.objects.get(name_persian=kind_name)

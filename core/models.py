@@ -62,8 +62,12 @@ class Kind(models.Model):
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
-    # def __str__(self):
-    #     return self.name_persian
+    def __str__(self):
+        if (self.name_english):
+            return self.name_english
+        elif (self.name_persian):
+            return self.name_persian
+        else: ''
 
 
 class PharmGroup(models.Model):
