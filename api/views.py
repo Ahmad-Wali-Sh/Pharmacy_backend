@@ -28,6 +28,16 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.request import Request
+from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_permissions(request):
+    user = request.user
+    permissions = list(user.get_all_permissions())
+    return JsonResponse({'permissions': permissions})
 
 
 class ArrayOverlapFilter(Filter):

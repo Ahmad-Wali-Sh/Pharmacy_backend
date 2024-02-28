@@ -5,7 +5,7 @@ from .views import MedicianView, PharmGroupView, CountryView, KindView, Prescrip
     StoreView, FinalRegisterView, PrescriptionThroughView, PatientNameView, DoctorNameView, DepartmentView, CurrencyView, \
     PaymentMethodView, EntranceThroughView, EntranceView, OutranceView, OutranceThroughView, MedicianExcelView, TrazView, \
     CityView, MarketView, RevenueThroughView, RevenueView, LastEntranceView, MedicineWithView, LastPrescriptionView, BigCompanyView, \
-    EntranceThroughExpiresView, MedicineConflictView, MedicineBarcodeView, PuchaseListView, PrescriptionImageView, EntranceImageView, PurchaseListQueryView, PurchaseListManualView
+    EntranceThroughExpiresView, user_permissions, MedicineConflictView, MedicineBarcodeView, PuchaseListView, PrescriptionImageView, EntranceImageView, PurchaseListQueryView, PurchaseListManualView
 
 
 
@@ -53,4 +53,5 @@ router.register(r'traz', TrazView, basename='traz')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('user/permissions/', user_permissions, name='user_permissions'),
 ]

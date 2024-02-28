@@ -24,7 +24,10 @@ from django.core.files import File
 from django.db.models import Q
 import datetime
 from jdatetime import datetime as jdatetime
+from django.contrib.auth.models import Group
 
+
+Group.add_to_class('description', models.CharField(max_length=180,null=True, blank=True))
 
 class User(AbstractUser):
     image = models.ImageField(
