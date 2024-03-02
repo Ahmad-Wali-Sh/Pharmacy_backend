@@ -289,27 +289,33 @@ class Prescription (models.Model):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
-        today_jalali = jdatetime.now().strftime("%Y-%m")
-
+        # Get the current Jalali date
+        today_jalali = jdatetime.now()
+        
+        # Convert Jalali date to Gregorian date
+        today_gregorian = today_jalali.togregorian()
+        
+        # Extract Jalali year and month
+        j_year = today_jalali.year
+        j_month = today_jalali.month
+        
+        # Count objects created in the current Gregorian year and month
         objects_count = Prescription.objects.filter(
-            created__year=date.today().year,
-            created__month=date.today().month
+            created__year=today_gregorian.year,
+            created__month=today_gregorian.month
         ).count()
 
-        if objects_count > 0:
-            count_of_month = objects_count + 1
-        else:
-            count_of_month = 1
+        # Increment count of objects in the current month
+        count_of_month = objects_count + 1 if objects_count > 0 else 1
 
         if not self.prescription_number:
+            # Format prescription number with Gregorian year and month
             if count_of_month == 1:
-                self.prescription_number = f"{today_jalali}-{count_of_month}"
+                self.prescription_number = f"{j_year}-{j_month}-{count_of_month}"
             else:
-                # Format count_of_month without leading zeros if less than 10
-                if count_of_month < 10:
-                    self.prescription_number = f"{today_jalali}-{count_of_month}"
-                else:
-                    self.prescription_number = f"{today_jalali}-{count_of_month:02d}"
+                # Format count_of_month with leading zeros if less than 10
+                self.prescription_number = f"{j_year}-{j_month}-{count_of_month:02d}"
+
 
         if (self.barcode_str == ''):
             number = random.randint(1000000000000, 9999999999999)
