@@ -327,7 +327,17 @@ class Prescription (models.Model):
             self.purchase_payment_date = timezone.now()
         if not self.sold:
             self.purchase_payment_date = None
-        
+            
+        if (self.prescription_number):
+            prescription_through_total = list(PrescriptionThrough.objects.filter(
+            prescription_id=self.id).aggregate(Sum('total_price')
+                                                                ).values())[0]
+            discount_percent = float(self.discount_percent)
+            discount_amount = 0
+            if (prescription_through_total):
+                discount_amount = prescription_through_total * (discount_percent / 100)
+                grand_total = float(prescription_through_total) - discount_amount - float(self.zakat) - float(self.khairat) - float(self.discount_money) + float(self.rounded_number)
+                self.grand_total = round(grand_total, 0)
         # Get the current Jalali date
         today_jalali = jdatetime.now()
         
@@ -388,7 +398,7 @@ class PrescriptionThrough(models.Model):
     def save(self, *args, **kwargs):
         """ Calculation of Total Price for total_price field """
 
-        self.total_price = round(self.quantity * self.each_price, 2)
+        self.total_price = round(self.quantity * self.each_price, 0)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
 
@@ -420,6 +430,9 @@ class PrescriptionThrough(models.Model):
         prescription_through_total = list(PrescriptionThrough.objects.filter(
             prescription_id=self.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
+        discount_percent = float(self.prescription.discount_percent)
+        discount_amount = prescription_through_total * (discount_percent / 100)
+        grand_total =float(prescription_through_total) - discount_amount - float(self.prescription.zakat) - float(self.prescription.khairat) - float(self.prescription.discount_money) + float(self.prescription.rounded_number)
 
         last_revenue = list(RevenueTrough.objects.filter(
             prescription_id=self.prescription.id).aggregate(Sum('purchased')
@@ -430,8 +443,8 @@ class PrescriptionThrough(models.Model):
             self.prescription.refund = prescription_through_total - last_revenue
         if (self.prescription.sold == True):
             self.prescription.sold = False
-        if prescription_through_total:
-            self.prescription.grand_total = prescription_through_total
+        if prescription_through_total and grand_total:
+            self.prescription.grand_total = round(grand_total, 0)
         else:
             self.prescription.grand_total = 0
 
