@@ -255,6 +255,38 @@ class DoctorName(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Revenue (models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    total = models.FloatField(default=0)
+    zakat = models.FloatField(default=0)
+    khairat = models.FloatField(default=0)
+    rounded = models.FloatField(default=0)
+    discount = models.FloatField(default=0)
+    start_time = models.TimeField(auto_now=False, null=True, blank=True)
+    start_end = models.TimeField(auto_now=False, null=True, blank=True)
+    start_end_date = models.DateField(null=True, blank=True, auto_now=True)
+    active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+    employee = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name='employee')
+
+    def update_model(self, *args, **kwargs):
+        checkifopen = Revenue.objects.filter(employee=self.employee).filter(
+            active=True).filter(~Q(id=self.id))
+        if checkifopen:
+            raise Exception('There is Already an Open Revenue...')
+            pass
+        else:
+            super(Revenue, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        if self.active == True:
+            self.start_time = timezone.now().strftime("%H:%M:%S")
+            self.start_end_date = ""
+        else:
+            self.start_end = timezone.now().strftime("%H:%M:%S")
+        self.update_model()
 
 
 class Prescription (models.Model):
@@ -284,11 +316,18 @@ class Prescription (models.Model):
     barcode = models.ImageField(
         upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
     barcode_str = models.CharField(max_length=255, blank=True, editable=False)
+    purchase_payment_date = models.DateTimeField(null=True, blank=True)
+    revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT, null=True, blank=True)
 
     def __str__(self):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
+        if self.sold:
+            self.purchase_payment_date = timezone.now()
+        if not self.sold:
+            self.purchase_payment_date = None
+        
         # Get the current Jalali date
         today_jalali = jdatetime.now()
         
@@ -349,7 +388,7 @@ class PrescriptionThrough(models.Model):
     def save(self, *args, **kwargs):
         """ Calculation of Total Price for total_price field """
 
-        self.total_price = round(self.quantity * self.each_price, 1)
+        self.total_price = round(self.quantity * self.each_price, 2)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
 
@@ -822,40 +861,6 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     instance.medician.existence = result
     instance.medician.save()
 
-
-class Revenue (models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    total = models.FloatField(default=0)
-    zakat = models.FloatField(default=0)
-    khairat = models.FloatField(default=0)
-    rounded = models.FloatField(default=0)
-    discount = models.FloatField(default=0)
-    start_time = models.TimeField(auto_now=False, null=True, blank=True)
-    start_end = models.TimeField(auto_now=False, null=True, blank=True)
-    start_end_date = models.DateField(null=True, blank=True, auto_now=True)
-    active = models.BooleanField(default=True)
-    user = models.ForeignKey(User, on_delete=models.RESTRICT)
-    employee = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name='employee')
-    revenue_through = models.ManyToManyField(
-        Prescription, through="RevenueTrough")
-
-    def update_model(self, *args, **kwargs):
-        checkifopen = Revenue.objects.filter(employee=self.employee).filter(
-            active=True).filter(~Q(id=self.id))
-        if checkifopen:
-            raise Exception('There is Already an Open Revenue...')
-            pass
-        else:
-            super(Revenue, self).save(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        if self.active == True:
-            self.start_time = timezone.now().strftime("%H:%M:%S")
-            self.start_end_date = ""
-        else:
-            self.start_end = timezone.now().strftime("%H:%M:%S")
-        self.update_model()
 
 
 class RevenueTrough (models.Model):

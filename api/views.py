@@ -195,8 +195,7 @@ class RevenueFilter(django_filters.FilterSet):
 
     class Meta:
         model = Revenue
-        fields = ['created', 'active', 'employee',
-                  'revenue_through__prescription_number']
+        fields = ['created', 'active', 'employee']
 
 
 class RevenueView(viewsets.ModelViewSet):
@@ -370,14 +369,17 @@ class PrescriptionFilterView(django_filters.FilterSet):
     class Meta:
         model = Prescription
         fields = ['prescription_number', 'department', 'created',
-                  'name', 'doctor', 'prescription_number', 'sold', 'barcode_str']
+                  'name', 'doctor', 'prescription_number', 'sold', 'barcode_str', 'revenue']
 
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by('id')
     serializer_class = PrescriptionSerializer
     filterset_class = PrescriptionFilterView
+    filter_backends = [DjangoFilterBackend,
+                       filters.SearchFilter, filters.OrderingFilter]
     permission_classes = [D7896DjangoModelPermissions]
+    ordering_fields = ['id', 'created']
 
 
 class LastPrescriptionView(viewsets.ModelViewSet):
