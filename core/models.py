@@ -579,12 +579,10 @@ class EntranceImage(models.Model):
         null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
 
 
-
-
 class EntranceThrough(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.RESTRICT)
     medician = models.ForeignKey(Medician, on_delete=models.RESTRICT)
-    number_in_factor = models.IntegerField()
+    number_in_factor = models.FloatField()
     each_price_factor = models.FloatField()
     each_price = models.FloatField(default=1)
     discount_money = models.FloatField(default=0)
