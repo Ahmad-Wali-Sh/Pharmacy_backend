@@ -317,16 +317,13 @@ class Prescription (models.Model):
         upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
     barcode_str = models.CharField(max_length=255, blank=True, editable=False)
     purchase_payment_date = models.DateTimeField(null=True, blank=True)
+    purchased_value = models.FloatField(default=0)
     revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT, null=True, blank=True)
 
     def __str__(self):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
-        if self.sold:
-            self.purchase_payment_date = timezone.now()
-        if not self.sold:
-            self.purchase_payment_date = None
             
         if (self.prescription_number):
             prescription_through_total = list(PrescriptionThrough.objects.filter(
@@ -338,6 +335,17 @@ class Prescription (models.Model):
                 discount_amount = prescription_through_total * (discount_percent / 100)
                 grand_total = float(prescription_through_total) - discount_amount - float(self.zakat) - float(self.khairat) - float(self.discount_money) + float(self.rounded_number)
                 self.grand_total = round(grand_total, 0)
+                
+        if (self.sold and self.purchased_value != 0 and (self.purchased_value != self.grand_total)):
+              self.refund = self.purchased_value - self.grand_total
+            
+        if self.sold and self.refund == 0:
+            self.purchase_payment_date = timezone.now()
+            self.purchased_value = self.grand_total
+        if not self.sold:
+            self.purchase_payment_date = None
+            
+            
         # Get the current Jalali date
         today_jalali = jdatetime.now()
         
@@ -432,24 +440,26 @@ class PrescriptionThrough(models.Model):
                                                             ).values())[0]
         discount_percent = float(self.prescription.discount_percent)
         discount_amount = prescription_through_total * (discount_percent / 100)
-        grand_total =float(prescription_through_total) - discount_amount - float(self.prescription.zakat) - float(self.prescription.khairat) - float(self.prescription.discount_money) + float(self.prescription.rounded_number)
+        grand_total = float(prescription_through_total) - discount_amount - float(self.prescription.zakat) - float(self.prescription.khairat) - float(self.prescription.discount_money) + float(self.prescription.rounded_number)
 
-        last_revenue = list(RevenueTrough.objects.filter(
-            prescription_id=self.prescription.id).aggregate(Sum('purchased')
-                                                            ).values())[0]
-
-        if (self.prescription.sold == True and last_revenue):
-            self.prescription.sold = False
-            self.prescription.refund = prescription_through_total - last_revenue
-        if (self.prescription.sold == True):
-            self.prescription.sold = False
-        if prescription_through_total and grand_total:
+                
+        if (prescription_through_total and grand_total):
             self.prescription.grand_total = round(grand_total, 0)
-        else:
-            self.prescription.grand_total = 0
+                
+        # if (self.prescription.sold == True and last_revenue):
+        #     self.prescription.sold = False
+        #     self.prescription.refund = prescription_through_total - last_revenue
+        # if (self.prescription.sold == True):
+        #     self.prescription.sold = False
+        # if prescription_through_total and grand_total:
+        #     self.prescription.grand_total = round(grand_total, 0)
+        # else:
+        #     self.prescription.grand_total = 0
 
-        if (last_revenue == prescription_through_total):
-            self.prescription.sold = True
+        # if (last_revenue == prescription_through_total):
+        #     self.prescription.sold = True
+        
+        
 
         self.prescription.save()
 
@@ -947,22 +957,16 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     prescription_through_total = list(PrescriptionThrough.objects.filter(
         prescription_id=instance.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
-
-    last_revenue = list(RevenueTrough.objects.filter(
-        prescription_id=instance.prescription.id).aggregate(Sum('purchased')
-                                                            ).values())[0]
-
-    # if (instance.prescription.sold == True and last_revenue):
-    #     grand_total_price = instance.prescription.grand_total
-    if (prescription_through_total and last_revenue):
-        instance.prescription.sold = False
-        instance.prescription.refund = prescription_through_total - last_revenue
-    elif (last_revenue):
-        instance.prescription.sold = False
-        instance.prescription.refund = - last_revenue
+    discount_percent = float(instance.prescription.discount_percent)
+    if (prescription_through_total):
+        discount_amount = prescription_through_total * (discount_percent / 100)
+        grand_total = float(prescription_through_total) - discount_amount - float(instance.prescription.zakat) - float(instance.prescription.khairat) - float(instance.prescription.discount_money) + float(instance.prescription.rounded_number)
     else:
-        instance.prescription.sold = False
-        instance.prescription.refund = 0
+        grand_total = 0
+    
+    if (prescription_through_total and grand_total):
+            instance.prescription.grand_total = round(grand_total, 0)
+
 
     instance.prescription.save()
 
@@ -973,149 +977,15 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     prescription_through_total = list(PrescriptionThrough.objects.filter(
         prescription_id=instance.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
-
-    last_revenue = list(RevenueTrough.objects.filter(
-        prescription_id=instance.prescription.id).aggregate(Sum('purchased')
-                                                            ).values())[0]
-
-    if (prescription_through_total and last_revenue):
-        instance.prescription.sold = False
-        instance.prescription.refund = prescription_through_total - last_revenue
-    elif (last_revenue):
-        instance.prescription.sold = False
-        instance.prescription.refund = - last_revenue
-    else:
-        instance.prescription.sold = False
-        instance.prescription.refund = 0
+    discount_percent = float(instance.prescription.discount_percent)
+    discount_amount = prescription_through_total * (discount_percent / 100)
+    grand_total = float(prescription_through_total) - discount_amount - float(instance.prescription.zakat) - float(instance.prescription.khairat) - float(instance.prescription.discount_money) + float(instance.prescription.rounded_number)
+    
+    if (prescription_through_total and grand_total):
+            instance.prescription.grand_total = round(grand_total, 0)
+            
 
     instance.prescription.save()
-
-    def total_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
-        else:
-            total_revenue_through = 0
-        return total_revenue_through
-
-    def discount_revenue_through():
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-        else:
-            total_revenue_through = 0
-        return total_revenue_through
-
-    def khairat_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-        else:
-            total_revenue_through = 0
-        return total_revenue_through
-
-    def zakat_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-        else:
-            total_revenue_through = 0
-        return total_revenue_through
-
-    def rounded_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-        else:
-            total_revenue_through = 0
-        return total_revenue_through
-
-    instance.revenue.rounded = rounded_revenue_through()
-    instance.revenue.zakat = zakat_revenue_through()
-    instance.revenue.khairat = khairat_revenue_through()
-    instance.revenue.discount = discount_revenue_through()
-    instance.revenue.total = total_revenue_through()
-    instance.revenue.save()
-
-
-@receiver(post_save, sender=RevenueTrough)
-def revenue_through_submit(sender, instance, **kwargs):
-
-    def total_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('purchased')).values())[0]
-        else:
-            total_revenue_through = instance.prescription.grand_total
-        return total_revenue_through
-
-    def discount_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__discount_money')).values())[0]
-        else:
-            total_revenue_through = instance.prescription.discount_money
-        return total_revenue_through
-
-    def khairat_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__khairat')).values())[0]
-        else:
-            total_revenue_through = instance.prescription.khairat
-        return total_revenue_through
-
-    def zakat_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__zakat')).values())[0]
-        else:
-            total_revenue_through = instance.prescription.zakat
-        return total_revenue_through
-
-    def rounded_revenue_through():
-
-        total_revenue_through = list(RevenueTrough.objects.filter(
-            revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-        if total_revenue_through != None:
-            total_revenue_through = list(RevenueTrough.objects.filter(
-                revenue_id=instance.revenue.id).aggregate(Sum('prescription__rounded_number')).values())[0]
-        else:
-            total_revenue_through = instance.prescription.rounded_number
-        return total_revenue_through
-
-    instance.revenue.rounded = rounded_revenue_through()
-    instance.revenue.zakat = zakat_revenue_through()
-    instance.revenue.khairat = khairat_revenue_through()
-    instance.revenue.discount = discount_revenue_through()
-    instance.revenue.total = total_revenue_through()
-    instance.revenue.save()
 
 
 class PurchaseListManual (models.Model):

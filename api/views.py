@@ -365,10 +365,10 @@ class PharmGroupView(viewsets.ModelViewSet):
 
 class PrescriptionFilterView(django_filters.FilterSet):
     created = django_filters.DateTimeFromToRangeFilter()
-
+    refund_not_equal = django_filters.NumberFilter(field_name='refund', lookup_expr='exact', exclude=True)  # New field for refund not equal
     class Meta:
         model = Prescription
-        fields = ['prescription_number', 'department', 'created',
+        fields = ['prescription_number', 'department', 'created', 'refund_not_equal',
                   'name', 'doctor', 'prescription_number', 'sold', 'barcode_str', 'revenue']
 
 
