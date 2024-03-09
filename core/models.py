@@ -25,6 +25,7 @@ from django.db.models import Q
 import datetime
 from jdatetime import datetime as jdatetime
 from django.contrib.auth.models import Group
+from core.utils import calculate_rounded_value
 
 
 Group.add_to_class('description', models.CharField(max_length=180,null=True, blank=True))
@@ -324,27 +325,27 @@ class Prescription (models.Model):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
-            
-        if (self.prescription_number):
+        if self.prescription_number:
             prescription_through_total = list(PrescriptionThrough.objects.filter(
-            prescription_id=self.id).aggregate(Sum('total_price')
-                                                                ).values())[0]
+                prescription_id=self.id).aggregate(Sum('total_price')).values())[0]
             discount_percent = float(self.discount_percent)
             discount_amount = 0
-            if (prescription_through_total):
+            if prescription_through_total:
                 discount_amount = prescription_through_total * (discount_percent / 100)
+                self.rounded_number = calculate_rounded_value(int(float(prescription_through_total)), self.department.celling_start)
                 grand_total = float(prescription_through_total) - discount_amount - float(self.zakat) - float(self.khairat) - float(self.discount_money) + float(self.rounded_number)
                 self.grand_total = round(grand_total, 0)
-                
-        if (self.sold and self.purchased_value != 0 and (self.purchased_value != self.grand_total)):
-              self.refund = self.purchased_value - self.grand_total
-            
+
+        if self.sold and self.purchased_value != 0 and (self.purchased_value != self.grand_total):
+            self.refund = self.purchased_value - self.grand_total
+
         if self.sold and self.refund == 0:
             self.purchase_payment_date = timezone.now()
             self.purchased_value = self.grand_total
         if not self.sold:
             self.purchase_payment_date = None
-            
+
+        # Now, you can access grand_total and calculate the rounded number
             
         # Get the current Jalali date
         today_jalali = jdatetime.now()
@@ -384,6 +385,8 @@ class Prescription (models.Model):
             self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
 
         return super().save(*args, **kwargs)
+    
+
     
 class PrescriptionImage(models.Model):
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
@@ -434,31 +437,9 @@ class PrescriptionThrough(models.Model):
 
         self.medician.existence = priscription_sum()
         self.medician.save()
-
-        prescription_through_total = list(PrescriptionThrough.objects.filter(
-            prescription_id=self.prescription.id).aggregate(Sum('total_price')
-                                                            ).values())[0]
-        discount_percent = float(self.prescription.discount_percent)
-        discount_amount = prescription_through_total * (discount_percent / 100)
-        grand_total = float(prescription_through_total) - discount_amount - float(self.prescription.zakat) - float(self.prescription.khairat) - float(self.prescription.discount_money) + float(self.prescription.rounded_number)
-
-                
-        if (prescription_through_total and grand_total):
-            self.prescription.grand_total = round(grand_total, 0)
-                
-        # if (self.prescription.sold == True and last_revenue):
-        #     self.prescription.sold = False
-        #     self.prescription.refund = prescription_through_total - last_revenue
-        # if (self.prescription.sold == True):
-        #     self.prescription.sold = False
-        # if prescription_through_total and grand_total:
-        #     self.prescription.grand_total = round(grand_total, 0)
-        # else:
-        #     self.prescription.grand_total = 0
-
-        # if (last_revenue == prescription_through_total):
-        #     self.prescription.sold = True
         
+        if (self.prescription.refund == 0 and self.prescription.purchased_value == 0 and self.prescription.sold == True):
+            self.prescription.sold = False
         
 
         self.prescription.save()
