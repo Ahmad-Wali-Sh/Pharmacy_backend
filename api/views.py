@@ -379,7 +379,7 @@ class PrescriptionView(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     permission_classes = [D7896DjangoModelPermissions]
-    ordering_fields = ['id', 'created']
+    ordering_fields = ['id', 'created', 'purchase_payment_date']
 
 
 class LastPrescriptionView(viewsets.ModelViewSet):
