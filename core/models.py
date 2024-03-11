@@ -408,8 +408,11 @@ class PrescriptionThrough(models.Model):
 
     def save(self, *args, **kwargs):
         """ Calculation of Total Price for total_price field """
-
-        self.total_price = round(self.quantity * self.each_price, 0)
+        if (self.quantity):
+            self.total_price = round(self.quantity * self.each_price, 0)
+        else: 
+            self.quantity = 1
+            self.total_price = round(1 * self.each_price, 0)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
 
