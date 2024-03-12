@@ -721,19 +721,19 @@ class PurchaseListManualSerializer (serializers.ModelSerializer):
 
     def get_details_1(self, obj):
         queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name',
-                    'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[0:1]
+                    'entrance__company__market__name', 'quantity_bonus', 'each_price_factor', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[0:1]
         data = list(queryset)
         return data
 
     def get_details_2(self, obj):
         queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name',
-                    'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[1:2]
+                    'entrance__company__market__name', 'quantity_bonus', 'each_price_factor', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[1:2]
         data = list(queryset)
         return data
 
     def get_details_3(self, obj):
         queryset = (EntranceThrough.objects.filter(medician=obj.medicine).order_by("-id").values('entrance__company__name',
-                    'entrance__company__market__name', 'quantity_bonus', 'each_price', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[2:3]
+                    'entrance__company__market__name', 'quantity_bonus', 'each_price_factor', 'entrance__currency__name', 'timestamp', 'entrance__wholesale'))[2:3]
         data = list(queryset)
         return data
 
@@ -777,6 +777,12 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
     medicine_no_quantity = serializers.SerializerMethodField()
     prescription_number = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
+    medicine_existence = serializers.SerializerMethodField()
+    
+    def get_medicine_existence (self, res):
+        if (res.medician and res.medician.existence):
+            return res.medician.existence
+        else: ''
 
     def get_department_name (self, res):
         return res.prescription.department.name
