@@ -207,10 +207,10 @@ class Medician(models.Model):
     # def __str__(self):
     #     return str(self.brand_name)
 
-    # def save(self, *args, **kwargs):
-    #     self.full_clean()
-    #     Medician.objects.prevent_duplicates_in_array_fields(self, self.barcode)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if (self.existence is None):
+            self.existence = 0
+        super().save(*args, **kwargs)
 
 class MedicineBarcode(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
@@ -415,31 +415,6 @@ class PrescriptionThrough(models.Model):
             self.total_price = round(1 * self.each_price, 0)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
-
-        def priscription_sum():
-
-            entrance_sum_query = list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
-            outrance_sum_query = list(OutranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-            if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
-                result = -(self.quantity)
-            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-                result = entrance_sum_query - outrance_sum_query
-            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-                result = entrance_sum_query - prescription_sum_query
-            if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
-                result = -(prescription_sum_query + outrance_sum_query)
-            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - \
-                    (prescription_sum_query + outrance_sum_query)
-            return result
-
-        self.medician.existence = priscription_sum()
-        self.medician.save()
         
         if (self.prescription.refund == 0 and self.prescription.purchased_value == 0 and self.prescription.sold == True):
             self.prescription.sold = False
@@ -651,35 +626,6 @@ class EntranceThrough(models.Model):
 
         super(EntranceThrough, self).save(*args, **kwargs)
 
-        def entrance_sum():
-
-            entrance_sum_query = list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
-            outrance_sum_query = list(OutranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-            if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
-                result = entrance_sum_query
-            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-                result = entrance_sum_query - outrance_sum_query
-            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-                result = entrance_sum_query - prescription_sum_query
-            if entrance_sum_query == None:
-                result = -(prescription_sum_query + outrance_sum_query)
-            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - \
-                    (prescription_sum_query + outrance_sum_query)
-            if entrance_sum_query:
-                result = entrance_sum_query
-            return result
-
-        self.medician.existence = entrance_sum()
-        if (entrance_sum() >= self.medician.unsubmited_existence):
-            self.medician.unsubmited_existence = 0
-        self.medician.save()
-
 
 class Outrance (models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
@@ -733,139 +679,6 @@ class OutranceThrough (models.Model):
 
     def __str__(self):
         return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
-
-    def save(self, *args, **kwargs):
-
-        round_digit = 1
-        super(OutranceThrough, self).save(*args, **kwargs)
-
-        def entrance_sum():
-
-            entrance_sum_query = list(EntranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-            prescription_sum_query = list(PrescriptionThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('quantity')).values())[0]
-            outrance_sum_query = list(OutranceThrough.objects.filter(
-                medician_id=self.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-            if entrance_sum_query == None and prescription_sum_query == None:
-                result = -(self.register_quantity)
-            if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-                result = entrance_sum_query - outrance_sum_query
-            if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-                result = entrance_sum_query - prescription_sum_query
-            if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
-                result = -(prescription_sum_query + outrance_sum_query)
-            if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-                result = entrance_sum_query - \
-                    (prescription_sum_query + outrance_sum_query)
-            return result
-
-        self.medician.existence = entrance_sum()
-        self.medician.save()
-
-
-@receiver(post_delete, sender=OutranceThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
-    entrance_sum_query = list(EntranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-    prescription_sum_query = list(PrescriptionThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
-    outrance_sum_query = list(OutranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
-        result = 0
-    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
-        result = -(prescription_sum_query)
-    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
-        result = entrance_sum_query
-    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-        result = entrance_sum_query - outrance_sum_query
-    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-        result = entrance_sum_query - prescription_sum_query
-    if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
-        result = -(prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - \
-            (prescription_sum_query + outrance_sum_query)
-
-    instance.medician.existence = result
-    instance.medician.save()
-
-
-@receiver(post_delete, sender=EntranceThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
-    entrance_sum_query = list(EntranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-    prescription_sum_query = list(PrescriptionThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
-    outrance_sum_query = list(OutranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
-        result = 0
-    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
-        result = -(prescription_sum_query)
-    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
-        result = entrance_sum_query
-    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-        result = entrance_sum_query - outrance_sum_query
-    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-        result = entrance_sum_query - prescription_sum_query
-    if entrance_sum_query == None and prescription_sum_query and outrance_sum_query:
-        result = -(prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - \
-            (prescription_sum_query + outrance_sum_query)
-    else:
-        result = 0
-
-    instance.medician.existence = result
-    instance.medician.save()
-
-
-@receiver(post_delete, sender=PrescriptionThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
-    entrance_sum_query = list(EntranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-    prescription_sum_query = list(PrescriptionThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('quantity')).values())[0]
-    outrance_sum_query = list(OutranceThrough.objects.filter(
-        medician_id=instance.medician.id).aggregate(Sum('register_quantity')).values())[0]
-
-    if entrance_sum_query == None and prescription_sum_query == None and outrance_sum_query == None:
-        result = 0
-    if entrance_sum_query and prescription_sum_query == None and outrance_sum_query == None:
-        result = entrance_sum_query
-    if prescription_sum_query == None and outrance_sum_query and entrance_sum_query:
-        result = entrance_sum_query - outrance_sum_query
-    if outrance_sum_query == None and prescription_sum_query and entrance_sum_query:
-        result = entrance_sum_query - prescription_sum_query
-    if entrance_sum_query == None and outrance_sum_query and prescription_sum_query:
-        result = -(prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query and outrance_sum_query:
-        result = entrance_sum_query - \
-            (prescription_sum_query + outrance_sum_query)
-    if prescription_sum_query and entrance_sum_query == None and outrance_sum_query == None:
-        result = -(prescription_sum_query)
-    else:
-        result = instance.medician.existence
-
-    prescription_through_total = list(PrescriptionThrough.objects.filter(
-        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
-                                                            ).values())[0]
-
-    if prescription_through_total:
-        instance.prescription.grand_total = prescription_through_total
-        instance.prescription.save()
-    else:
-        instance.prescription.grand_total = 0
-        instance.prescription.save()
-
-    instance.medician.existence = result
-    instance.medician.save()
-
 
 
 class RevenueTrough (models.Model):
@@ -935,6 +748,29 @@ class MedicineConflict (models.Model):
         return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
 
+class PurchaseListManual (models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
+    quantity = models.FloatField()
+    arrival = models.FloatField(default=0)
+    approved = models.BooleanField(default=False)
+    shortaged = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return self.medicine.brand_name
+
+    def save(self, *args, **kwargs):
+        if (self.arrival > 0):
+            self.approved = True
+            self.medicine.unsubmited_existence = self.arrival
+            self.medicine.save()
+        if (self.arrival == 0):
+            self.approved = False
+            self.medicine.unsubmited_existence = self.arrival
+            self.medicine.save()
+        super(PurchaseListManual, self).save(*args, **kwargs)
+        
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
 
@@ -953,52 +789,40 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 
 
     instance.prescription.save()
-
-
-@receiver(post_delete, sender=RevenueTrough)
+    
+@receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
-
     prescription_through_total = list(PrescriptionThrough.objects.filter(
         prescription_id=instance.prescription.id).aggregate(Sum('total_price')
                                                             ).values())[0]
-    discount_percent = float(instance.prescription.discount_percent)
-    discount_amount = prescription_through_total * (discount_percent / 100)
-    grand_total = float(prescription_through_total) - discount_amount - float(instance.prescription.zakat) - float(instance.prescription.khairat) - float(instance.prescription.discount_money) + float(instance.prescription.rounded_number)
-    
-    if (prescription_through_total and grand_total):
-            instance.prescription.grand_total = round(grand_total, 0)
-            
 
-    instance.prescription.save()
+    if prescription_through_total:
+        instance.prescription.grand_total = prescription_through_total
+        instance.prescription.save()
+    else:
+        instance.prescription.grand_total = 0
+        instance.prescription.save()
+
+    instance.medician.save()
 
 
-class PurchaseListManual (models.Model):
-    medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    quantity = models.FloatField()
-    arrival = models.FloatField(default=0)
-    approved = models.BooleanField(default=False)
-    shortaged = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+@receiver([post_save, post_delete], sender=EntranceThrough)
+@receiver([post_save, post_delete], sender=PrescriptionThrough)
+def update_medician_existence(sender, instance, **kwargs):
+    medician = instance.medician
+    entrance_sum_query = EntranceThrough.objects.filter(
+        medician_id=medician.id).aggregate(Sum('register_quantity')).get('register_quantity__sum', 0)
+    prescription_sum_query = PrescriptionThrough.objects.filter(
+        medician_id=medician.id).aggregate(Sum('quantity')).get('quantity__sum', 0)
 
-    def __str__(self):
-        return self.medicine.brand_name
+    entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
+    prescription_sum = prescription_sum_query if prescription_sum_query is not None else 0
 
-    def update_model(self, *args, **kwargs):
-        queryset = PurchaseListManual.objects.filter(approved=False).filter(
-            medicine=self.medicine).filter(~Q(id=self.id))
-        if queryset:
-            raise Exception("This Item is Already Set.")
-        else:
-            super(PurchaseListManual, self).save(*args, **kwargs)
+    existence = entrance_sum - prescription_sum
+    medician.existence = round(existence, 1)
 
-    def save(self, *args, **kwargs):
-        if (self.arrival > 0):
-            self.approved = True
-            self.medicine.unsubmited_existence = self.arrival
-            self.medicine.save()
-        if (self.arrival == 0):
-            self.approved = False
-            self.medicine.unsubmited_existence = self.arrival
-            self.medicine.save()
-        self.update_model()
+    # Update unsubmited_existence based on comparison with entrance quantity
+    if existence >= medician.unsubmited_existence:
+        medician.unsubmited_existence = 0
+
+    medician.save()
