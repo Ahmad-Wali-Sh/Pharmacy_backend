@@ -338,6 +338,9 @@ class Prescription (models.Model):
 
         if self.sold and self.purchased_value != 0 and (self.purchased_value != self.grand_total):
             self.refund = self.purchased_value - self.grand_total
+            
+        if (self.purchased_value == self.grand_total):
+            self.refund = 0
 
         if self.sold and self.refund == 0:
             self.purchase_payment_date = timezone.now()
