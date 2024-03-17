@@ -33,7 +33,8 @@ from .serializers import (
     MedicineConflictSerializer,
     PurchaseListSerializer,
     PurchaseListQuerySerializer,
-    MedicineBarcodeSerializer,
+    MedicineBarcodeDisplaySerializer,
+    MedicineBarcodeCreateUpdateSerializer,
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
 )
@@ -214,7 +215,6 @@ class MedicianView(viewsets.ModelViewSet):
 
 class MedicineBarcodeView(viewsets.ModelViewSet):
     queryset = MedicineBarcode.objects.all().order_by("id")
-    serializer_class = MedicineBarcodeSerializer
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -223,6 +223,11 @@ class MedicineBarcodeView(viewsets.ModelViewSet):
     filterset_fields = ["barcode", "medicine"]
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
+    
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return MedicineBarcodeDisplaySerializer
+        return MedicineBarcodeCreateUpdateSerializer
 
 
 class MedicianExcelView(viewsets.ModelViewSet):

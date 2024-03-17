@@ -556,13 +556,28 @@ class MedicianSeralizer(serializers.ModelSerializer):
         extra_kwargs = {"medicines": {"required": False}}
 
 
-class MedicineBarcodeSerializer(serializers.ModelSerializer):
-    medician = serializers.SerializerMethodField()
+# class MedicineBarcodeSerializer(serializers.ModelSerializer):
+#     medician = serializers.SerializerMethodField()
 
-    def get_medician(self, obj):
-        entrance_image_obj = obj.medicine
-        json_entrance_image = MedicianSeralizer(entrance_image_obj)
-        return json_entrance_image.data
+#     def get_medician(self, obj):
+#         entrance_image_obj = obj.medicine
+#         json_entrance_image = MedicianSeralizer(entrance_image_obj)
+#         return json_entrance_image.data
+
+#     class Meta:
+#         model = MedicineBarcode
+#         fields = "__all__"
+        
+        
+class MedicineBarcodeDisplaySerializer(serializers.ModelSerializer):
+    medicine = MedicianSeralizer()
+
+    class Meta:
+        model = MedicineBarcode
+        fields = "__all__"
+        
+class MedicineBarcodeCreateUpdateSerializer(serializers.ModelSerializer):
+    medicine = serializers.PrimaryKeyRelatedField(queryset=Medician.objects.all())
 
     class Meta:
         model = MedicineBarcode
