@@ -28,19 +28,36 @@ from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
 
 
-Group.add_to_class('description', models.CharField(max_length=180,null=True, blank=True))
+Group.add_to_class(
+    "description", models.CharField(max_length=180, null=True, blank=True)
+)
+
+
+class AdditionalPermission(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 
 class User(AbstractUser):
     image = models.ImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/users')
-    REQUIRED_FIELDS = ['image', 'email', 'first_name', 'last_name']
+        null=True, blank=True, default="", upload_to="frontend/public/dist/images/users"
+    )
+    additional_permissions = models.ManyToManyField(AdditionalPermission, blank=True)
+    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name"]
+
+    def get_additional_permissions(self):
+        return ", ".join(str(p) for p in self.additional_permissions.all())
+
+    get_additional_permissions.short_description = "Additional permissions"
 
 
 class ISODateTimeField(forms.DateTimeField):
 
     widget = DateTimeInput
     default_error_messages = {
-        'invalid': _('Enter a valid date/time.'),
+        "invalid": _("Enter a valid date/time."),
     }
 
     def to_python(self, value):
@@ -48,21 +65,24 @@ class ISODateTimeField(forms.DateTimeField):
         try:
             return self.strptime(value, format)
         except (ValueError, TypeError):
-            raise forms.ValidationError(
-                self.error_messages['invalid'], code='invalid')
+            raise forms.ValidationError(self.error_messages["invalid"], code="invalid")
 
     def strptime(self, value, format):
-        """ stackoverflow won't let me save just an indent! """
+        """stackoverflow won't let me save just an indent!"""
         return parse_datetime(force_str(value))
 
 
 class Kind(models.Model):
-    name_english = models.CharField(
-        max_length=60, null=True, blank=True, unique=True)
+    name_english = models.CharField(max_length=60, null=True, blank=True, unique=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
     image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/kinds', optimized_image_output_size=(500, 500),
-        optimized_image_resize_method="cover")
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/kinds",
+        optimized_image_output_size=(500, 500),
+        optimized_image_resize_method="cover",
+    )
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -77,9 +97,14 @@ class Kind(models.Model):
 class PharmGroup(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True)
     name_persian = models.CharField(max_length=60, null=True, blank=True)
-    image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/pharm_groub', optimized_image_output_size=(500, 500),
-                                optimized_image_resize_method="cover")
+    image = OptimizedImageField(
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/pharm_groub",
+        optimized_image_output_size=(500, 500),
+        optimized_image_resize_method="cover",
+    )
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -89,9 +114,14 @@ class PharmGroup(models.Model):
 
 class Country(models.Model):
     name = models.CharField(max_length=50)
-    image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/countries', optimized_image_output_size=(500, 500),
-                                optimized_image_resize_method="cover")
+    image = OptimizedImageField(
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/countries",
+        optimized_image_output_size=(500, 500),
+        optimized_image_resize_method="cover",
+    )
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
@@ -105,7 +135,7 @@ class Unit(models.Model):
         return self.name
 
 
-class Department (models.Model):
+class Department(models.Model):
     name = models.CharField(max_length=240)
     over_price_money = models.FloatField(default=0)
     over_price_percent = models.FloatField(default=0)
@@ -118,14 +148,14 @@ class Department (models.Model):
         return self.name
 
 
-class BigCompany (models.Model):
+class BigCompany(models.Model):
     name = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
 
 
-UNIQUE_ARRAY_FIELDS = ('barcode',)
+UNIQUE_ARRAY_FIELDS = ("barcode",)
 
 
 class MyManager(models.Manager):
@@ -133,49 +163,60 @@ class MyManager(models.Manager):
         def duplicate_check(_lookup_params):
             fields = self.model._meta.get_fields()
             for unique_field in UNIQUE_ARRAY_FIELDS:
-                unique_field_index = [
-                    getattr(field, 'name', '') for field in fields]
+                unique_field_index = [getattr(field, "name", "") for field in fields]
                 try:
                     # if model doesn't have the unique field, then proceed to the next loop iteration
                     unique_field_index = unique_field_index.index(unique_field)
                 except ValueError:
                     continue
-            all_items_in_db = [item for sublist in self.values_list(
-                fields[unique_field_index].name).exclude(**_lookup_params) for item in sublist]
             all_items_in_db = [
-                item for sublist in all_items_in_db for item in sublist]
+                item
+                for sublist in self.values_list(
+                    fields[unique_field_index].name
+                ).exclude(**_lookup_params)
+                for item in sublist
+            ]
+            all_items_in_db = [item for sublist in all_items_in_db for item in sublist]
             if not set(array_field).isdisjoint(all_items_in_db):
                 raise ValidationError(
-                    '{} contains items already in the database'.format(array_field))
+                    "{} contains items already in the database".format(array_field)
+                )
+
         if model.id:
-            lookup_params = {'id': model.id}
+            lookup_params = {"id": model.id}
         else:
             lookup_params = {}
         duplicate_check(lookup_params)
 
 
-
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
-    generic_name = ArrayField(models.CharField(
-        max_length=400, blank=True, null=True), null=True, blank=True, default=list)
+    generic_name = ArrayField(
+        models.CharField(max_length=400, blank=True, null=True),
+        null=True,
+        blank=True,
+        default=list,
+    )
     # barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
     barcode = ArrayField(
-        models.CharField(max_length=255, null=True, blank=True), default=list, blank=True, null=True
+        models.CharField(max_length=255, null=True, blank=True),
+        default=list,
+        blank=True,
+        null=True,
     )
     no_pocket = models.FloatField(null=True, blank=True)
     no_box = models.FloatField(null=True, default=1)
     pharm_group = models.ForeignKey(
-        PharmGroup, on_delete=models.RESTRICT, null=True, blank=True)
-    kind = models.ForeignKey(
-        Kind, on_delete=models.RESTRICT, null=True, blank=True)
+        PharmGroup, on_delete=models.RESTRICT, null=True, blank=True
+    )
+    kind = models.ForeignKey(Kind, on_delete=models.RESTRICT, null=True, blank=True)
     ml = models.CharField(max_length=50, null=True, blank=True)
-    unit = models.ForeignKey(
-        Unit, on_delete=models.DO_NOTHING, null=True, blank=True)
+    unit = models.ForeignKey(Unit, on_delete=models.DO_NOTHING, null=True, blank=True)
     weight = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=30, blank=True, null=True)
     country = models.ForeignKey(
-        Country, on_delete=models.RESTRICT, null=True, blank=True)
+        Country, on_delete=models.RESTRICT, null=True, blank=True
+    )
     company = models.CharField(max_length=50, blank=True, null=True)
     price = models.FloatField()
     last_purchased = models.FloatField(default=0)
@@ -187,18 +228,23 @@ class Medician(models.Model):
     cautions = models.TextField(blank=True, null=True)
     usages = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    image = OptimizedImageField(null=True, blank=True, default="",
-                                upload_to='frontend/public/dist/images/medician', optimized_image_output_size=(500, 500),
-                                optimized_image_resize_method="cover")
+    image = OptimizedImageField(
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/medician",
+        optimized_image_output_size=(500, 500),
+        optimized_image_resize_method="cover",
+    )
     patient_approved = models.BooleanField(default=False)
     doctor_approved = models.BooleanField(default=False)
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
-    department = models.ManyToManyField(
-        Department, blank=True)
+    department = models.ManyToManyField(Department, blank=True)
     min_expire_date = models.IntegerField(default=6, blank=True)
     big_company = models.ForeignKey(
-        BigCompany, on_delete=models.RESTRICT, blank=True, null=True)
+        BigCompany, on_delete=models.RESTRICT, blank=True, null=True
+    )
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
@@ -208,23 +254,20 @@ class Medician(models.Model):
     #     return str(self.brand_name)
 
     def save(self, *args, **kwargs):
-        if (self.existence is None):
+        if self.existence is None:
             self.existence = 0
         super().save(*args, **kwargs)
+
 
 class MedicineBarcode(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
     barcode = models.CharField(max_length=100, unique=True)
 
 
-
-GENDER_CHOICES = (
-    ("Male", "Male"),
-    ("Female", "Female")
-)
+GENDER_CHOICES = (("Male", "Male"), ("Female", "Female"))
 
 
-class PatientName (models.Model):
+class PatientName(models.Model):
     name = models.CharField(max_length=100)
     code = models.IntegerField(null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
@@ -256,8 +299,9 @@ class DoctorName(models.Model):
 
     def __str__(self):
         return self.name
-    
-class Revenue (models.Model):
+
+
+class Revenue(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     total = models.FloatField(default=0)
     zakat = models.FloatField(default=0)
@@ -270,13 +314,17 @@ class Revenue (models.Model):
     active = models.BooleanField(default=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     employee = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name='employee')
+        User, on_delete=models.RESTRICT, related_name="employee"
+    )
 
     def update_model(self, *args, **kwargs):
-        checkifopen = Revenue.objects.filter(employee=self.employee).filter(
-            active=True).filter(~Q(id=self.id))
+        checkifopen = (
+            Revenue.objects.filter(employee=self.employee)
+            .filter(active=True)
+            .filter(~Q(id=self.id))
+        )
         if checkifopen:
-            raise Exception('There is Already an Open Revenue...')
+            raise Exception("There is Already an Open Revenue...")
             pass
         else:
             super(Revenue, self).save(*args, **kwargs)
@@ -290,16 +338,20 @@ class Revenue (models.Model):
         self.update_model()
 
 
-class Prescription (models.Model):
+class Prescription(models.Model):
     department = models.ForeignKey(
-        Department, on_delete=models.RESTRICT)  # انتخاب بخش فروش
+        Department, on_delete=models.RESTRICT
+    )  # انتخاب بخش فروش
     prescription_number = models.CharField(
-        max_length=60, unique=True, null=True, blank=True, editable=False)
+        max_length=60, unique=True, null=True, blank=True, editable=False
+    )
     name = models.ForeignKey(
-        PatientName, on_delete=models.RESTRICT, null=True, blank=True)
+        PatientName, on_delete=models.RESTRICT, null=True, blank=True
+    )
     doctor = models.ForeignKey(
-        DoctorName, on_delete=models.RESTRICT, null=True, blank=True)
-    medician = models.ManyToManyField(Medician, through='PrescriptionThrough')
+        DoctorName, on_delete=models.RESTRICT, null=True, blank=True
+    )
+    medician = models.ManyToManyField(Medician, through="PrescriptionThrough")
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
@@ -309,37 +361,63 @@ class Prescription (models.Model):
     id = models.AutoField(primary_key=True)
     rounded_number = models.FloatField(default=0)
     image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/prescriptions",
+    )
     sold = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     timestamp = models.DateTimeField(default=timezone.now, editable=False)
     refund = models.FloatField(default=0)
     barcode = models.ImageField(
-        upload_to='frontend/public/dist/images/prescriptions/barcodes', blank=True, editable=False)
+        upload_to="frontend/public/dist/images/prescriptions/barcodes",
+        blank=True,
+        editable=False,
+    )
     barcode_str = models.CharField(max_length=255, blank=True, editable=False)
     purchase_payment_date = models.DateTimeField(null=True, blank=True)
     purchased_value = models.FloatField(default=0)
-    revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT, null=True, blank=True)
+    revenue = models.ForeignKey(
+        Revenue, on_delete=models.RESTRICT, null=True, blank=True
+    )
 
     def __str__(self):
         return self.prescription_number
 
     def save(self, *args, **kwargs):
         if self.prescription_number:
-            prescription_through_total = list(PrescriptionThrough.objects.filter(
-                prescription_id=self.id).aggregate(Sum('total_price')).values())[0]
+            prescription_through_total = list(
+                PrescriptionThrough.objects.filter(prescription_id=self.id)
+                .aggregate(Sum("total_price"))
+                .values()
+            )[0]
             discount_percent = float(self.discount_percent)
             discount_amount = 0
             if prescription_through_total:
                 discount_amount = prescription_through_total * (discount_percent / 100)
-                self.rounded_number = calculate_rounded_value(int(float(prescription_through_total)), self.department.celling_start)
-                grand_total = float(prescription_through_total) - discount_amount - float(self.zakat) - float(self.khairat) - float(self.discount_money) + float(self.rounded_number)
+                self.rounded_number = calculate_rounded_value(
+                    int(float(prescription_through_total)),
+                    self.department.celling_start,
+                )
+                grand_total = (
+                    float(prescription_through_total)
+                    - discount_amount
+                    - float(self.zakat)
+                    - float(self.khairat)
+                    - float(self.discount_money)
+                    + float(self.rounded_number)
+                )
                 self.grand_total = round(grand_total, 0)
 
-        if self.sold and self.purchased_value != 0 and (self.purchased_value != self.grand_total):
+        if (
+            self.sold
+            and self.purchased_value != 0
+            and (self.purchased_value != self.grand_total)
+        ):
             self.refund = self.purchased_value - self.grand_total
-            
-        if (self.purchased_value == self.grand_total):
+
+        if self.purchased_value == self.grand_total:
             self.refund = 0
 
         if self.sold and self.refund == 0:
@@ -349,21 +427,20 @@ class Prescription (models.Model):
             self.purchase_payment_date = None
 
         # Now, you can access grand_total and calculate the rounded number
-            
+
         # Get the current Jalali date
         today_jalali = jdatetime.now()
-        
+
         # Convert Jalali date to Gregorian date
         today_gregorian = today_jalali.togregorian()
-        
+
         # Extract Jalali year and month
         j_year = today_jalali.year
         j_month = today_jalali.month
-        
+
         # Count objects created in the current Gregorian year and month
         objects_count = Prescription.objects.filter(
-            created__year=today_gregorian.year,
-            created__month=today_gregorian.month
+            created__year=today_gregorian.year, created__month=today_gregorian.month
         ).count()
 
         # Increment count of objects in the current month
@@ -377,24 +454,26 @@ class Prescription (models.Model):
                 # Format count_of_month with leading zeros if less than 10
                 self.prescription_number = f"{j_year}-{j_month}-{count_of_month:02d}"
 
-
-        if (self.barcode_str == ''):
+        if self.barcode_str == "":
             number = random.randint(1000000000000, 9999999999999)
-            EAN = barcode.get_barcode_class('upc')
-            ean = EAN(f'{number}', writer=ImageWriter())
+            EAN = barcode.get_barcode_class("upc")
+            ean = EAN(f"{number}", writer=ImageWriter())
             buffer = BytesIO()
             ean.write(buffer)
             self.barcode_str = ean.get_fullcode()
-            self.barcode.save(f'{number}' + '.png', File(buffer), save=False)
+            self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)
-    
 
-    
+
 class PrescriptionImage(models.Model):
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE)
     image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/prescriptions')
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/prescriptions",
+    )
 
 
 class PrescriptionThrough(models.Model):
@@ -410,23 +489,26 @@ class PrescriptionThrough(models.Model):
         return self.prescription.prescription_number
 
     def save(self, *args, **kwargs):
-        """ Calculation of Total Price for total_price field """
-        if (self.quantity):
+        """Calculation of Total Price for total_price field"""
+        if self.quantity:
             self.total_price = round(self.quantity * self.each_price, 0)
-        else: 
+        else:
             self.quantity = 1
             self.total_price = round(1 * self.each_price, 0)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
-        
-        if (self.prescription.refund == 0 and self.prescription.purchased_value == 0 and self.prescription.sold == True):
+
+        if (
+            self.prescription.refund == 0
+            and self.prescription.purchased_value == 0
+            and self.prescription.sold == True
+        ):
             self.prescription.sold = False
-        
 
         self.prescription.save()
 
 
-class City (models.Model):
+class City(models.Model):
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -434,7 +516,7 @@ class City (models.Model):
         return self.name
 
 
-class Market (models.Model):
+class Market(models.Model):
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -442,7 +524,7 @@ class Market (models.Model):
         return self.name
 
 
-class PharmCompany (models.Model):
+class PharmCompany(models.Model):
     name = models.CharField(max_length=100)
     ceo = models.CharField(max_length=50, null=True, blank=True)
     ceo_phone = models.IntegerField(null=True, blank=True)
@@ -450,24 +532,23 @@ class PharmCompany (models.Model):
     manager_phone = models.IntegerField(null=True, blank=True)
     visitor = models.CharField(max_length=50, null=True, blank=True)
     visitor_phone = models.IntegerField(null=True, blank=True)
-    companies = ArrayField(models.CharField(
-        max_length=30, null=True, blank=True), null=True, blank=True)
-    company_phone_1 = models.IntegerField(null=True,  blank=True)
+    companies = ArrayField(
+        models.CharField(max_length=30, null=True, blank=True), null=True, blank=True
+    )
+    company_phone_1 = models.IntegerField(null=True, blank=True)
     company_phone_2 = models.IntegerField(null=True, blank=True)
     company_online = models.CharField(max_length=50, null=True, blank=True)
-    address = models.CharField(max_length=150,  blank=True, null=True)
+    address = models.CharField(max_length=150, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    city = models.ForeignKey(
-        City, on_delete=models.RESTRICT, null=True, blank=True)
-    market = models.ForeignKey(
-        Market, on_delete=models.RESTRICT, null=True, blank=True)
+    city = models.ForeignKey(City, on_delete=models.RESTRICT, null=True, blank=True)
+    market = models.ForeignKey(Market, on_delete=models.RESTRICT, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
 
 
-class Currency (models.Model):
+class Currency(models.Model):
     name = models.CharField(max_length=20)
     rate = models.FloatField()
     description = models.TextField(null=True, blank=True)
@@ -477,21 +558,25 @@ class Currency (models.Model):
         return self.name
 
 
-class Store (models.Model):
+class Store(models.Model):
     name = models.CharField(max_length=100)
     phone = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     responsible = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    image = models.FileField(null=True, blank=True, default="",
-                             upload_to='frontend/public/dist/images/stores')
+    image = models.FileField(
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/stores",
+    )
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.name
 
 
-class PaymentMethod (models.Model):
+class PaymentMethod(models.Model):
     name = models.CharField(max_length=20)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -499,7 +584,7 @@ class PaymentMethod (models.Model):
         return self.name
 
 
-class FinalRegister (models.Model):
+class FinalRegister(models.Model):
     name = models.CharField(max_length=20)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -507,31 +592,25 @@ class FinalRegister (models.Model):
         return self.name
 
 
-WHOLESALE_CHOICE = (
-    ("WHOLESALE", "WHOLESALE"),
-    ("SINGULAR", "SINGULAR")
-)
+WHOLESALE_CHOICE = (("WHOLESALE", "WHOLESALE"), ("SINGULAR", "SINGULAR"))
 
 
-class Entrance (models.Model):
+class Entrance(models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.RESTRICT)
     factor_number = models.IntegerField(null=True, blank=True)
-    medicians = models.ManyToManyField(Medician, through='EntranceThrough')
+    medicians = models.ManyToManyField(Medician, through="EntranceThrough")
     factor_date = models.DateTimeField(default=timezone.now)
-    payment_method = models.ForeignKey(
-        PaymentMethod, on_delete=models.RESTRICT)
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.RESTRICT)
     currency = models.ForeignKey(Currency, on_delete=models.RESTRICT)
     total_interest = models.IntegerField()
-    final_register = models.ForeignKey(
-        FinalRegister, on_delete=models.RESTRICT)
+    final_register = models.ForeignKey(FinalRegister, on_delete=models.RESTRICT)
     store = models.ForeignKey(Store, on_delete=models.RESTRICT)
     deliver_by = models.CharField(max_length=100, null=True, blank=True)
     recived_by = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     without_discount = models.BooleanField(default=False)
     discount_percent = models.FloatField(default=0)
-    wholesale = models.CharField(
-        max_length=100, choices=WHOLESALE_CHOICE, default=1)
+    wholesale = models.CharField(max_length=100, choices=WHOLESALE_CHOICE, default=1)
     currency_rate = models.FloatField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
@@ -539,7 +618,7 @@ class Entrance (models.Model):
         return self.company.name
 
     def save(self, *args, **kwargs):
-        if (self.currency_rate == None):
+        if self.currency_rate == None:
             self.currency_rate = self.currency.rate
 
         super(Entrance, self).save(*args, **kwargs)
@@ -548,7 +627,11 @@ class Entrance (models.Model):
 class EntranceImage(models.Model):
     entrance = models.ForeignKey(Entrance, on_delete=models.CASCADE)
     image = OptimizedImageField(
-        null=True, blank=True, default="", upload_to='frontend/public/dist/images/entrances')
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/entrances",
+    )
 
 
 class EntranceThrough(models.Model):
@@ -560,10 +643,8 @@ class EntranceThrough(models.Model):
     discount_money = models.FloatField(default=0)
     no_box = models.FloatField(default=1)
     discount_percent = models.FloatField(default=0)
-    total_purchaseـafghani = models.FloatField(
-        default=1)
-    total_purchaseـcurrency = models.FloatField(
-        default=1)
+    total_purchaseـafghani = models.FloatField(default=1)
+    total_purchaseـcurrency = models.FloatField(default=1)
     total_purchase_currency_before = models.FloatField(default=0)
     discount_value = models.FloatField(default=0)
     each_quantity = models.FloatField(default=1)
@@ -571,17 +652,12 @@ class EntranceThrough(models.Model):
     bonus_value = models.FloatField(default=0)
     shortage = models.FloatField(default=0)
     lease = models.BooleanField(default=False)
-    each_purchase_price = models.FloatField(
-        default=1)
-    each_sell_price = models.FloatField(
-        default=0)
-    each_sell_price_afg = models.FloatField(
-        default=0
-    )
+    each_purchase_price = models.FloatField(default=1)
+    each_sell_price = models.FloatField(default=0)
+    each_sell_price_afg = models.FloatField(default=0)
     total_sell = models.FloatField(default=0)
     interest_percent = models.FloatField(default=20)
-    register_quantity = models.IntegerField(
-        default=0)
+    register_quantity = models.IntegerField(default=0)
     total_interest = models.FloatField(default=0)
     expire_date = models.DateField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -600,27 +676,39 @@ class EntranceThrough(models.Model):
         round_digit = 2
 
         self.total_purchase_currency_before = round(
-            self.number_in_factor * self.each_price_factor, round_digit)
-        self.total_purchaseـcurrency = round(self.total_purchase_currency_before * (
-            1-self.discount_percent / 100) - self.discount_money, round_digit)
+            self.number_in_factor * self.each_price_factor, round_digit
+        )
+        self.total_purchaseـcurrency = round(
+            self.total_purchase_currency_before * (1 - self.discount_percent / 100)
+            - self.discount_money,
+            round_digit,
+        )
         self.discount_value = round(
-            self.total_purchase_currency_before - self.total_purchaseـcurrency, round_digit)
+            self.total_purchase_currency_before - self.total_purchaseـcurrency,
+            round_digit,
+        )
         # if (self.quantity_bonus > 0):
         #     self.bonus_value = round((self.total_purchase_currency_before / (
         #         self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
         # else:
         #     self.bonus_value = 0
         self.each_purchase_price = round(
-            (self.each_price_factor / self.no_box), round_digit)
+            (self.each_price_factor / self.no_box), round_digit
+        )
         self.each_price = round(
-            self.each_purchase_price * (1 + self.interest_percent / 100), round_digit)
-        self.register_quantity = ((self.number_in_factor * self.no_box) -
-                                  (self.shortage * self.no_box)) + self.quantity_bonus
+            self.each_purchase_price * (1 + self.interest_percent / 100), round_digit
+        )
+        self.register_quantity = (
+            (self.number_in_factor * self.no_box) - (self.shortage * self.no_box)
+        ) + self.quantity_bonus
         self.each_sell_price = round(
-            self.each_sell_price_afg / self.entrance.currency_rate, round_digit)
+            self.each_sell_price_afg / self.entrance.currency_rate, round_digit
+        )
         self.bonus_value = self.each_sell_price * self.quantity_bonus
         self.total_sell = round(
-            self.each_price * self.no_box * self.number_in_factor + self.bonus_value, round_digit)
+            self.each_price * self.no_box * self.number_in_factor + self.bonus_value,
+            round_digit,
+        )
         self.rate = self.entrance.currency_rate
         self.rate_name = self.entrance.currency.name
 
@@ -630,10 +718,10 @@ class EntranceThrough(models.Model):
         super(EntranceThrough, self).save(*args, **kwargs)
 
 
-class Outrance (models.Model):
+class Outrance(models.Model):
     company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
     factor_number = models.IntegerField()
-    medicians = models.ManyToManyField(Medician, through='OutranceThrough')
+    medicians = models.ManyToManyField(Medician, through="OutranceThrough")
     factor_date = models.DateField()
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
@@ -650,7 +738,7 @@ class Outrance (models.Model):
         return self.company.name
 
 
-class OutranceThrough (models.Model):
+class OutranceThrough(models.Model):
     medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
     outrance = models.ForeignKey(Outrance, on_delete=models.CASCADE)
     number_in_factor = models.IntegerField()  # G4 تعداد در فاکتور
@@ -658,21 +746,20 @@ class OutranceThrough (models.Model):
     each_price = models.FloatField(default=1)  # G5 قیمت فی خرید فاکتور
     discount_money = models.FloatField(default=0)  # G6 تخفیف خرید پولی
     discount_percent = models.FloatField(default=0)  # G7 تخفیف خرید فیصدی
-    total_purchaseـafghani = models.FloatField(
-        default=1)  # G9 مجموع خرید افغانی
-    total_purchaseـcurrency = models.FloatField(
-        default=1)  # G10 مجموع خرید اسعاری
+    total_purchaseـafghani = models.FloatField(default=1)  # G9 مجموع خرید افغانی
+    total_purchaseـcurrency = models.FloatField(default=1)  # G10 مجموع خرید اسعاری
     each_quantity = models.IntegerField(default=1)  # G11  تعداد در فی فروش
     bonus = models.IntegerField(default=0)  # G12 بونوس
     quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
     register_quantity = models.IntegerField(
-        default=0)  # G14 تعداد ثبت به سیستم جهت موجودی
+        default=0
+    )  # G14 تعداد ثبت به سیستم جهت موجودی
     each_purchase_price = models.FloatField(
-        default=1)  # G18 قیمت فی خرید جهت ثبت به سیستم
+        default=1
+    )  # G18 قیمت فی خرید جهت ثبت به سیستم
     interest_money = models.FloatField(default=0)  # G19 فایده پولی
     interest_percent = models.FloatField(default=20)  # G20 فایده فیصدی
-    each_sell_price = models.FloatField(
-        default=0)  # G21 قیمت فی فروش جهت ثبت به سیستم
+    each_sell_price = models.FloatField(default=0)  # G21 قیمت فی فروش جهت ثبت به سیستم
     total_sell = models.FloatField(default=0)  # G25 مجموع فروش
     bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
     total_interest = models.FloatField(default=0)  # G30 مجموع فایده
@@ -684,7 +771,7 @@ class OutranceThrough (models.Model):
         return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
 
 
-class RevenueTrough (models.Model):
+class RevenueTrough(models.Model):
     revenue = models.ForeignKey(Revenue, on_delete=models.DO_NOTHING)
     prescription = models.ForeignKey(Prescription, on_delete=models.DO_NOTHING)
     created = models.DateTimeField(auto_now_add=True)
@@ -693,9 +780,9 @@ class RevenueTrough (models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def save(self, *args, **kwargs):
-        if (self.prescription.refund == 0):
+        if self.prescription.refund == 0:
             self.purchased = self.prescription.grand_total
-        if (self.prescription.refund != 0):
+        if self.prescription.refund != 0:
             self.purchased = self.prescription.refund
             self.prescription.sold = True
             self.prescription.refund = 0
@@ -710,7 +797,7 @@ class RevenueTrough (models.Model):
     #     unique_together = ('revenue', 'prescription',)
 
 
-class PurchaseList (models.Model):
+class PurchaseList(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
     need_quautity = models.FloatField(default=0)
     company_1 = models.ForeignKey(PharmCompany, on_delete=models.DO_NOTHING)
@@ -718,12 +805,14 @@ class PurchaseList (models.Model):
     bonus_1 = models.FloatField(default=0)
     date_1 = models.DateField()
     company_2 = models.ForeignKey(
-        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_2")
+        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_2"
+    )
     price_2 = models.FloatField(default=0)
     bonus_2 = models.FloatField(default=0)
     date_2 = models.DateField()
     company_3 = models.ForeignKey(
-        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_3")
+        PharmCompany, on_delete=models.DO_NOTHING, related_name="company_3"
+    )
     price_3 = models.FloatField(default=0)
     bonus_3 = models.FloatField(default=0)
     date_3 = models.DateField()
@@ -734,7 +823,7 @@ class PurchaseList (models.Model):
         return self.medicine.brand_name
 
 
-class MedicineWith (models.Model):
+class MedicineWith(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.RESTRICT)
     includes = models.ManyToManyField(Medician, related_name="medicines")
 
@@ -742,16 +831,17 @@ class MedicineWith (models.Model):
         return self.medicine.brand_name
 
 
-class MedicineConflict (models.Model):
+class MedicineConflict(models.Model):
     medicine_1 = models.ForeignKey(
-        Medician, on_delete=models.DO_NOTHING, related_name="medicine_1")
+        Medician, on_delete=models.DO_NOTHING, related_name="medicine_1"
+    )
     medicine_2 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
 
-class PurchaseListManual (models.Model):
+class PurchaseListManual(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
     quantity = models.FloatField()
     arrival = models.FloatField(default=0)
@@ -764,40 +854,52 @@ class PurchaseListManual (models.Model):
         return self.medicine.brand_name
 
     def save(self, *args, **kwargs):
-        if (self.arrival > 0):
+        if self.arrival > 0:
             self.approved = True
             self.medicine.unsubmited_existence = self.arrival
             self.medicine.save()
-        if (self.arrival == 0):
+        if self.arrival == 0:
             self.approved = False
             self.medicine.unsubmited_existence = self.arrival
             self.medicine.save()
         super(PurchaseListManual, self).save(*args, **kwargs)
-        
+
+
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
 
-    prescription_through_total = list(PrescriptionThrough.objects.filter(
-        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
-                                                            ).values())[0]
+    prescription_through_total = list(
+        PrescriptionThrough.objects.filter(prescription_id=instance.prescription.id)
+        .aggregate(Sum("total_price"))
+        .values()
+    )[0]
     discount_percent = float(instance.prescription.discount_percent)
-    if (prescription_through_total):
+    if prescription_through_total:
         discount_amount = prescription_through_total * (discount_percent / 100)
-        grand_total = float(prescription_through_total) - discount_amount - float(instance.prescription.zakat) - float(instance.prescription.khairat) - float(instance.prescription.discount_money) + float(instance.prescription.rounded_number)
+        grand_total = (
+            float(prescription_through_total)
+            - discount_amount
+            - float(instance.prescription.zakat)
+            - float(instance.prescription.khairat)
+            - float(instance.prescription.discount_money)
+            + float(instance.prescription.rounded_number)
+        )
     else:
         grand_total = 0
-    
-    if (prescription_through_total and grand_total):
-            instance.prescription.grand_total = round(grand_total, 0)
 
+    if prescription_through_total and grand_total:
+        instance.prescription.grand_total = round(grand_total, 0)
 
     instance.prescription.save()
-    
+
+
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
-    prescription_through_total = list(PrescriptionThrough.objects.filter(
-        prescription_id=instance.prescription.id).aggregate(Sum('total_price')
-                                                            ).values())[0]
+    prescription_through_total = list(
+        PrescriptionThrough.objects.filter(prescription_id=instance.prescription.id)
+        .aggregate(Sum("total_price"))
+        .values()
+    )[0]
 
     if prescription_through_total:
         instance.prescription.grand_total = prescription_through_total
@@ -813,13 +915,21 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=PrescriptionThrough)
 def update_medician_existence(sender, instance, **kwargs):
     medician = instance.medician
-    entrance_sum_query = EntranceThrough.objects.filter(
-        medician_id=medician.id).aggregate(Sum('register_quantity')).get('register_quantity__sum', 0)
-    prescription_sum_query = PrescriptionThrough.objects.filter(
-        medician_id=medician.id).aggregate(Sum('quantity')).get('quantity__sum', 0)
+    entrance_sum_query = (
+        EntranceThrough.objects.filter(medician_id=medician.id)
+        .aggregate(Sum("register_quantity"))
+        .get("register_quantity__sum", 0)
+    )
+    prescription_sum_query = (
+        PrescriptionThrough.objects.filter(medician_id=medician.id)
+        .aggregate(Sum("quantity"))
+        .get("quantity__sum", 0)
+    )
 
     entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
-    prescription_sum = prescription_sum_query if prescription_sum_query is not None else 0
+    prescription_sum = (
+        prescription_sum_query if prescription_sum_query is not None else 0
+    )
 
     existence = entrance_sum - prescription_sum
     medician.existence = round(existence, 1)

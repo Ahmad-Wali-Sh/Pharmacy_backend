@@ -3,52 +3,85 @@ from import_export.admin import ImportExportModelAdmin
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
 
-from core.models import PharmGroup, Medician, Kind, Country, Unit, Prescription, PharmCompany, \
-    Store, Currency, Entrance, EntranceThrough, PaymentMethod, FinalRegister, Department, DoctorName, PatientName, PrescriptionThrough, OutranceThrough, \
-        Outrance, City, Market, Revenue, MedicineBarcode, RevenueTrough, EntranceImage, MedicineWith, BigCompany, MedicineConflict, PurchaseList, PurchaseListManual
+from core.models import (
+    PharmGroup,
+    Medician,
+    Kind,
+    Country,
+    Unit,
+    Prescription,
+    PharmCompany,
+    Store,
+    Currency,
+    Entrance,
+    EntranceThrough,
+    PaymentMethod,
+    FinalRegister,
+    Department,
+    DoctorName,
+    PatientName,
+    PrescriptionThrough,
+    OutranceThrough,
+    Outrance,
+    City,
+    Market,
+    Revenue,
+    MedicineBarcode,
+    RevenueTrough,
+    EntranceImage,
+    MedicineWith,
+    BigCompany,
+    MedicineConflict,
+    PurchaseList,
+    PurchaseListManual,
+)
 
 from django_jalali.admin.filters import JDateFieldListFilter
 import django_jalali.admin as jadmin
 
 from django.contrib.auth.admin import UserAdmin
-from .models import User 
+from .models import User, AdditionalPermission
 
 
-UserAdmin.list_display += ('image',)
-UserAdmin.list_filter += ('image',)
-UserAdmin.fieldsets += (('Extra Fields', {'fields': ('image', )}),)
+UserAdmin.list_display += ("image",)
+UserAdmin.list_filter += ("image",)
+
+UserAdmin.list_display += ("get_additional_permissions",)
+UserAdmin.fieldsets += (
+    ("Extra Fields", {"fields": ("image", "additional_permissions")}),
+)
 
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     skip_admin_log = True
     IMPORT_EXPORT_SKIP_ADMIN_CONFIRM = False
-    pass 
+    pass
+
 
 class EntracnceAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_filter = (
-        ('factor_date', JDateFieldListFilter),
-    )
+    list_filter = (("factor_date", JDateFieldListFilter),)
+
 
 class MedicineImport(resources.ModelResource):
     kind = fields.Field(
-        column_name='kind',
-        attribute='name_persian',
-        widget=ForeignKeyWidget(Kind, 'name_persian')
+        column_name="kind",
+        attribute="name_persian",
+        widget=ForeignKeyWidget(Kind, "name_persian"),
     )
     big_company = fields.Field(
-        column_name='big_company',
-        attribute='big_company',
-        widget=ForeignKeyWidget(BigCompany, 'name')
+        column_name="big_company",
+        attribute="big_company",
+        widget=ForeignKeyWidget(BigCompany, "name"),
     )
     pharm_group = fields.Field(
-        column_name='pharm_group',
-        attribute='pharm_group',
-        widget=ForeignKeyWidget(PharmGroup, 'name_english')
+        column_name="pharm_group",
+        attribute="pharm_group",
+        widget=ForeignKeyWidget(PharmGroup, "name_english"),
     )
     country = fields.Field(
-        column_name='country',
-        attribute='country',
-        widget=ForeignKeyWidget(Country, 'name')
+        column_name="country",
+        attribute="country",
+        widget=ForeignKeyWidget(Country, "name"),
     )
 
     class Meta:
@@ -65,7 +98,7 @@ class MedicineImport(resources.ModelResource):
     #             admin_user = User.objects.get(username="admin")
     #             kind = Kind(name_persian=kind_name, user=admin_user)
     #             kind.save()
-    #         instance.kind = kind    
+    #         instance.kind = kind
 
     #     return super().save_instance(instance, using_transactions=using_transactions, dry_run=dry_run, *args, **kwargs)
 
@@ -79,18 +112,36 @@ class MedicineImport(resources.ModelResource):
     #             Kind.objects.create(name_persian=kind_name, user=admin_user)
     #     else: pass
 
+
 class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    readonly_fields = ('register_quantity', 'each_purchase_price', 'total_sell', 'bonus_interest', 'total_purchaseـafghani', 
-                       'total_purchaseـcurrency','total_interest', 'each_price', 'total_purchase_currency_before', 'discount_value', 'each_quantity', 'bonus_value', 'each_sell_price', 'interest_money')
+    readonly_fields = (
+        "register_quantity",
+        "each_purchase_price",
+        "total_sell",
+        "bonus_interest",
+        "total_purchaseـafghani",
+        "total_purchaseـcurrency",
+        "total_interest",
+        "each_price",
+        "total_purchase_currency_before",
+        "discount_value",
+        "each_quantity",
+        "bonus_value",
+        "each_sell_price",
+        "interest_money",
+    )
 
 
 class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    readonly_fields = ('total_price' ,)
+    readonly_fields = ("total_price",)
+
 
 class MedicineAdmin(ImportExportModelAdmin):
     resource_class = MedicineImport
 
+
 admin.site.register(User, UserAdmin)
+admin.site.register(AdditionalPermission, ImportAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, MedicineAdmin)
 admin.site.register(Kind, ImportAdmin)
