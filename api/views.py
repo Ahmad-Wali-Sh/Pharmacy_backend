@@ -529,6 +529,9 @@ class PrescriptionFilterView(django_filters.FilterSet):
     refund_not_equal = django_filters.NumberFilter(
         field_name="refund", lookup_expr="exact", exclude=True
     )  # New field for refund not equal
+    grand_not_equal = django_filters.NumberFilter(
+        field_name="grand_total", lookup_expr="exact", exclude=True
+    )  # New field for refund not equal
 
     class Meta:
         model = Prescription
@@ -543,6 +546,7 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "sold",
             "barcode_str",
             "revenue",
+            "grand_not_equal"
         ]
 
 
