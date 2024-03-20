@@ -561,6 +561,25 @@ class PrescriptionView(viewsets.ModelViewSet):
     ]
     permission_classes = [D7896DjangoModelPermissions]
     ordering_fields = ["id", "created", "purchase_payment_date"]
+    
+class PrescriptionPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    
+class PrescriptionPaginatedView(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all().order_by("id")
+    serializer_class = PrescriptionSerializer
+    filterset_class = PrescriptionFilterView
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    permission_classes = [D7896DjangoModelPermissions]
+    ordering_fields = ["id", "created", "purchase_payment_date"]
+    pagination_class = PrescriptionPagination
 
 
 class LastPrescriptionView(viewsets.ModelViewSet):

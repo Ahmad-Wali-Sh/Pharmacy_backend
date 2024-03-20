@@ -40,6 +40,7 @@ from .views import (
     EntranceImageView,
     PurchaseListQueryView,
     PurchaseListManualView,
+    PrescriptionPaginatedView
 )
 
 
@@ -69,6 +70,7 @@ router.register(r"revenue", RevenueView)
 router.register(r"revenue-through", RevenueThroughView)
 router.register(r"outrance-through", OutranceThroughView)
 router.register(r"medician-excel", MedicianExcelView)
+router.register(r"prescription-pg", PrescriptionPaginatedView)
 router.register(r"last-entrance", LastEntranceView)
 router.register(r"last-prescription", LastPrescriptionView)
 router.register(r"big-company", BigCompanyView)
