@@ -26,7 +26,7 @@ import datetime
 from jdatetime import datetime as jdatetime
 from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
-
+from barcode import Code128
 
 Group.add_to_class(
     "description", models.CharField(max_length=180, null=True, blank=True)
@@ -452,11 +452,10 @@ class Prescription(models.Model):
 
         if self.barcode_str == "":
             number = random.randint(1000000000000, 9999999999999)
-            EAN = barcode.get_barcode_class("upc")
-            ean = EAN(f"{number}", writer=ImageWriter())
+            code128 = Code128(f"{number}", writer=ImageWriter())
             buffer = BytesIO()
-            ean.write(buffer)
-            self.barcode_str = ean.get_fullcode()
+            code128.write(buffer)
+            self.barcode_str = code128.get_fullcode()
             self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)
