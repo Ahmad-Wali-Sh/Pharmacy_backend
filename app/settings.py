@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "single_session",
     "api",
     "core",
+    "auditlog",
     "django_cleanup.apps.CleanupConfig",
 ]
 
@@ -89,6 +90,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    'app.middleware.AuditlogMiddleware',
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",

@@ -17,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
+from django.db.models import F
 import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
@@ -27,6 +28,13 @@ from jdatetime import datetime as jdatetime
 from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
 from barcode import Code128
+from auditlog.registry import auditlog
+from auditlog.models import AuditlogHistoryField
+from django.db.models.signals import m2m_changed, pre_delete, pre_save
+from auditlog.models import LogEntry
+from django.contrib.contenttypes.models import ContentType
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 Group.add_to_class(
     "description", models.CharField(max_length=180, null=True, blank=True)
@@ -51,6 +59,14 @@ class User(AbstractUser):
         return ", ".join(str(p) for p in self.additional_permissions.all())
 
     get_additional_permissions.short_description = "Additional permissions"
+    
+    def __str__ (self):
+        if (self.first_name and self.last_name):
+            return self.first_name + ' ' + self.last_name
+        elif (self.first_name):
+            return self.first_name
+        else:
+            return self.username 
 
 
 class ISODateTimeField(forms.DateTimeField):
@@ -336,6 +352,9 @@ class Revenue(models.Model):
         else:
             self.start_end = timezone.now().strftime("%H:%M:%S")
         self.update_model()
+        
+    def __str__ (self):
+        return 'Revenue: ' + str(self.id)
 
 
 class Prescription(models.Model):
@@ -351,6 +370,7 @@ class Prescription(models.Model):
     doctor = models.ForeignKey(
         DoctorName, on_delete=models.RESTRICT, null=True, blank=True
     )
+    history = AuditlogHistoryField()
     medician = models.ManyToManyField(Medician, through="PrescriptionThrough")
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
@@ -381,6 +401,8 @@ class Prescription(models.Model):
     revenue = models.ForeignKey(
         Revenue, on_delete=models.RESTRICT, null=True, blank=True
     )
+    order_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True, blank=True, related_name='order_user')
+
 
     def __str__(self):
         return self.prescription_number
@@ -459,6 +481,8 @@ class Prescription(models.Model):
             self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)
+    
+auditlog.register(Prescription, include_fields=['name', 'doctor', 'purchased_value', 'order_user','revenue', 'zakat', 'sold','khairat', 'discount_money', 'discount_percent'],)
 
 
 class PrescriptionImage(models.Model):
@@ -859,7 +883,6 @@ class PurchaseListManual(models.Model):
             self.medicine.save()
         super(PurchaseListManual, self).save(*args, **kwargs)
 
-
 @receiver(post_delete, sender=PrescriptionThrough)
 def deleting_prescriptionThrough(sender, instance, **kwargs):
 
@@ -934,3 +957,164 @@ def update_medician_existence(sender, instance, **kwargs):
         medician.unsubmited_existence = 0
 
     medician.save()
+    
+def get_medicine_full(res):
+    obj = res
+    kind_name = ""
+    country_name = ""
+    big_company_name = ""
+    generics = ""
+    ml = ""
+    weight = ""
+    if obj.kind and obj.kind.name_english:
+        kind_name = obj.kind.name_english + "."
+    if obj.country:
+        country_name = obj.country.name
+    if obj.big_company:
+        big_company_name = obj.big_company.name + " "
+    if obj.generic_name:
+        generics = "{" + str(",".join(map(str, obj.generic_name))) + "}"
+    if obj.ml:
+        ml = obj.ml
+    if obj.weight:
+        weight = obj.weight
+
+    return (
+        kind_name
+        + obj.brand_name
+        + " "
+        + obj.ml
+        + " "
+        + big_company_name
+        + country_name
+        + " "
+        + weight
+    )
+
+
+
+def get_prescription_through_data(prescription_through):
+    return {
+        'medician_id': prescription_through.medician_id,
+        'quantity': prescription_through.quantity,
+        'medician_name': get_medicine_full(prescription_through.medician),
+        'each_price': prescription_through.each_price,
+        'total_price': prescription_through.total_price,
+    }
+        
+@receiver(pre_save, sender=PrescriptionThrough)
+@receiver(pre_delete, sender=PrescriptionThrough)
+def prescription_through_changed(sender, instance, **kwargs):
+    print("Signal receiver called")
+    if kwargs.get('raw', False):
+        return
+
+    changes = {}
+
+    if instance.pk:
+        try:
+            previous_instance = PrescriptionThrough.objects.get(pk=instance.pk)
+        except PrescriptionThrough.DoesNotExist:
+            # This is a new instance, so we don't have previous data
+            changes = dict(
+                prescription_through=dict(new=get_prescription_through_data(instance)),
+            )
+        else:
+            current_data = get_prescription_through_data(instance)
+            previous_data = get_prescription_through_data(previous_instance)
+
+            print("Current data:", current_data)
+            print("Previous data:", previous_data)
+
+            if (
+                previous_data['medician_id'] != current_data['medician_id']
+                or previous_data['quantity'] != current_data['quantity']
+                or previous_data['each_price'] != current_data['each_price']
+                or previous_data['total_price'] != current_data['total_price']
+            ):
+                changes = dict(
+                    prescription_through=dict(old=previous_data, new=current_data),
+                )
+
+        if changes:
+            LogEntry.objects.create(
+                object_id=instance.prescription_id,
+                content_type=ContentType.objects.get_for_model(instance.prescription),
+                actor_id=instance.prescription.user_id,
+                action=1 if previous_instance else 0,  # Action flag for update or creation
+                changes=json.dumps(changes, cls=DjangoJSONEncoder),
+            )
+
+    elif kwargs.get('signal') == pre_delete:
+        changes = dict(
+            prescription_through=dict(old=get_prescription_through_data(instance)),
+        )
+
+        LogEntry.objects.create(
+            object_id=instance.prescription_id,
+            content_type=ContentType.objects.get_for_model(instance.prescription),
+            actor_id=instance.prescription.user_id,
+            action=2,  # Action flag for deletion
+            changes=json.dumps(changes, cls=DjangoJSONEncoder),
+        )
+        
+@receiver(post_save, sender=PrescriptionThrough)
+def prescription_through_post_save(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
+
+    if created:
+        changes = dict(
+            prescription_through=dict(new=get_prescription_through_data(instance)),
+        )
+
+        LogEntry.objects.create(
+            object_id=instance.prescription_id,
+            content_type=ContentType.objects.get_for_model(instance.prescription),
+            actor_id=instance.prescription.user_id,
+            action=0,  # Action flag for creation
+            changes=json.dumps(changes, cls=DjangoJSONEncoder),
+        )
+    else:
+        try:
+            previous_instance = PrescriptionThrough.objects.get(pk=instance.pk)
+        except PrescriptionThrough.DoesNotExist:
+            pass
+        else:
+            current_data = get_prescription_through_data(instance)
+            previous_data = get_prescription_through_data(previous_instance)
+
+            if (
+                previous_data['medician_id'] != current_data['medician_id']
+                or previous_data['quantity'] != current_data['quantity']
+                or previous_data['each_price'] != current_data['each_price']
+                or previous_data['total_price'] != current_data['total_price']
+            ):
+                changes = dict(
+                    prescription_through=dict(old=previous_data, new=current_data),
+                )
+
+                LogEntry.objects.create(
+                    object_id=instance.prescription_id,
+                    content_type=ContentType.objects.get_for_model(instance.prescription),
+                    actor_id=instance.prescription.user_id,
+                    action=1,  # Action flag for update
+                    changes=json.dumps(changes, cls=DjangoJSONEncoder),
+                )
+
+@receiver(post_delete, sender=PrescriptionThrough)
+def prescription_through_post_delete(sender, instance, **kwargs):
+    if kwargs.get('raw', False):
+        return
+
+    changes = dict(
+        prescription_through=dict(old=get_prescription_through_data(instance)),
+    )
+
+    LogEntry.objects.create(
+        object_id=instance.prescription_id,
+        content_type=ContentType.objects.get_for_model(instance.prescription),
+        actor_id=instance.prescription.user_id,
+        action=2,  # Action flag for deletion
+        changes=json.dumps(changes, cls=DjangoJSONEncoder),
+    )

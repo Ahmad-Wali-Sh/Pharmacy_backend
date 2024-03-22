@@ -1,7 +1,4 @@
 from rest_framework import serializers
-from django.core import serializers as core_serializers
-import io
-from django.db.models import F
 from django.db.models import Sum
 
 from core.models import (
@@ -38,8 +35,26 @@ from core.models import (
     PurchaseList,
     PurchaseListManual,
 )
+import ast
 
-from django_jalali.serializers.serializerfield import JDateField, JDateTimeField
+
+
+def log_entry_to_dict(log_entry):
+    changes_dict = ast.literal_eval(log_entry.changes)
+    user = None
+    if log_entry.actor_id:
+        user = User.objects.get(pk=log_entry.actor_id)
+        user_name = f"{user.first_name} {user.last_name}" if user.first_name and user.last_name else str(user)
+    else:
+        user_name = None
+    return {
+        'id': log_entry.id,
+        'action': log_entry.action,
+        'date': log_entry.timestamp,
+        'user': log_entry.actor_id,
+        'user_name': user_name,
+        'changes': changes_dict,
+    }
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -417,6 +432,12 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
     prescription_image = serializers.SerializerMethodField()
+    history = serializers.SerializerMethodField()
+    
+    def get_history(self, obj):
+        history_list = obj.history.all()
+        history_dicts = [log_entry_to_dict(entry) for entry in history_list]
+        return history_dicts
 
     def get_prescription_image(self, obj):
         entrance_image_obj = PrescriptionImage.objects.filter(prescription=obj.id)
