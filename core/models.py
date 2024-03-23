@@ -929,58 +929,52 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     instance.medician.save()
 
 
-@receiver([post_save, post_delete], sender=EntranceThrough)
-@receiver([post_save, post_delete], sender=PrescriptionThrough)
-def update_medician_existence(sender, instance, **kwargs):
-    medician = instance.medician
-    entrance_sum_query = (
-        EntranceThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("register_quantity"))
-        .get("register_quantity__sum", 0)
-    )
-    prescription_sum_query = (
-        PrescriptionThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("quantity"))
-        .get("quantity__sum", 0)
-    )
-
-    entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
-    prescription_sum = (
-        prescription_sum_query if prescription_sum_query is not None else 0
-    )
-
-    existence = entrance_sum - prescription_sum
-    medician.existence = round(existence, 1)
-
-    # Update unsubmited_existence based on comparison with entrance quantity
-    if existence >= medician.unsubmited_existence:
-        medician.unsubmited_existence = 0
-
-    medician.save()
+# def get_medicine_full(res):
+#     obj = res
+#     kind_name = obj.kind.name_english if obj and obj.kind and obj.kind.name_english else ""
+#     country_name = obj.country.name if obj and obj.country else ""
+#     big_company_name = obj.big_company.name if obj and obj.big_company else ""
+#     generics = "{" + ",".join(map(str, obj.generic_name)) + "}" if obj and obj.generic_name else ""
+#     ml = str(obj.ml) if obj and obj.ml else ""
+#     weight = str(obj.weight) if obj and obj.weight else ""
     
+    
+#     result = ".".join(filter(None, [kind_name, obj.brand_name.strip(), ml, big_company_name, country_name, weight]))
+#     print(result)
+#     return result.strip()
+
 def get_medicine_full(res):
-    obj = res
-    kind_name = obj.kind.name_english if obj and obj.kind and obj.kind.name_english else ""
-    country_name = obj.country.name if obj and obj.country else ""
-    big_company_name = obj.big_company.name if obj and obj.big_company else ""
-    generics = "{" + ",".join(map(str, obj.generic_name)) + "}" if obj and obj.generic_name else ""
-    ml = str(obj.ml) if obj and obj.ml else ""
-    weight = str(obj.weight) if obj and obj.weight else ""
+        obj = res
+        kind_name = ""
+        country_name = ""
+        big_company_name = ""
+        generics = ""
+        ml = ""
+        weight = ""
+        if obj.kind and obj.kind.name_english:
+            kind_name = obj.kind.name_english + "."
+        if obj.country and obj.country.name:
+            country_name = obj.country.name
+        if obj.big_company and obj.big_company.name:
+            big_company_name = obj.big_company.name + " "
+        if obj.generic_name:
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} "
+        if obj.ml:
+            ml = obj.ml
+        if obj.weight:
+            weight = obj.weight
 
-    return (
-        kind_name
-        + "." if kind_name else ""
-        + obj.brand_name
-        + " " if obj and obj.brand_name else ""
-        + ml
-        + " " if ml else ""
-        + big_company_name
-        + " " if big_company_name else ""
-        + country_name
-        + " " if country_name else ""
-        + weight
-    ).strip()
-
+        return (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        ).strip()
 
 
 def get_prescription_through_data(prescription_through):
@@ -995,7 +989,6 @@ def get_prescription_through_data(prescription_through):
 @receiver(pre_save, sender=PrescriptionThrough)
 @receiver(pre_delete, sender=PrescriptionThrough)
 def prescription_through_changed(sender, instance, **kwargs):
-    print("Signal receiver called")
     if kwargs.get('raw', False):
         return
 
@@ -1012,9 +1005,6 @@ def prescription_through_changed(sender, instance, **kwargs):
         else:
             current_data = get_prescription_through_data(instance)
             previous_data = get_prescription_through_data(previous_instance)
-
-            print("Current data:", current_data)
-            print("Previous data:", previous_data)
 
             if (
                 previous_data['medician_id'] != current_data['medician_id']
@@ -1108,3 +1098,34 @@ def prescription_through_post_delete(sender, instance, **kwargs):
         action=2,  # Action flag for deletion
         changes=json.dumps(changes, cls=DjangoJSONEncoder),
     )
+    
+@receiver([post_save, post_delete], sender=EntranceThrough)
+@receiver([post_save, post_delete], sender=PrescriptionThrough)
+def update_medician_existence(sender, instance, **kwargs):
+    medician = instance.medician
+    entrance_sum_query = (
+        EntranceThrough.objects.filter(medician_id=medician.id)
+        .aggregate(Sum("register_quantity"))
+        .get("register_quantity__sum", 0)
+    )
+    prescription_sum_query = (
+        PrescriptionThrough.objects.filter(medician_id=medician.id)
+        .aggregate(Sum("quantity"))
+        .get("quantity__sum", 0)
+    )
+
+    entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
+    prescription_sum = (
+        prescription_sum_query if prescription_sum_query is not None else 0
+    )
+
+    existence = entrance_sum - prescription_sum
+    if existence is None:
+        existence = 0
+    medician.existence = round(existence, 1)
+
+    # Update unsubmited_existence based on comparison with entrance quantity
+    if existence >= medician.unsubmited_existence:
+        medician.unsubmited_existence = 0
+
+    medician.save()
