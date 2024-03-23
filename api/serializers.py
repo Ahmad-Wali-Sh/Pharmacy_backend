@@ -504,7 +504,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
         if obj.department:
             return obj.department.name
         else:
-            """"""
+            return ''
 
     def get_kind_image(self, obj):
         if obj.kind and obj.kind.image:
@@ -554,7 +554,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
         return medicine_full
 
     def get_kind_name(self, obj):
-        if obj.kind:
+        if obj.kind and obj.kind.name_english:
             return obj.kind.name_english
         else:
             return ""
