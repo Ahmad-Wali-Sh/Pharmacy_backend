@@ -960,36 +960,26 @@ def update_medician_existence(sender, instance, **kwargs):
     
 def get_medicine_full(res):
     obj = res
-    kind_name = ""
-    country_name = ""
-    big_company_name = ""
-    generics = ""
-    ml = ""
-    weight = ""
-    if obj.kind and obj.kind.name_english:
-        kind_name = obj.kind.name_english + "."
-    if obj.country:
-        country_name = obj.country.name
-    if obj.big_company:
-        big_company_name = obj.big_company.name + " "
-    if obj.generic_name:
-        generics = "{" + str(",".join(map(str, obj.generic_name))) + "}"
-    if obj.ml:
-        ml = obj.ml
-    if obj.weight:
-        weight = obj.weight
+    kind_name = obj.kind.name_english if obj and obj.kind and obj.kind.name_english else ""
+    country_name = obj.country.name if obj and obj.country else ""
+    big_company_name = obj.big_company.name if obj and obj.big_company else ""
+    generics = "{" + ",".join(map(str, obj.generic_name)) + "}" if obj and obj.generic_name else ""
+    ml = str(obj.ml) if obj and obj.ml else ""
+    weight = str(obj.weight) if obj and obj.weight else ""
 
     return (
         kind_name
+        + "." if kind_name else ""
         + obj.brand_name
-        + " "
-        + obj.ml
-        + " "
+        + " " if obj and obj.brand_name else ""
+        + ml
+        + " " if ml else ""
         + big_company_name
+        + " " if big_company_name else ""
         + country_name
-        + " "
+        + " " if country_name else ""
         + weight
-    )
+    ).strip()
 
 
 
