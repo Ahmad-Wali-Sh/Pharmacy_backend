@@ -400,6 +400,8 @@ class Prescription(models.Model):
     grand_total = models.FloatField(default=0)
     discount_money = models.FloatField(default=0)
     discount_percent = models.FloatField(default=0)
+    over_money = models.FloatField(default=0)
+    over_percent = models.FloatField(default=0)
     zakat = models.FloatField(default=0)
     khairat = models.FloatField(default=0)
     created = models.DateField(auto_now_add=True)
@@ -440,9 +442,11 @@ class Prescription(models.Model):
                 .values()
             )[0]
             discount_percent = float(self.discount_percent)
+            over_percent = float(self.over_percent)
             discount_amount = 0
             if prescription_through_total:
                 discount_amount = prescription_through_total * (discount_percent / 100)
+                over_amount = prescription_through_total * (over_percent / 100)
                 self.rounded_number = calculate_rounded_value(
                     int(float(prescription_through_total)),
                     self.department.celling_start,
@@ -454,6 +458,8 @@ class Prescription(models.Model):
                     - float(self.khairat)
                     - float(self.discount_money)
                     + float(self.rounded_number)
+                    + over_amount
+                    + float(self.over_money)
                 )
                 self.grand_total = round(grand_total, 0)
 
@@ -542,7 +548,7 @@ class Prescription(models.Model):
 
         return super().save(*args, **kwargs)
     
-auditlog.register(Prescription, include_fields=['name', 'doctor', 'purchased_value', 'order_user','revenue', 'zakat', 'sold','khairat', 'discount_money', 'discount_percent'],)
+auditlog.register(Prescription, include_fields=['name', 'doctor', 'purchased_value', 'order_user','revenue', 'zakat', 'sold','khairat', 'discount_money', 'discount_percent', 'over_percent', 'over_money'],)
 
 
 class PrescriptionImage(models.Model):
@@ -952,8 +958,10 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
         .values()
     )[0]
     discount_percent = float(instance.prescription.discount_percent)
+    over_percent = float(instance.prescription.over_percent)
     if prescription_through_total:
         discount_amount = prescription_through_total * (discount_percent / 100)
+        over_amount = prescription_through_total * (over_percent / 100)
         grand_total = (
             float(prescription_through_total)
             - discount_amount
@@ -961,6 +969,8 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
             - float(instance.prescription.khairat)
             - float(instance.prescription.discount_money)
             + float(instance.prescription.rounded_number)
+            + over_amount
+            + float(instance.prescription.over_money)
         )
     else:
         grand_total = 0
