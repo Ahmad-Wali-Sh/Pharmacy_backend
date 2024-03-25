@@ -40,8 +40,14 @@ from .views import (
     EntranceImageView,
     PurchaseListQueryView,
     PurchaseListManualView,
-    PrescriptionPaginatedView
+    PrescriptionPaginatedView,
+    PrescriptionViewSet
 )
+
+prescription_extra_actions = {
+    'previous': 'previous',
+}
+
 
 
 router = routers.DefaultRouter()
@@ -89,4 +95,6 @@ router.register(r"traz", TrazView, basename="traz")
 urlpatterns = [
     path("", include(router.urls)),
     path("user/permissions/", user_permissions, name="user_permissions"),
+    path('prescription/<int:pk>/previous/', PrescriptionViewSet.as_view({'get': 'previous'}), name='prescription-previous'),
+    path('prescription/<int:pk>/next/', PrescriptionViewSet.as_view({'get': 'next'}), name='prescription-next'),
 ]

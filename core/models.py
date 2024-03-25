@@ -27,7 +27,6 @@ import datetime
 from jdatetime import datetime as jdatetime
 from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
-from barcode import Code128
 from auditlog.registry import auditlog
 from auditlog.models import AuditlogHistoryField
 from django.db.models.signals import m2m_changed, pre_delete, pre_save
@@ -35,6 +34,9 @@ from auditlog.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from barcode import Code39, Code128, EAN13, UPCA
+import qrcode
+from django.core.files.base import ContentFile
 
 Group.add_to_class(
     "description", models.CharField(max_length=180, null=True, blank=True)
@@ -46,6 +48,29 @@ class AdditionalPermission(models.Model):
 
     def __str__(self):
         return self.name
+    
+class GlobalSettings(models.Model):
+    BARCODE_TYPES = (
+        ('code39', 'Code39'),
+        ('code128', 'Code128'),
+        ('ean13', 'EAN13'),
+        ('upca', 'UPCA'),
+        ('qrcode', 'QR Code'),
+    )
+
+    barcode_type = models.CharField(max_length=10, choices=BARCODE_TYPES, default='code128')
+
+    @classmethod
+    def get_settings(cls):
+        try:
+            return cls.objects.get()
+        except cls.DoesNotExist:
+            return cls.create_default_settings()
+
+    @classmethod
+    def create_default_settings(cls):
+        settings = cls.objects.create(barcode_type='code128')
+        return settings
 
 
 class User(AbstractUser):
@@ -473,11 +498,46 @@ class Prescription(models.Model):
                 self.prescription_number = f"{j_year}-{j_month:02d}-{count_of_month}"
 
         if self.barcode_str == "":
+            settings = GlobalSettings.get_settings()
             number = random.randint(1000000000000, 9999999999999)
-            code128 = Code128(f"{number}", writer=ImageWriter())
             buffer = BytesIO()
-            code128.write(buffer)
-            self.barcode_str = code128.get_fullcode()
+
+            if settings.barcode_type == 'code39':
+                code39 = Code39(f"{number}", writer=ImageWriter())
+                code39.write(buffer)
+                self.barcode_str = code39.get_fullcode()
+                
+            elif settings.barcode_type == 'qrcode':
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(str(number))
+                qr.make(fit=True)
+
+                img = qr.make_image(fill_color="black", back_color="white")
+                buffer = BytesIO()
+                img.save(buffer, format='PNG')
+                self.barcode.save(f"{number}.png", ContentFile(buffer.getvalue()), save=False)
+
+
+            elif settings.barcode_type == 'code128':
+                code128 = Code128(f"{number}", writer=ImageWriter())
+                code128.write(buffer)
+                self.barcode_str = code128.get_fullcode()
+
+            elif settings.barcode_type == 'ean13':
+                ean13 = EAN13(f"{number}", writer=ImageWriter())
+                ean13.write(buffer)
+                self.barcode_str = ean13.get_fullcode()
+
+            elif settings.barcode_type == 'upca':
+                upca = UPCA(f"{number}", writer=ImageWriter())
+                upca.write(buffer)
+                self.barcode_str = upca.get_fullcode()
+
             self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)

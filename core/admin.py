@@ -34,6 +34,7 @@ from core.models import (
     MedicineConflict,
     PurchaseList,
     PurchaseListManual,
+    GlobalSettings
 )
 
 from django_jalali.admin.filters import JDateFieldListFilter
@@ -50,6 +51,29 @@ UserAdmin.list_display += ("get_additional_permissions",)
 UserAdmin.fieldsets += (
     ("Extra Fields", {"fields": ("image", "additional_permissions")}),
 )
+
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    list_display = ('barcode_type',)
+    fieldsets = (
+        (None, {
+            'fields': ('barcode_type',),
+        }),
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        try:
+            return qs.filter(pk=GlobalSettings.get_settings().pk)
+        except GlobalSettings.DoesNotExist:
+            return qs.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+admin.site.register(GlobalSettings, GlobalSettingsAdmin)
 
 
 class ImportAdmin(ImportExportModelAdmin, admin.ModelAdmin):

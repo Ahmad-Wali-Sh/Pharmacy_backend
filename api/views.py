@@ -38,6 +38,7 @@ from .serializers import (
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
 )
+from rest_framework import status
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import (
@@ -786,3 +787,38 @@ class PurchaseListManualView(viewsets.ModelViewSet):
     ]
     filterset_class = PurchaseListFilter
     permission_classes = [D7896DjangoModelPermissions]
+
+
+class PrescriptionViewSet(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all()
+    serializer_class = PrescriptionSerializer
+
+    @action(detail=True, methods=['get'], url_path='previous')
+    def previous(self, request, pk=None):
+        try:
+            prescription = self.get_object()
+            department_prescriptions = Prescription.objects.filter(department=prescription.department, id__lt=prescription.id).order_by('-id')
+
+            if department_prescriptions.exists():
+                previous_prescription = department_prescriptions.first()
+                serializer = self.get_serializer(previous_prescription)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'No previous prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Prescription.DoesNotExist:
+            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+    @action(detail=True, methods=['get'], url_path='next')
+    def next(self, request, pk=None):
+        try:
+            prescription = self.get_object()
+            department_prescriptions = Prescription.objects.filter(department=prescription.department, id__gt=prescription.id).order_by('id')
+
+            if department_prescriptions.exists():
+                next_prescription = department_prescriptions.first()
+                serializer = self.get_serializer(next_prescription)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Prescription.DoesNotExist:
+            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
