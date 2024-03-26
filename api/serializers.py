@@ -40,7 +40,11 @@ import ast
 
 
 def log_entry_to_dict(log_entry):
-    changes_dict = ast.literal_eval(log_entry.changes)
+    try:
+        changes_dict = ast.literal_eval(str(log_entry.changes))
+    except (ValueError, TypeError):
+        changes_dict = log_entry.changes
+
     user = None
     if log_entry.actor_id:
         user = User.objects.get(pk=log_entry.actor_id)
