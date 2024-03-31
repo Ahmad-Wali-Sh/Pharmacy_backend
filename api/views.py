@@ -748,19 +748,14 @@ class PurchaseListFilter(django_filters.FilterSet):
         
 class RevenueRecordViewSet(viewsets.ModelViewSet):
     queryset = RevenueRecord.objects.all().order_by("-timestamp")
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     serializer_class = RevenueRecordSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = [
         "revenue", "prescription__prescription_number", 'record_type'
     ]
     pagination_class = PrescriptionPagination
-    ordering_fields = [
-        "id","timestamp"
-    ]
-    ordering = [
-        "id","timestamp"
-    ]
+
 
 
 

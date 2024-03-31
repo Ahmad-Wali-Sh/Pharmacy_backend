@@ -805,6 +805,40 @@ class RevenueRecordSerializer(serializers.ModelSerializer):
     prescription_number = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
     patient_name = serializers.SerializerMethodField()
+    
+    
+    discount_money = serializers.SerializerMethodField()
+    def get_discount_money(self, obj):
+        if (obj.prescription.discount_money):
+            return obj.prescription.discount_money
+        else:
+            return 0
+        
+    discount_percent = serializers.SerializerMethodField()
+    def get_discount_percent(self, obj):
+        if (obj.prescription.discount_percent):
+            return obj.prescription.discount_percent
+        else:
+            return 0
+    khairat = serializers.SerializerMethodField()
+    def get_khairat(self, obj):
+        if (obj.prescription.khairat):
+            return obj.prescription.khairat
+        else:
+            return 0
+    zakat = serializers.SerializerMethodField()
+    def get_zakat(self, obj):
+        if (obj.prescription.zakat):
+            return obj.prescription.zakat
+        else:
+            return 0
+    rounded_number = serializers.SerializerMethodField()
+    def get_rounded_number(self, obj):
+        if (obj.prescription.rounded_number):
+            return obj.prescription.rounded_number
+        else:
+            return 0
+    
 
     def get_patient_name(self, obj):
         if obj.prescription.name:
