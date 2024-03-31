@@ -178,6 +178,7 @@ class MedicianFilter(django_filters.FilterSet):
             "generic_name",
             "no_pocket",
             "ml",
+            "active",
             "location",
             "barcode__contains",
             "company",
