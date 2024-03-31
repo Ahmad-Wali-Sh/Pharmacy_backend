@@ -96,38 +96,38 @@ class RevenueSerializer(serializers.ModelSerializer):
     rounded_value = serializers.SerializerMethodField()
 
     def get_total_value(self, revenue):
-        total_value = revenue.prescription_set.aggregate(
-            total_value=Sum("grand_total")
+        total_value = revenue.revenuerecord_set.aggregate(
+            total_value=Sum("amount")
         )["total_value"]
         return total_value or 0
 
     def get_discount_money_value(self, revenue):
-        discount_money_value = revenue.prescription_set.aggregate(
-            discount_money_value=Sum("discount_money")
+        discount_money_value = revenue.revenuerecord_set.values('prescription').distinct().aggregate(
+            discount_money_value=Sum("prescription__discount_money")
         )["discount_money_value"]
         return discount_money_value or 0
 
     def get_discount_percent_value(self, revenue):
-        discount_percent_value = revenue.prescription_set.aggregate(
-            discount_percent_value=Sum("discount_percent")
+        discount_percent_value = revenue.revenuerecord_set.values('prescription').distinct().aggregate(
+            discount_percent_value=Sum("prescription__discount_percent")
         )["discount_percent_value"]
         return discount_percent_value or 0
 
     def get_zakat_value(self, revenue):
-        zakat_value = revenue.prescription_set.aggregate(zakat_value=Sum("zakat"))[
+        zakat_value = revenue.revenuerecord_set.values('prescription').distinct().aggregate(zakat_value=Sum("prescription__zakat"))[
             "zakat_value"
         ]
         return zakat_value or 0
 
     def get_khairat_value(self, revenue):
-        khairat_value = revenue.prescription_set.aggregate(
-            khairat_value=Sum("khairat")
+        khairat_value = revenue.revenuerecord_set.values('prescription').distinct().aggregate(
+            khairat_value=Sum("prescription__khairat")
         )["khairat_value"]
         return khairat_value or 0
 
     def get_rounded_value(self, revenue):
-        rounded_value = revenue.prescription_set.aggregate(
-            rounded_value=Sum("rounded_number")
+        rounded_value = revenue.revenuerecord_set.values('prescription').distinct().aggregate(
+            rounded_value=Sum("prescription__rounded_number")
         )["rounded_value"]
         return rounded_value or 0
 
