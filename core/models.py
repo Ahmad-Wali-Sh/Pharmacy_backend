@@ -2,14 +2,10 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
-from datetime import date
 from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import date
 import random
 from django.utils import timezone
-from django.db.models.signals import post_delete, post_save
-from django.dispatch import receiver
 from django.utils.dateparse import parse_datetime
 from django.utils.encoding import force_str
 from django.forms.widgets import DateTimeInput
@@ -17,23 +13,15 @@ from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import AbstractUser
-from django.db.models import F
-import barcode
 from barcode.writer import ImageWriter
 from io import BytesIO
 from django.core.files import File
 from django.db.models import Q
-import datetime
 from jdatetime import datetime as jdatetime
 from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
 from auditlog.registry import auditlog
 from auditlog.models import AuditlogHistoryField
-from django.db.models.signals import m2m_changed, pre_delete, pre_save
-from auditlog.models import LogEntry
-from django.contrib.contenttypes.models import ContentType
-import json
-from django.core.serializers.json import DjangoJSONEncoder
 from barcode import Code39, Code128, EAN13, UPCA
 import qrcode
 from django.core.files.base import ContentFile
@@ -48,17 +36,20 @@ class AdditionalPermission(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+
 class GlobalSettings(models.Model):
     BARCODE_TYPES = (
-        ('code39', 'Code39'),
-        ('code128', 'Code128'),
-        ('ean13', 'EAN13'),
-        ('upca', 'UPCA'),
-        ('qrcode', 'QR Code'),
+        ("code39", "Code39"),
+        ("code128", "Code128"),
+        ("ean13", "EAN13"),
+        ("upca", "UPCA"),
+        ("qrcode", "QR Code"),
     )
 
-    barcode_type = models.CharField(max_length=10, choices=BARCODE_TYPES, default='code128')
+    barcode_type = models.CharField(
+        max_length=10, choices=BARCODE_TYPES, default="code128"
+    )
 
     @classmethod
     def get_settings(cls):
@@ -69,7 +60,7 @@ class GlobalSettings(models.Model):
 
     @classmethod
     def create_default_settings(cls):
-        settings = cls.objects.create(barcode_type='code128')
+        settings = cls.objects.create(barcode_type="code128")
         return settings
 
 
@@ -84,14 +75,14 @@ class User(AbstractUser):
         return ", ".join(str(p) for p in self.additional_permissions.all())
 
     get_additional_permissions.short_description = "Additional permissions"
-    
-    def __str__ (self):
-        if (self.first_name and self.last_name):
-            return self.first_name + ' ' + self.last_name
-        elif (self.first_name):
+
+    def __str__(self):
+        if self.first_name and self.last_name:
+            return self.first_name + " " + self.last_name
+        elif self.first_name:
             return self.first_name
         else:
-            return self.username 
+            return self.username
 
 
 class ISODateTimeField(forms.DateTimeField):
@@ -127,12 +118,13 @@ class Kind(models.Model):
     description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
-    # def __str__(self):
-    #     if (self.name_english):
-    #         return self.name_english
-    #     elif (self.name_persian):
-    #         return self.name_persian
-    #     else: ''
+    def __str__(self):
+        if self.name_english:
+            return self.name_english
+        elif self.name_persian:
+            return self.name_persian
+        else:
+            return ""
 
 
 class PharmGroup(models.Model):
@@ -196,40 +188,6 @@ class BigCompany(models.Model):
         return self.name
 
 
-UNIQUE_ARRAY_FIELDS = ("barcode",)
-
-
-class MyManager(models.Manager):
-    def prevent_duplicates_in_array_fields(self, model, array_field):
-        def duplicate_check(_lookup_params):
-            fields = self.model._meta.get_fields()
-            for unique_field in UNIQUE_ARRAY_FIELDS:
-                unique_field_index = [getattr(field, "name", "") for field in fields]
-                try:
-                    # if model doesn't have the unique field, then proceed to the next loop iteration
-                    unique_field_index = unique_field_index.index(unique_field)
-                except ValueError:
-                    continue
-            all_items_in_db = [
-                item
-                for sublist in self.values_list(
-                    fields[unique_field_index].name
-                ).exclude(**_lookup_params)
-                for item in sublist
-            ]
-            all_items_in_db = [item for sublist in all_items_in_db for item in sublist]
-            if not set(array_field).isdisjoint(all_items_in_db):
-                raise ValidationError(
-                    "{} contains items already in the database".format(array_field)
-                )
-
-        if model.id:
-            lookup_params = {"id": model.id}
-        else:
-            lookup_params = {}
-        duplicate_check(lookup_params)
-
-
 class Medician(models.Model):
     brand_name = models.CharField(max_length=100)
     generic_name = ArrayField(
@@ -238,7 +196,6 @@ class Medician(models.Model):
         blank=True,
         default=list,
     )
-    # barcode = models.CharField(max_length=255, null=True, blank=True, unique=True)
     barcode = ArrayField(
         models.CharField(max_length=255, null=True, blank=True),
         default=list,
@@ -289,10 +246,6 @@ class Medician(models.Model):
     shorted = models.BooleanField(default=False)
     to_buy = models.BooleanField(default=False)
     unsubmited_existence = models.FloatField(default=0)
-    # objects = MyManager()
-
-    # def __str__(self):
-    #     return str(self.brand_name)
 
     def save(self, *args, **kwargs):
         if self.existence is None:
@@ -344,11 +297,6 @@ class DoctorName(models.Model):
 
 class Revenue(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    total = models.FloatField(default=0)
-    zakat = models.FloatField(default=0)
-    khairat = models.FloatField(default=0)
-    rounded = models.FloatField(default=0)
-    discount = models.FloatField(default=0)
     start_time = models.TimeField(auto_now=False, null=True, blank=True)
     start_end = models.TimeField(auto_now=False, null=True, blank=True)
     start_end_date = models.DateField(null=True, blank=True, auto_now=True)
@@ -377,9 +325,9 @@ class Revenue(models.Model):
         else:
             self.start_end = timezone.now().strftime("%H:%M:%S")
         self.update_model()
-        
-    def __str__ (self):
-        return 'Revenue: ' + str(self.id)
+
+    def __str__(self):
+        return "Revenue: " + str(self.id)
 
 
 class Prescription(models.Model):
@@ -428,8 +376,13 @@ class Prescription(models.Model):
     revenue = models.ForeignKey(
         Revenue, on_delete=models.RESTRICT, null=True, blank=True
     )
-    order_user = models.ForeignKey(User, on_delete=models.RESTRICT, null=True, blank=True, related_name='order_user')
-
+    order_user = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        related_name="order_user",
+    )
 
     def __str__(self):
         return self.prescription_number
@@ -463,28 +416,23 @@ class Prescription(models.Model):
                 )
                 self.grand_total = round(grand_total, 0)
 
-        if (
-            self.sold
-            and self.purchased_value != 0
-            and (self.purchased_value != self.grand_total)
-        ):
-            self.refund = self.purchased_value - self.grand_total
+        purchased_total = (
+            RevenueRecord.objects.filter(prescription=self.id)
+            .aggregate(Sum("amount"))
+            .get("amount__sum", 0)
+        )
+        
+        if (purchased_total):
+            self.purchased_value = purchased_total
+            self.refund = self.grand_total - purchased_total
+        else:
+            self.purchased_value = 0
+            self.refund = self.grand_total
+            
 
-        if self.purchased_value == self.grand_total:
-            self.refund = 0
-
-        if self.sold and self.refund == 0:
-            self.purchase_payment_date = timezone.now()
-            self.purchased_value = self.grand_total
-        if not self.sold:
-            self.purchase_payment_date = None
-
-        # Now, you can access grand_total and calculate the rounded number
-
-        # Get the current Jalali date
         today_jalali = jdatetime.now()
         start_jalali_date = jdatetime(today_jalali.year, today_jalali.month, 1)
-        
+
         start_gregorian_date = start_jalali_date.togregorian()
         end_gregorian_date = today_jalali.togregorian()
 
@@ -508,12 +456,12 @@ class Prescription(models.Model):
             number = random.randint(1000000000000, 9999999999999)
             buffer = BytesIO()
 
-            if settings.barcode_type == 'code39':
+            if settings.barcode_type == "code39":
                 code39 = Code39(f"{number}", writer=ImageWriter())
                 code39.write(buffer)
                 self.barcode_str = code39.get_fullcode()
-                
-            elif settings.barcode_type == 'qrcode':
+
+            elif settings.barcode_type == "qrcode":
                 qr = qrcode.QRCode(
                     version=1,
                     error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -525,21 +473,22 @@ class Prescription(models.Model):
 
                 img = qr.make_image(fill_color="black", back_color="white")
                 buffer = BytesIO()
-                img.save(buffer, format='PNG')
-                self.barcode.save(f"{number}.png", ContentFile(buffer.getvalue()), save=False)
+                img.save(buffer, format="PNG")
+                self.barcode.save(
+                    f"{number}.png", ContentFile(buffer.getvalue()), save=False
+                )
 
-
-            elif settings.barcode_type == 'code128':
+            elif settings.barcode_type == "code128":
                 code128 = Code128(f"{number}", writer=ImageWriter())
                 code128.write(buffer)
                 self.barcode_str = code128.get_fullcode()
 
-            elif settings.barcode_type == 'ean13':
+            elif settings.barcode_type == "ean13":
                 ean13 = EAN13(f"{number}", writer=ImageWriter())
                 ean13.write(buffer)
                 self.barcode_str = ean13.get_fullcode()
 
-            elif settings.barcode_type == 'upca':
+            elif settings.barcode_type == "upca":
                 upca = UPCA(f"{number}", writer=ImageWriter())
                 upca.write(buffer)
                 self.barcode_str = upca.get_fullcode()
@@ -547,8 +496,39 @@ class Prescription(models.Model):
             self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)
-    
-auditlog.register(Prescription, include_fields=['name', 'doctor', 'purchased_value', 'order_user','revenue', 'zakat', 'sold','khairat', 'discount_money', 'discount_percent', 'over_percent', 'over_money'],)
+
+
+class RevenueRecord(models.Model):
+    revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT)
+    prescription = models.ForeignKey(Prescription, on_delete=models.RESTRICT)
+    record_type = models.CharField(max_length=30)
+    amount = models.FloatField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return (
+            str(self.revenue.id) + " | " + str(self.prescription.prescription_number)
+        )
+
+
+auditlog.register(
+    Prescription,
+    include_fields=[
+        "name",
+        "doctor",
+        "purchased_value",
+        "order_user",
+        "revenue",
+        "zakat",
+        "sold",
+        "khairat",
+        "discount_money",
+        "discount_percent",
+        "over_percent",
+        "over_money",
+    ],
+)
 
 
 class PrescriptionImage(models.Model):
@@ -582,13 +562,6 @@ class PrescriptionThrough(models.Model):
             self.total_price = round(1 * self.each_price, 0)
 
         super(PrescriptionThrough, self).save(*args, **kwargs)
-
-        if (
-            self.prescription.refund == 0
-            and self.prescription.purchased_value == 0
-            and self.prescription.sold == True
-        ):
-            self.prescription.sold = False
 
         self.prescription.save()
 
@@ -772,11 +745,6 @@ class EntranceThrough(models.Model):
             self.total_purchase_currency_before - self.total_purchaseـcurrency,
             round_digit,
         )
-        # if (self.quantity_bonus > 0):
-        #     self.bonus_value = round((self.total_purchase_currency_before / (
-        #         self.number_in_factor + self.quantity_bonus)) * self.quantity_bonus, round_digit)
-        # else:
-        #     self.bonus_value = 0
         self.each_purchase_price = round(
             (self.each_price_factor / self.no_box), round_digit
         )
@@ -803,83 +771,22 @@ class EntranceThrough(models.Model):
         super(EntranceThrough, self).save(*args, **kwargs)
 
 
-class Outrance(models.Model):
-    company = models.ForeignKey(PharmCompany, on_delete=models.CASCADE)
-    factor_number = models.IntegerField()
-    medicians = models.ManyToManyField(Medician, through="OutranceThrough")
-    factor_date = models.DateField()
-    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    total_interest = models.IntegerField()
-    final_register = models.ForeignKey(FinalRegister, on_delete=models.CASCADE)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    deliver_by = models.CharField(max_length=100)
-    recived_by = models.CharField(max_length=100)
-    description = models.TextField(null=True, blank=True)
-    without_discount = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class MedicineWith(models.Model):
+    medicine = models.ForeignKey(Medician, on_delete=models.RESTRICT)
+    includes = models.ManyToManyField(Medician, related_name="medicines")
 
     def __str__(self):
-        return self.company.name
+        return self.medicine.brand_name
 
 
-class OutranceThrough(models.Model):
-    medician = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    outrance = models.ForeignKey(Outrance, on_delete=models.CASCADE)
-    number_in_factor = models.IntegerField()  # G4 تعداد در فاکتور
-    each_price_factor = models.FloatField()  # G8 قیمت فی خرید توسط کاربر
-    each_price = models.FloatField(default=1)  # G5 قیمت فی خرید فاکتور
-    discount_money = models.FloatField(default=0)  # G6 تخفیف خرید پولی
-    discount_percent = models.FloatField(default=0)  # G7 تخفیف خرید فیصدی
-    total_purchaseـafghani = models.FloatField(default=1)  # G9 مجموع خرید افغانی
-    total_purchaseـcurrency = models.FloatField(default=1)  # G10 مجموع خرید اسعاری
-    each_quantity = models.IntegerField(default=1)  # G11  تعداد در فی فروش
-    bonus = models.IntegerField(default=0)  # G12 بونوس
-    quantity_bonus = models.IntegerField(default=0)  # G13 تعداد بیشتر از خرید
-    register_quantity = models.IntegerField(
-        default=0
-    )  # G14 تعداد ثبت به سیستم جهت موجودی
-    each_purchase_price = models.FloatField(
-        default=1
-    )  # G18 قیمت فی خرید جهت ثبت به سیستم
-    interest_money = models.FloatField(default=0)  # G19 فایده پولی
-    interest_percent = models.FloatField(default=20)  # G20 فایده فیصدی
-    each_sell_price = models.FloatField(default=0)  # G21 قیمت فی فروش جهت ثبت به سیستم
-    total_sell = models.FloatField(default=0)  # G25 مجموع فروش
-    bonus_interest = models.FloatField(default=0)  # G27 مجموع فروش بونوس دار
-    total_interest = models.FloatField(default=0)  # G30 مجموع فایده
-    expire_date = models.DateField()  # G31 تاریخ انقضا
-    timestamp = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class MedicineConflict(models.Model):
+    medicine_1 = models.ForeignKey(
+        Medician, on_delete=models.DO_NOTHING, related_name="medicine_1"
+    )
+    medicine_2 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
 
     def __str__(self):
-        return self.medician.brand_name + " - " + self.outrance.company.name + ".co"
-
-
-class RevenueTrough(models.Model):
-    revenue = models.ForeignKey(Revenue, on_delete=models.DO_NOTHING)
-    prescription = models.ForeignKey(Prescription, on_delete=models.DO_NOTHING)
-    created = models.DateTimeField(auto_now_add=True)
-    purchased = models.FloatField(default=0)
-    sold = models.BooleanField(default=False)
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-
-    def save(self, *args, **kwargs):
-        if self.prescription.refund == 0:
-            self.purchased = self.prescription.grand_total
-        if self.prescription.refund != 0:
-            self.purchased = self.prescription.refund
-            self.prescription.sold = True
-            self.prescription.refund = 0
-
-        if self.sold == True:
-            self.prescription.sold = True
-            self.prescription.save()
-
-        super(RevenueTrough, self).save()
-
-    # class Meta:
-    #     unique_together = ('revenue', 'prescription',)
+        return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
 
 
 class PurchaseList(models.Model):
@@ -908,24 +815,6 @@ class PurchaseList(models.Model):
         return self.medicine.brand_name
 
 
-class MedicineWith(models.Model):
-    medicine = models.ForeignKey(Medician, on_delete=models.RESTRICT)
-    includes = models.ManyToManyField(Medician, related_name="medicines")
-
-    def __str__(self):
-        return self.medicine.brand_name
-
-
-class MedicineConflict(models.Model):
-    medicine_1 = models.ForeignKey(
-        Medician, on_delete=models.DO_NOTHING, related_name="medicine_1"
-    )
-    medicine_2 = models.ForeignKey(Medician, on_delete=models.DO_NOTHING)
-
-    def __str__(self):
-        return self.medicine_1.brand_name + " vs " + self.medicine_2.brand_name
-
-
 class PurchaseListManual(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
     quantity = models.FloatField()
@@ -949,253 +838,5 @@ class PurchaseListManual(models.Model):
             self.medicine.save()
         super(PurchaseListManual, self).save(*args, **kwargs)
 
-@receiver(post_delete, sender=PrescriptionThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
 
-    prescription_through_total = list(
-        PrescriptionThrough.objects.filter(prescription_id=instance.prescription.id)
-        .aggregate(Sum("total_price"))
-        .values()
-    )[0]
-    discount_percent = float(instance.prescription.discount_percent)
-    over_percent = float(instance.prescription.over_percent)
-    if prescription_through_total:
-        discount_amount = prescription_through_total * (discount_percent / 100)
-        over_amount = prescription_through_total * (over_percent / 100)
-        grand_total = (
-            float(prescription_through_total)
-            - discount_amount
-            - float(instance.prescription.zakat)
-            - float(instance.prescription.khairat)
-            - float(instance.prescription.discount_money)
-            + float(instance.prescription.rounded_number)
-            + over_amount
-            + float(instance.prescription.over_money)
-        )
-    else:
-        grand_total = 0
-
-    if prescription_through_total and grand_total:
-        instance.prescription.grand_total = round(grand_total, 0)
-
-    instance.prescription.save()
-
-
-@receiver(post_delete, sender=PrescriptionThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
-    prescription_through_total = list(
-        PrescriptionThrough.objects.filter(prescription_id=instance.prescription.id)
-        .aggregate(Sum("total_price"))
-        .values()
-    )[0]
-
-    if prescription_through_total:
-        instance.prescription.grand_total = prescription_through_total
-        instance.prescription.save()
-    else:
-        instance.prescription.grand_total = 0
-        instance.prescription.save()
-
-    instance.medician.save()
-
-
-# def get_medicine_full(res):
-#     obj = res
-#     kind_name = obj.kind.name_english if obj and obj.kind and obj.kind.name_english else ""
-#     country_name = obj.country.name if obj and obj.country else ""
-#     big_company_name = obj.big_company.name if obj and obj.big_company else ""
-#     generics = "{" + ",".join(map(str, obj.generic_name)) + "}" if obj and obj.generic_name else ""
-#     ml = str(obj.ml) if obj and obj.ml else ""
-#     weight = str(obj.weight) if obj and obj.weight else ""
-    
-    
-#     result = ".".join(filter(None, [kind_name, obj.brand_name.strip(), ml, big_company_name, country_name, weight]))
-#     print(result)
-#     return result.strip()
-
-def get_medicine_full(res):
-        obj = res
-        kind_name = ""
-        country_name = ""
-        big_company_name = ""
-        generics = ""
-        ml = ""
-        weight = ""
-        if obj.kind and obj.kind.name_english:
-            kind_name = obj.kind.name_english + "."
-        if obj.country and obj.country.name:
-            country_name = obj.country.name
-        if obj.big_company and obj.big_company.name:
-            big_company_name = obj.big_company.name + " "
-        if obj.generic_name:
-            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} "
-        if obj.ml:
-            ml = obj.ml
-        if obj.weight:
-            weight = obj.weight
-
-        return (
-            kind_name
-            + obj.brand_name
-            + " "
-            + ml
-            + " "
-            + big_company_name
-            + country_name
-            + " "
-            + weight
-        ).strip()
-
-
-def get_prescription_through_data(prescription_through):
-    return {
-        'medician_id': prescription_through.medician_id,
-        'quantity': prescription_through.quantity,
-        'medician_name': get_medicine_full(prescription_through.medician),
-        'each_price': prescription_through.each_price,
-        'total_price': prescription_through.total_price,
-    }
-        
-@receiver(pre_save, sender=PrescriptionThrough)
-@receiver(pre_delete, sender=PrescriptionThrough)
-def prescription_through_changed(sender, instance, **kwargs):
-    if kwargs.get('raw', False):
-        return
-
-    changes = {}
-
-    if instance.pk:
-        try:
-            previous_instance = PrescriptionThrough.objects.get(pk=instance.pk)
-        except PrescriptionThrough.DoesNotExist:
-            # This is a new instance, so we don't have previous data
-            changes = dict(
-                prescription_through=dict(new=get_prescription_through_data(instance)),
-            )
-        else:
-            current_data = get_prescription_through_data(instance)
-            previous_data = get_prescription_through_data(previous_instance)
-
-            if (
-                previous_data['medician_id'] != current_data['medician_id']
-                or previous_data['quantity'] != current_data['quantity']
-                or previous_data['each_price'] != current_data['each_price']
-                or previous_data['total_price'] != current_data['total_price']
-            ):
-                changes = dict(
-                    prescription_through=dict(old=previous_data, new=current_data),
-                )
-
-        if changes:
-            LogEntry.objects.create(
-                object_id=instance.prescription_id,
-                content_type=ContentType.objects.get_for_model(instance.prescription),
-                actor_id=instance.prescription.user_id,
-                action=1 if previous_instance else 0,  # Action flag for update or creation
-                changes=json.dumps(changes, cls=DjangoJSONEncoder),
-            )
-
-    elif kwargs.get('signal') == pre_delete:
-        changes = dict(
-            prescription_through=dict(old=get_prescription_through_data(instance)),
-        )
-
-        LogEntry.objects.create(
-            object_id=instance.prescription_id,
-            content_type=ContentType.objects.get_for_model(instance.prescription),
-            actor_id=instance.prescription.user_id,
-            action=2,  # Action flag for deletion
-            changes=json.dumps(changes, cls=DjangoJSONEncoder),
-        )
-        
-@receiver(post_save, sender=PrescriptionThrough)
-def prescription_through_post_save(sender, instance, created, **kwargs):
-    if kwargs.get('raw', False):
-        return
-
-    if created:
-        changes = dict(
-            prescription_through=dict(new=get_prescription_through_data(instance)),
-        )
-
-        LogEntry.objects.create(
-            object_id=instance.prescription_id,
-            content_type=ContentType.objects.get_for_model(instance.prescription),
-            actor_id=instance.prescription.user_id,
-            action=0,  # Action flag for creation
-            changes=json.dumps(changes, cls=DjangoJSONEncoder),
-        )
-    else:
-        try:
-            previous_instance = PrescriptionThrough.objects.get(pk=instance.pk)
-        except PrescriptionThrough.DoesNotExist:
-            pass
-        else:
-            current_data = get_prescription_through_data(instance)
-            previous_data = get_prescription_through_data(previous_instance)
-
-            if (
-                previous_data['medician_id'] != current_data['medician_id']
-                or previous_data['quantity'] != current_data['quantity']
-                or previous_data['each_price'] != current_data['each_price']
-                or previous_data['total_price'] != current_data['total_price']
-            ):
-                changes = dict(
-                    prescription_through=dict(old=previous_data, new=current_data),
-                )
-
-                LogEntry.objects.create(
-                    object_id=instance.prescription_id,
-                    content_type=ContentType.objects.get_for_model(instance.prescription),
-                    actor_id=instance.prescription.user_id,
-                    action=1,  # Action flag for update
-                    changes=json.dumps(changes, cls=DjangoJSONEncoder),
-                )
-
-@receiver(post_delete, sender=PrescriptionThrough)
-def prescription_through_post_delete(sender, instance, **kwargs):
-    if kwargs.get('raw', False):
-        return
-
-    changes = dict(
-        prescription_through=dict(old=get_prescription_through_data(instance)),
-    )
-
-    LogEntry.objects.create(
-        object_id=instance.prescription_id,
-        content_type=ContentType.objects.get_for_model(instance.prescription),
-        actor_id=instance.prescription.user_id,
-        action=2,  # Action flag for deletion
-        changes=json.dumps(changes, cls=DjangoJSONEncoder),
-    )
-    
-@receiver([post_save, post_delete], sender=EntranceThrough)
-@receiver([post_save, post_delete], sender=PrescriptionThrough)
-def update_medician_existence(sender, instance, **kwargs):
-    medician = instance.medician
-    entrance_sum_query = (
-        EntranceThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("register_quantity"))
-        .get("register_quantity__sum", 0)
-    )
-    prescription_sum_query = (
-        PrescriptionThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("quantity"))
-        .get("quantity__sum", 0)
-    )
-
-    entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
-    prescription_sum = (
-        prescription_sum_query if prescription_sum_query is not None else 0
-    )
-
-    existence = entrance_sum - prescription_sum
-    if existence is None:
-        existence = 0
-    medician.existence = round(existence, 1)
-
-    # Update unsubmited_existence based on comparison with entrance quantity
-    if existence >= medician.unsubmited_existence:
-        medician.unsubmited_existence = 0
-
-    medician.save()
+from . import signals

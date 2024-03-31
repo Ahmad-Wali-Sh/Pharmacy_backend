@@ -18,14 +18,11 @@ from .serializers import (
     PrescriptionImageSerializer,
     PatientNameSerializer,
     PrescriptionThroughSerializer,
-    OutranceSerializer,
-    OutranceThroughSerializer,
     MeidicainExcelSerializer,
     TrazSerializer,
     CitySerializer,
     MarketSerializer,
     RevenueSerializer,
-    RevenueTrhoughSerializer,
     UserSerializer,
     MedicineWithSerializer,
     BigCompanySerializer,
@@ -37,6 +34,7 @@ from .serializers import (
     MedicineBarcodeCreateUpdateSerializer,
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
+    RevenueRecordSerializer
 )
 from rest_framework import status
 
@@ -60,12 +58,10 @@ from core.models import (
     DoctorName,
     PatientName,
     PrescriptionThrough,
-    Outrance,
-    OutranceThrough,
     City,
     Market,
     Revenue,
-    RevenueTrough,
+    RevenueRecord,
     User,
     MedicineBarcode,
     EntranceImage,
@@ -324,16 +320,6 @@ class RevenueView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
 
 
-class RevenueThroughView(viewsets.ModelViewSet):
-    queryset = RevenueTrough.objects.all().order_by("id")
-    serializer_class = RevenueTrhoughSerializer
-    permission_classes = [D7896DjangoModelPermissions]
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = [
-        "revenue",
-    ]
-
-
 class MarketFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr="icontains")
 
@@ -413,7 +399,7 @@ class BigCompanyView(viewsets.ModelViewSet):
     serializer_class = BigCompanySerializer
     filterset_class = BigCompanyFilter
     permission_classes = [D7896DjangoModelPermissions]
-
+    
 
 class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all().order_by("id")
@@ -689,12 +675,6 @@ class EntranceThroughExpiresView(viewsets.ModelViewSet):
         return medicines
 
 
-class OutranceView(viewsets.ModelViewSet):
-    queryset = Outrance.objects.all().order_by("id")
-    serializer_class = OutranceSerializer
-    permission_classes = [D7896DjangoModelPermissions]
-
-
 class MedicineWithView(viewsets.ModelViewSet):
     queryset = MedicineWith.objects.all().order_by("id")
     serializer_class = MedicineWithSerializer
@@ -728,12 +708,6 @@ class MedicineConflictView(viewsets.ModelViewSet):
     filterset_fields = ("medicine_1",)
 
 
-class OutranceThroughView(viewsets.ModelViewSet):
-    queryset = OutranceThrough.objects.all().order_by("id")
-    serializer_class = OutranceThroughSerializer
-    filterset_fields = ("outrance",)
-    permission_classes = [D7896DjangoModelPermissions]
-
 
 class MultipleModelPermissions(permissions.DjangoModelPermissions):
     def has_permission(self, request, view):
@@ -753,10 +727,6 @@ class TrazView(FlatMultipleModelAPIViewSet):
             "queryset": PrescriptionThrough.objects.all(),
             "serializer_class": PrescriptionThroughSerializer,
         },
-        {
-            "queryset": OutranceThrough.objects.all(),
-            "serializer_class": OutranceThroughSerializer,
-        },
     ]
     model = EntranceThrough
     filter_backends = [
@@ -775,6 +745,23 @@ class PurchaseListFilter(django_filters.FilterSet):
     class Meta:
         model = PurchaseListManual
         fields = ["approved", "medicine", "created"]
+        
+class RevenueRecordViewSet(viewsets.ModelViewSet):
+    queryset = RevenueRecord.objects.all().order_by("-timestamp")
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    serializer_class = RevenueRecordSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filterset_fields = [
+        "revenue", "prescription__prescription_number", 'record_type'
+    ]
+    pagination_class = PrescriptionPagination
+    ordering_fields = [
+        "id","timestamp"
+    ]
+    ordering = [
+        "id","timestamp"
+    ]
+
 
 
 class PurchaseListManualView(viewsets.ModelViewSet):

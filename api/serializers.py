@@ -19,24 +19,21 @@ from core.models import (
     DoctorName,
     PatientName,
     PrescriptionThrough,
-    Outrance,
-    OutranceThrough,
     City,
     Market,
     MedicineBarcode,
     Revenue,
     PrescriptionImage,
-    RevenueTrough,
     EntranceImage,
     User,
     MedicineWith,
     BigCompany,
-    MedicineConflict,
     PurchaseList,
+    MedicineConflict,
     PurchaseListManual,
+    RevenueRecord,
 )
 import ast
-
 
 
 def log_entry_to_dict(log_entry):
@@ -48,16 +45,20 @@ def log_entry_to_dict(log_entry):
     user = None
     if log_entry.actor_id:
         user = User.objects.get(pk=log_entry.actor_id)
-        user_name = f"{user.first_name} {user.last_name}" if user.first_name and user.last_name else str(user)
+        user_name = (
+            f"{user.first_name} {user.last_name}"
+            if user.first_name and user.last_name
+            else str(user)
+        )
     else:
         user_name = None
     return {
-        'id': log_entry.id,
-        'action': log_entry.action,
-        'date': log_entry.timestamp,
-        'user': log_entry.actor_id,
-        'user_name': user_name,
-        'changes': changes_dict,
+        "id": log_entry.id,
+        "action": log_entry.action,
+        "date": log_entry.timestamp,
+        "user": log_entry.actor_id,
+        "user_name": user_name,
+        "changes": changes_dict,
     }
 
 
@@ -141,61 +142,6 @@ class RevenueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Revenue
-        fields = "__all__"
-
-
-class RevenueTrhoughSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-    prescription_number = serializers.SerializerMethodField()
-    grand_total = serializers.SerializerMethodField()
-    department = serializers.SerializerMethodField()
-    prescription_user = serializers.SerializerMethodField()
-    discount = serializers.SerializerMethodField()
-    zakat = serializers.SerializerMethodField()
-    khairat = serializers.SerializerMethodField()
-    rounded = serializers.SerializerMethodField()
-    patient_name = serializers.SerializerMethodField()
-
-    def get_patient_name(self, obj):
-        if obj.prescription.name:
-            return str(obj.prescription.name.id) + "." + obj.prescription.name.name
-
-    def get_prescription_user(self, obj):
-        return obj.prescription.user.username
-
-    def get_discount(self, obj):
-        return obj.prescription.discount_percent
-
-    def get_zakat(self, obj):
-        return obj.prescription.zakat
-
-    def get_khairat(self, obj):
-        return obj.prescription.khairat
-
-    def get_rounded(self, obj):
-        return obj.prescription.rounded_number
-
-    def get_username(self, res):
-        if res.user and res.user.first_name:
-            return res.user.first_name
-        else:
-            return ""
-
-    def get_prescription_number(self, obj):
-        return obj.prescription.prescription_number
-
-    def get_grand_total(self, obj):
-        return obj.prescription.grand_total
-
-    def get_department(self, obj):
-        return obj.prescription.department.name
-
-    prescription = serializers.PrimaryKeyRelatedField(
-        queryset=Prescription.objects.all()
-    )
-
-    class Meta:
-        model = RevenueTrough
         fields = "__all__"
 
 
@@ -437,7 +383,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     doctor_name = serializers.SerializerMethodField()
     prescription_image = serializers.SerializerMethodField()
     history = serializers.SerializerMethodField()
-    
+
     def get_history(self, obj):
         history_list = obj.history.all()
         history_dicts = [log_entry_to_dict(entry) for entry in history_list]
@@ -508,7 +454,7 @@ class MedicianSeralizer(serializers.ModelSerializer):
         if obj.department:
             return obj.department.name
         else:
-            return ''
+            return ""
 
     def get_kind_image(self, obj):
         if obj.kind and obj.kind.image:
@@ -592,15 +538,16 @@ class MedicianSeralizer(serializers.ModelSerializer):
 #     class Meta:
 #         model = MedicineBarcode
 #         fields = "__all__"
-        
-        
+
+
 class MedicineBarcodeDisplaySerializer(serializers.ModelSerializer):
     medicine = MedicianSeralizer()
 
     class Meta:
         model = MedicineBarcode
         fields = "__all__"
-        
+
+
 class MedicineBarcodeCreateUpdateSerializer(serializers.ModelSerializer):
     medicine = serializers.PrimaryKeyRelatedField(queryset=Medician.objects.all())
 
@@ -853,6 +800,35 @@ class FinalRegisterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class RevenueRecordSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    prescription_number = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+
+    def get_patient_name(self, obj):
+        if obj.prescription.name:
+            return obj.prescription.name.name
+        else:
+            return ""
+
+    def get_prescription_number(self, obj):
+        return obj.prescription.prescription_number
+
+    def get_department_name(self, obj):
+        return obj.prescription.department.name
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = RevenueRecord
+        fields = "__all__"
+
+
 class DoctorNameSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     code_name = serializers.SerializerMethodField()
@@ -1077,34 +1053,6 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrescriptionThrough
-        fields = "__all__"
-
-
-class OutranceSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-
-    def get_username(self, res):
-        if res.user and res.user.first_name:
-            return res.user.first_name
-        else:
-            return ""
-
-    class Meta:
-        model = Outrance
-        fields = "__all__"
-
-
-class OutranceThroughSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField()
-
-    def get_username(self, res):
-        if res.user and res.user.first_name:
-            return res.user.first_name
-        else:
-            return ""
-
-    class Meta:
-        model = OutranceThrough
         fields = "__all__"
 
 

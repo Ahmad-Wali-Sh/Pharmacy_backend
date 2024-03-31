@@ -19,13 +19,10 @@ from .views import (
     PaymentMethodView,
     EntranceThroughView,
     EntranceView,
-    OutranceView,
-    OutranceThroughView,
     MedicianExcelView,
     TrazView,
     CityView,
     MarketView,
-    RevenueThroughView,
     RevenueView,
     LastEntranceView,
     MedicineWithView,
@@ -41,6 +38,7 @@ from .views import (
     PurchaseListQueryView,
     PurchaseListManualView,
     PrescriptionPaginatedView,
+    RevenueRecordViewSet,
     PrescriptionViewSet
 )
 
@@ -71,10 +69,7 @@ router.register(r"doctor", DoctorNameView)
 router.register(r"department", DepartmentView)
 router.register(r"currency", CurrencyView)
 router.register(r"payment-method", PaymentMethodView)
-router.register(r"outrance", OutranceView)
 router.register(r"revenue", RevenueView)
-router.register(r"revenue-through", RevenueThroughView)
-router.register(r"outrance-through", OutranceThroughView)
 router.register(r"medician-excel", MedicianExcelView)
 router.register(r"prescription-pg", PrescriptionPaginatedView)
 router.register(r"last-entrance", LastEntranceView)
@@ -83,6 +78,7 @@ router.register(r"big-company", BigCompanyView)
 router.register(r"purchase-list", PurchaseListQueryView)
 router.register(r"city", CityView)
 router.register(r"medicine-with", MedicineWithView)
+router.register(r"revenue-record", RevenueRecordViewSet)
 router.register(r"purchase-list-manual", PurchaseListManualView)
 router.register(r"medicine-conflict", MedicineConflictView)
 router.register(

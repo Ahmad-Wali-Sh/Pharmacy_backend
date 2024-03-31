@@ -21,25 +21,20 @@ from core.models import (
     DoctorName,
     PatientName,
     PrescriptionThrough,
-    OutranceThrough,
-    Outrance,
     City,
     Market,
     Revenue,
     MedicineBarcode,
-    RevenueTrough,
     EntranceImage,
     MedicineWith,
+    RevenueRecord,
     BigCompany,
     MedicineConflict,
-    PurchaseList,
     PurchaseListManual,
     GlobalSettings
 )
 
 from django_jalali.admin.filters import JDateFieldListFilter
-import django_jalali.admin as jadmin
-
 from django.contrib.auth.admin import UserAdmin
 from .models import User, AdditionalPermission
 
@@ -111,30 +106,6 @@ class MedicineImport(resources.ModelResource):
     class Meta:
         model = Medician
 
-    # def save_instance(self, instance, using_transactions=True, dry_run=False, *args, **kwargs):
-    #     if (instance.kind):
-    #         kind_name = instance.kind
-    #         try:
-    #             # Try to get the related Kind object by name_persian
-    #             kind = Kind.objects.get(name_persian=kind_name)
-    #         except Kind.DoesNotExist:
-    #             # If Kind does not exist, create a new one
-    #             admin_user = User.objects.get(username="admin")
-    #             kind = Kind(name_persian=kind_name, user=admin_user)
-    #             kind.save()
-    #         instance.kind = kind
-
-    #     return super().save_instance(instance, using_transactions=using_transactions, dry_run=dry_run, *args, **kwargs)
-
-    # def before_import_row(self, row, **kwargs):
-    #     if ('kind' in row):
-    #         kind_name = row['kind']
-    #         try:
-    #             Kind.objects.get(name_persian=kind_name)
-    #         except Kind.DoesNotExist:
-    #             admin_user = User.objects.get(username="admin")
-    #             Kind.objects.create(name_persian=kind_name, user=admin_user)
-    #     else: pass
 
 
 class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
@@ -171,6 +142,7 @@ admin.site.register(Medician, MedicineAdmin)
 admin.site.register(Kind, ImportAdmin)
 admin.site.register(Country, ImportAdmin)
 admin.site.register(Unit, ImportAdmin)
+admin.site.register(RevenueRecord, ImportAdmin)
 admin.site.register(Prescription, ImportAdmin)
 admin.site.register(PharmCompany, ImportAdmin)
 admin.site.register(Entrance, EntracnceAdmin)
@@ -184,16 +156,12 @@ admin.site.register(EntranceThrough, EntranceThrougheAdmin)
 admin.site.register(PaymentMethod, ImportAdmin)
 admin.site.register(FinalRegister, ImportAdmin)
 admin.site.register(Department, ImportAdmin)
-admin.site.register(Outrance, ImportAdmin)
-admin.site.register(OutranceThrough, ImportAdmin)
 admin.site.register(BigCompany, ImportAdmin)
 admin.site.register(DoctorName, ImportAdmin)
 admin.site.register(City, ImportAdmin)
-admin.site.register(PurchaseList, ImportAdmin)
 admin.site.register(Market, ImportAdmin)
 admin.site.register(PatientName, ImportAdmin)
 admin.site.register(Revenue, ImportAdmin)
-admin.site.register(RevenueTrough, ImportAdmin)
 admin.site.register(MedicineConflict, ImportAdmin)
 admin.site.register(PrescriptionThrough, PrescriptionThroughAdmin)
 
