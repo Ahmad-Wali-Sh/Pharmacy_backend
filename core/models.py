@@ -765,9 +765,6 @@ class EntranceThrough(models.Model):
         self.rate = self.entrance.currency_rate
         self.rate_name = self.entrance.currency.name
 
-        self.medician.last_purchased = self.each_purchase_price
-        self.medician.save()
-
         super(EntranceThrough, self).save(*args, **kwargs)
 
 

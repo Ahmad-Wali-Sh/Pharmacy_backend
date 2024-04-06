@@ -449,6 +449,14 @@ class MedicianSeralizer(serializers.ModelSerializer):
     department = serializers.PrimaryKeyRelatedField(
         queryset=Department.objects.all(), many=True
     )
+    last_purchased_v1 = serializers.SerializerMethodField()
+    
+    def get_last_purchased_v1 (self, obj):
+        try:
+            latest_entrance = EntranceThrough.objects.filter(medician=obj.id).latest('timestamp')
+            return latest_entrance.each_purchase_price
+        except EntranceThrough.DoesNotExist:
+            return ''
 
     def get_department_name(self, obj):
         if obj.department:
