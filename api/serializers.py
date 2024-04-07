@@ -544,7 +544,6 @@ class MedicineWithGetSerializer(serializers.ModelSerializer):
         fields = "__all__"
         
 class MedicineWithPostSerializer(serializers.ModelSerializer):
-    additional = MedicineSerializer(many=True)
     class Meta:
         model = MedicineWith
         fields = "__all__"

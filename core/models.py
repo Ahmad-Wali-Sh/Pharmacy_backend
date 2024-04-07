@@ -770,7 +770,7 @@ class EntranceThrough(models.Model):
 
 class MedicineWith(models.Model):
     medician  = models.ForeignKey(Medician, on_delete=models.RESTRICT, related_name="add_medicine")
-    additional = models.ManyToManyField(Medician)
+    additional = models.ManyToManyField(Medician, blank=True, null=True)
 
     def __str__(self):
         return self.medician.brand_name
