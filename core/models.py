@@ -251,6 +251,23 @@ class Medician(models.Model):
         if self.existence is None:
             self.existence = 0
         super().save(*args, **kwargs)
+        
+    def get_medicine_full(self, obj):
+        kind_name = f"{obj.kind.name_english}." if obj.kind else ""
+        country_name = f"{obj.country.name}" if obj.country else ""
+        big_company_name = f"{obj.big_company.name} " if obj.big_company else ""
+        generics = (
+            f"{{{','.join(map(str, obj.generic_name))}}}"
+            if obj.generic_name
+            else ""
+        )
+        ml = f"{obj.ml}" if obj.ml else ""
+        weight = f"{obj.weight}" if obj.weight else ""
+
+        medicine_full = (
+            f"{kind_name}{obj.brand_name} {ml} {big_company_name} {country_name} {weight}"
+        )
+        return medicine_full
 
 
 class MedicineBarcode(models.Model):

@@ -2,6 +2,8 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from import_export import fields, resources
 from import_export.widgets import ForeignKeyWidget
+from excel_response import ExcelResponse
+from datetime import datetime
 
 from core.models import (
     PharmGroup,
@@ -133,6 +135,51 @@ class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 class MedicineAdmin(ImportExportModelAdmin):
     resource_class = MedicineImport
+    list_display = (
+        'id',
+        'get_medicine_full',
+        'price',
+        'existence',
+    )
+    search_fields = ('brand_name', 'generic_name__contains', 'barcode__contains')
+    list_filter = ('kind', 'pharm_group', 'country', 'big_company', 'active')
+    ordering = ('brand_name',)
+    actions = ['export_to_excel']
+
+    def get_medicine_full(self, obj):
+        kind_name = f"{obj.kind.name_english}." if obj.kind else ""
+        country_name = f"{obj.country.name}" if obj.country else ""
+        big_company_name = f"{obj.big_company.name} " if obj.big_company else ""
+        generics = (
+            f"{{{','.join(map(str, obj.generic_name))}}}"
+            if obj.generic_name
+            else ""
+        )
+        ml = f"{obj.ml}" if obj.ml else ""
+        weight = f"{obj.weight}" if obj.weight else ""
+
+        medicine_full = (
+            f"{kind_name}{obj.brand_name} {ml} {big_company_name}{country_name} {weight}"
+        )
+        return medicine_full
+
+    get_medicine_full.short_description = 'Medicine Full'
+
+    def export_to_excel(self, request, queryset):
+        data = [
+            ['آی دی', 'دارو', 'قیمت', 'موجودی'],
+        ]
+        
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        excel_export_name = f'Medicine_List_{today_date}'
+        for obj in queryset:
+            medicine_full = obj.get_medicine_full(obj)
+            data.append([obj.id, medicine_full, obj.price, obj.existence])
+        
+        response = ExcelResponse(data, excel_export_name)
+        return response
+
+    export_to_excel.short_description = 'Export to Excel'
 
 
 admin.site.register(User, UserAdmin)
