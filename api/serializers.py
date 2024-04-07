@@ -435,9 +435,8 @@ class BigCompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = BigCompany
         fields = "__all__"
-
-
-class MedicianSeralizer(serializers.ModelSerializer):
+        
+class MedicineSerializer(serializers.ModelSerializer):
     kind_name = serializers.SerializerMethodField()
     country_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
@@ -533,19 +532,122 @@ class MedicianSeralizer(serializers.ModelSerializer):
         model = Medician
         fields = "__all__"
         extra_kwargs = {"medicines": {"required": False}}
+    class Meta:
+        model = Medician
+        fields = "__all__"
+        
+        
+class MedicineWithGetSerializer(serializers.ModelSerializer):
+    additional = MedicineSerializer(many=True)
+    class Meta:
+        model = MedicineWith
+        fields = "__all__"
+        
+class MedicineWithPostSerializer(serializers.ModelSerializer):
+    additional = MedicineSerializer(many=True)
+    class Meta:
+        model = MedicineWith
+        fields = "__all__"
 
 
-# class MedicineBarcodeSerializer(serializers.ModelSerializer):
-#     medician = serializers.SerializerMethodField()
+class MedicianSeralizer(serializers.ModelSerializer):
+    kind_name = serializers.SerializerMethodField()
+    country_name = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+    kind_image = serializers.SerializerMethodField()
+    country_image = serializers.SerializerMethodField()
+    pharm_group_image = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), many=True
+    )
+    last_purchased_v1 = serializers.SerializerMethodField()
+    add_medicine = MedicineWithGetSerializer(many=True, read_only=True)
+    
+    def get_last_purchased_v1 (self, obj):
+        try:
+            latest_entrance = EntranceThrough.objects.filter(medician=obj.id).latest('timestamp')
+            return latest_entrance.each_purchase_price
+        except EntranceThrough.DoesNotExist:
+            return ''
 
-#     def get_medician(self, obj):
-#         entrance_image_obj = obj.medicine
-#         json_entrance_image = MedicianSeralizer(entrance_image_obj)
-#         return json_entrance_image.data
+    def get_department_name(self, obj):
+        if obj.department:
+            return obj.department.name
+        else:
+            return ""
 
-#     class Meta:
-#         model = MedicineBarcode
-#         fields = "__all__"
+    def get_kind_image(self, obj):
+        if obj.kind and obj.kind.image:
+            return str(obj.kind.image)
+
+    def get_country_image(self, obj):
+        if obj.country and obj.country.image:
+            return str(obj.country.image)
+        else:
+            return ""
+
+    def get_pharm_group_image(self, obj):
+        if obj.pharm_group and obj.pharm_group.image:
+            return str(obj.pharm_group.image)
+        else:
+            return ""
+
+    def get_medicine_full(self, res):
+        obj = res
+
+        # Initialize variables
+        kind_name = (
+            obj.kind.name_english + "." if obj.kind and obj.kind.name_english else ""
+        )
+        country_name = obj.country.name if obj.country else ""
+        big_company_name = obj.big_company.name + " " if obj.big_company else ""
+        generics = (
+            "{" + str(",".join(map(str, obj.generic_name))) + "}"
+            if obj.generic_name
+            else ""
+        )
+        ml = obj.ml if obj.ml else ""
+        weight = obj.weight if obj.weight else ""
+
+        # Construct the full medicine name
+        medicine_full = (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        )
+        return medicine_full
+
+    def get_kind_name(self, obj):
+        if obj.kind and obj.kind.name_english:
+            return obj.kind.name_english
+        else:
+            return ""
+
+    def get_country_name(self, obj):
+        if obj.country:
+            return obj.country.name
+        else:
+            return ""
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = Medician
+        fields = "__all__"
+        extra_kwargs = {"medicines": {"required": False}}
+
 
 
 class MedicineBarcodeDisplaySerializer(serializers.ModelSerializer):
@@ -629,11 +731,7 @@ class PharmCompanySeralizer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class MedicineWithSerializer(serializers.ModelSerializer):
 
-    class Meta:
-        model = MedicineWith
-        fields = "__all__"
 
 
 class MedicineConflictSerializer(serializers.ModelSerializer):

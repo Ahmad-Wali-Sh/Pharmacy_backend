@@ -24,7 +24,8 @@ from .serializers import (
     MarketSerializer,
     RevenueSerializer,
     UserSerializer,
-    MedicineWithSerializer,
+    MedicineWithGetSerializer,
+    MedicineWithPostSerializer,
     BigCompanySerializer,
     EntranceThroughExpiresSerializer,
     MedicineConflictSerializer,
@@ -678,9 +679,15 @@ class EntranceThroughExpiresView(viewsets.ModelViewSet):
 
 class MedicineWithView(viewsets.ModelViewSet):
     queryset = MedicineWith.objects.all().order_by("id")
-    serializer_class = MedicineWithSerializer
     permission_classes = [D7896DjangoModelPermissions]
-    filterset_fields = ("medicine",)
+    filterset_fields = ("medician",)
+    
+    def get_serializer_class(self):
+        if self.request.method in ['GET']:
+            return MedicineWithGetSerializer
+        elif self.request.method in ['POST', 'PATCH', 'PUT', 'DELETE']:
+            return MedicineWithPostSerializer
+        return MedicineWithPostSerializer
 
 
 class PurchaseListQueryView(viewsets.ModelViewSet):

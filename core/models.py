@@ -769,11 +769,11 @@ class EntranceThrough(models.Model):
 
 
 class MedicineWith(models.Model):
-    medicine = models.ForeignKey(Medician, on_delete=models.RESTRICT)
-    includes = models.ManyToManyField(Medician, related_name="medicines")
+    medician  = models.ForeignKey(Medician, on_delete=models.RESTRICT, related_name="add_medicine")
+    additional = models.ManyToManyField(Medician)
 
     def __str__(self):
-        return self.medicine.brand_name
+        return self.medician.brand_name
 
 
 class MedicineConflict(models.Model):
