@@ -10,6 +10,7 @@ __pycache__/
 
 core/migrations/
 
+static
 # C extensions
 *.so
 
