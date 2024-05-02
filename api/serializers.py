@@ -439,6 +439,7 @@ class BigCompanySerializer(serializers.ModelSerializer):
 class MedicineSerializer(serializers.ModelSerializer):
     kind_name = serializers.SerializerMethodField()
     country_name = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     kind_image = serializers.SerializerMethodField()
@@ -519,6 +520,12 @@ class MedicineSerializer(serializers.ModelSerializer):
     def get_country_name(self, obj):
         if obj.country:
             return obj.country.name
+        else:
+            return ""
+        
+    def get_company_name(self, obj):
+        if obj.big_company:
+            return obj.big_company.name
         else:
             return ""
 
@@ -790,6 +797,13 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     medicine_min_expire = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
+    
+    def get_company_name (self, res):
+        if ( res.entrance.company):
+            return res.entrance.company.name
+        else:
+            return ''
 
     def get_description(self, res):
         return res.entrance.description
