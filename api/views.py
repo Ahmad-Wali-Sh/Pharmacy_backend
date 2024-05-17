@@ -35,6 +35,7 @@ from .serializers import (
     MedicineBarcodeCreateUpdateSerializer,
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
+    MedicianOrderSerializer,
     RevenueRecordSerializer
 )
 from rest_framework import status
@@ -247,6 +248,16 @@ class MedicianExcelView(viewsets.ModelViewSet):
         "id",
     ]
     permission_classes = [D7896DjangoModelPermissions]
+
+
+class MedicianOrderViewSet(viewsets.ModelViewSet):
+    queryset = Medician.objects.all()
+    serializer_class = MedicianOrderSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MedicianFilter
+    pagination_class = StandardResultsSetPagination
+    ordering_fields = ['-id',]
 
 
 class UserView(viewsets.ModelViewSet):

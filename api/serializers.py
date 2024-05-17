@@ -34,7 +34,12 @@ from core.models import (
     RevenueRecord,
 )
 import ast
+import datetime
 
+def get_num_days(start_date):
+        today = datetime.date.today()
+        num_days = (today - start_date).days
+        return num_days
 
 def log_entry_to_dict(log_entry):
     try:
@@ -542,6 +547,134 @@ class MedicineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medician
         fields = "__all__"
+        
+class MedicianOrderSerializer(serializers.ModelSerializer):
+    existence = serializers.SerializerMethodField()
+    num_sell = serializers.SerializerMethodField()
+    num_purchase = serializers.SerializerMethodField()
+    order = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+    orderd_for = serializers.SerializerMethodField()
+    start_report_date = serializers.SerializerMethodField()
+    total_days_for_sale = serializers.SerializerMethodField()
+    
+    def get_total_days_for_sale (self, obj):
+        request = self.context['request']
+        start_date_str = request.query_params.get('start_date')
+        if not start_date_str:
+            start_date_str = datetime.date.today().replace(month=1, day=1).isoformat()  
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        total_days = get_num_days(start_date)
+        
+        return total_days
+    
+    def get_start_report_date (self, obj):
+        request = self.context['request']
+        start_date = request.query_params.get('start_date')
+
+        if not start_date:
+            start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+
+        return start_date
+    
+    
+    def get_orderd_for (self, obj):
+        request = self.context['request']
+        num_days = request.query_params.get('num_days')
+        if not num_days:
+            return 0
+        return int(num_days)
+    class Meta:
+        model = Medician
+        fields = ['id', 'medicine_full', 'existence', 'num_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
+        
+    def get_medicine_full (self, obj):
+        kind_name = ""
+        country_name = ""
+        big_company_name = ""
+        generics = ""
+        ml = ""
+        weight = ""
+        if obj.kind and obj.kind.name_english:
+            kind_name = obj.kind.name_english + "."
+        if obj.country:
+            country_name = obj.country.name
+        if obj.big_company:
+            big_company_name = obj.big_company.name + " "
+        if obj.generic_name:
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} "
+        if obj.ml:
+            ml = obj.ml
+        if obj.weight:
+            weight = obj.weight
+
+        return (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + generics
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        )  
+        
+                
+    def get_existence (self, obj):
+        return obj.existence
+    
+    def get_num_sell (self, obj):
+        request = self.context['request']
+        start_date = request.query_params.get('start_date')
+
+        if not start_date:
+            start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        result = PrescriptionThrough.objects.filter(
+            medician=obj,
+            timestamp__gte=start_date
+        ).aggregate(Sum('quantity'))['quantity__sum'] or 0
+
+        return result
+        
+    def get_num_purchase(self, obj):
+        request = self.context['request']
+        start_date = request.query_params.get('start_date')
+
+        if not start_date:
+            start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        result = EntranceThrough.objects.filter(
+            medician=obj,
+            timestamp__gte=start_date
+        ).aggregate(Sum('register_quantity'))['register_quantity__sum'] or 0
+
+        return result
+    
+
+        
+    def get_order(self, obj):
+        request = self.context['request']
+        num_days = request.query_params.get('num_days')
+        start_date_str = request.query_params.get('start_date')
+        if not start_date_str:
+            start_date_str = datetime.date.today().replace(month=1, day=1).isoformat()  
+        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        total_days = get_num_days(start_date)
+          
+        if num_days:
+            num_days = int(num_days)
+            num_sell = self.get_num_sell(obj)
+            result = (num_sell * num_days / total_days) - obj.existence
+            if result > 0: 
+                return round(result, 2)
+            else:
+                return 0
+        else:
+            return 0
         
         
 class MedicineWithGetSerializer(serializers.ModelSerializer):
