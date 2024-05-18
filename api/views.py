@@ -256,7 +256,6 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
-    pagination_class = StandardResultsSetPagination
     ordering_fields = ['-id',]
 
 
