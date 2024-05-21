@@ -791,6 +791,13 @@ class MedicineWith(models.Model):
 
     def __str__(self):
         return self.medician.brand_name
+    
+class MedicineSaleDictionary(models.Model):
+    medician  = models.ForeignKey(Medician, on_delete=models.RESTRICT, related_name="list_medicine")
+    sale = models.FloatField(blank=True, null=True)
+
+    def __str__(self):
+        return self.medician.brand_name
 
 
 class MedicineConflict(models.Model):

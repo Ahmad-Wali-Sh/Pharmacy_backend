@@ -5,6 +5,7 @@ from import_export.widgets import ForeignKeyWidget
 from excel_response import ExcelResponse
 from datetime import datetime
 
+
 from core.models import (
     PharmGroup,
     Medician,
@@ -22,6 +23,7 @@ from core.models import (
     Department,
     DoctorName,
     PatientName,
+    MedicineSaleDictionary,
     PrescriptionThrough,
     City,
     Market,
@@ -204,6 +206,7 @@ admin.site.register(Country, ImportAdmin)
 admin.site.register(Unit, ImportAdmin)
 admin.site.register(RevenueRecord, ImportAdmin)
 admin.site.register(Prescription, ImportAdmin)
+admin.site.register(MedicineSaleDictionary, ImportAdmin)
 admin.site.register(PharmCompany, ImportAdmin)
 admin.site.register(Entrance, EntracnceAdmin)
 admin.site.register(MedicineBarcode, ImportAdmin)

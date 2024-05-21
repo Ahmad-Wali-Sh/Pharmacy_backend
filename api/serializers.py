@@ -24,6 +24,7 @@ from core.models import (
     MedicineBarcode,
     Revenue,
     PrescriptionImage,
+    MedicineSaleDictionary,
     EntranceImage,
     User,
     MedicineWith,
@@ -633,11 +634,14 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         if not start_date:
             start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
         start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
-        result = PrescriptionThrough.objects.filter(
+        prescripion_through_total = PrescriptionThrough.objects.filter(
             medician=obj,
             timestamp__gte=start_date
         ).aggregate(Sum('quantity'))['quantity__sum'] or 0
-
+        dictionary_total = MedicineSaleDictionary.objects.filter(
+            medician=obj
+        ).aggregate(Sum('sale'))['sale__sum'] or 0
+        result = float(prescripion_through_total) + float(dictionary_total)
         return result
         
     def get_num_purchase(self, obj):
