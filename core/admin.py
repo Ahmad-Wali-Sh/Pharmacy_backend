@@ -127,10 +127,24 @@ class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
         "each_sell_price",
         "interest_money",
     )
+    list_display = (
+        'id',
+        'medician',
+        'entrance',
+        'register_quantity',
+        'each_quantity',
+    )
 
 
 class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ("total_price",)
+    list_filter = ('medician', 'prescription', 'quantity')
+    list_display = (
+        'id',
+        'medician',
+        'prescription',
+        'quantity',
+    )
 
 
 class MedicineAdmin(ImportExportModelAdmin):
