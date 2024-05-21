@@ -558,6 +558,15 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
     orderd_for = serializers.SerializerMethodField()
     start_report_date = serializers.SerializerMethodField()
     total_days_for_sale = serializers.SerializerMethodField()
+    dictionary_sale = serializers.SerializerMethodField()
+    total_sell = serializers.SerializerMethodField()
+    
+    def get_dictionary_sale( self, obj):
+        dictionary_total = MedicineSaleDictionary.objects.filter(
+            medician=obj
+        ).aggregate(Sum('sale'))['sale__sum'] or 0
+        
+        return dictionary_total
     
     def get_total_days_for_sale (self, obj):
         request = self.context['request']
@@ -588,7 +597,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         return int(num_days)
     class Meta:
         model = Medician
-        fields = ['id', 'medicine_full', 'existence', 'num_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
+        fields = ['id', 'medicine_full', 'existence',  'dictionary_sale','num_sell','total_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
         
     def get_medicine_full (self, obj):
         kind_name = ""
@@ -627,7 +636,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
     def get_existence (self, obj):
         return obj.existence
     
-    def get_num_sell (self, obj):
+    def get_total_sell (self, obj):
         request = self.context['request']
         start_date = request.query_params.get('start_date')
 
@@ -642,6 +651,20 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
             medician=obj
         ).aggregate(Sum('sale'))['sale__sum'] or 0
         result = float(prescripion_through_total) + float(dictionary_total)
+        return result        
+    
+    def get_num_sell (self, obj):
+        request = self.context['request']
+        start_date = request.query_params.get('start_date')
+
+        if not start_date:
+            start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        prescripion_through_total = PrescriptionThrough.objects.filter(
+            medician=obj,
+            timestamp__gte=start_date
+        ).aggregate(Sum('quantity'))['quantity__sum'] or 0
+        result = float(prescripion_through_total) 
         return result
         
     def get_num_purchase(self, obj):
@@ -671,7 +694,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
           
         if num_days:
             num_days = int(num_days)
-            num_sell = self.get_num_sell(obj)
+            num_sell = self.get_total_sell(obj)
             result = (num_sell * num_days / total_days) - obj.existence
             if result > 0: 
                 return round(result, 2)
