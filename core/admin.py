@@ -138,7 +138,6 @@ class EntranceThrougheAdmin(ImportExportModelAdmin, admin.ModelAdmin):
 
 class PrescriptionThroughAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     readonly_fields = ("total_price",)
-    list_filter = ('medician', 'prescription', 'quantity')
     list_display = (
         'id',
         'medician',
