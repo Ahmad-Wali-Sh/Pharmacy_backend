@@ -542,6 +542,8 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "refund_not_equal",
             "name",
             "doctor",
+            "grand_total",
+            "refund",
             "prescription_number",
             "sold",
             "barcode_str",
@@ -814,7 +816,7 @@ class RevenueRecordViewSet(viewsets.ModelViewSet):
     serializer_class = RevenueRecordSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = [
-        "revenue", "prescription__prescription_number", 'record_type'
+        "revenue", "prescription__prescription_number", 'record_type', 'amount'
     ]
     pagination_class = PrescriptionPagination
 
