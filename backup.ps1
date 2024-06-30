@@ -2,14 +2,14 @@ Echo 'Backup is under progress...'
 
 $ConfirmPreference = "None"
 
-$projectPath = "C:\Projects\Pharmacy"
-$backupPath = "C:\Projects\Pharmacy\pharmacy_backend\app\backups"
-$destinationPaths = @("C:\Projects\Pharmacy\backups\1", "C:\Projects\Pharmacy\backups\2", "C:\Projects\Pharmacy\backups\3")
+$projectPath = "D:\Sharif_Pharmacy_Platform"
+$backupPath = "D:\Sharif_Pharmacy_Platform\Pharmacy_backend\app\backups"
+$destinationPaths = @("D:\Sharif_Pharmacy_Platform\Backups\1", "F:\USB Backup", "D:\Sharif_Pharmacy_Platform\Backups\3")
 
 & $projectPath\env\Scripts\activate.ps1
 
 
-Set-Location $projectPath\pharmacy_backend
+Set-Location $projectPath\Pharmacy_backend
 
 Echo '1. Backup database...'
 Echo '2. Backup and Compressing Media ...'
@@ -18,7 +18,7 @@ python manage.py dbbackup --clean
 
 # Zip media files
 Echo '2. Backup and Compressing Media ...'
-Compress-Archive -Path "$projectPath\pharmacy_backend\frontend\public" -DestinationPath "$backupPath\media_backup.zip" -Force
+Compress-Archive -Path "$projectPath\Pharmacy_backend\frontend\public\dist" -DestinationPath "$backupPath\media_backup.zip" 
 
 # Copy the backup directory to the destinations
 Echo '3. Copy Files to Directories ...'
