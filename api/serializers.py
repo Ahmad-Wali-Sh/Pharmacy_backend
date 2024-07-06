@@ -1420,9 +1420,6 @@ class MedicineMinimumSerializer (serializers.Serializer):
             return float(obj.maximum_existence) - float(obj.existence)
         return ''
     
-    def get_maximum (self, obj):
-        return obj.maximum_existence
-    
     def get_medicine_id (self, obj):
         return obj.id
 
@@ -1483,7 +1480,7 @@ class MedicineMinimumSerializer (serializers.Serializer):
     def get_minimum(self, obj):
         return obj.minmum_existence
     
-    def get_minimum(self, obj):
+    def get_maximum(self, obj):
         return obj.maximum_existence
 
     def get_medicine_full(self, res):
