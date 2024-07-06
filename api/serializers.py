@@ -1416,7 +1416,9 @@ class MedicineMinimumSerializer (serializers.Serializer):
     details_3 = serializers.SerializerMethodField()
     
     def get_need (self, obj):
-        return float(obj.maximum_existence) - float(obj.existence)
+        if (obj.maximum_existence):   
+            return float(obj.maximum_existence) - float(obj.existence)
+        return ''
     
     def get_maximum (self, obj):
         return obj.maximum_existence
