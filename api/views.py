@@ -180,7 +180,7 @@ class MedicianFilter(django_filters.FilterSet):
         
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(existence__lt=F('minmum_existence'))
+            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(existence__lt=F('minmum_existence'))
         return queryset
 
     class Meta:
@@ -282,7 +282,7 @@ class MedicianMinimuFilter(django_filters.FilterSet):
 
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(existence__lt=F('minmum_existence'))
+            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(existence__lt=F('minmum_existence'))
         return queryset
     
 class MedicianMinimumViewSet(viewsets.ModelViewSet):
