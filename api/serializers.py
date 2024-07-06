@@ -553,6 +553,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
     existence = serializers.SerializerMethodField()
     num_sell = serializers.SerializerMethodField()
     num_purchase = serializers.SerializerMethodField()
+    pharm_group = serializers.SerializerMethodField()
     order = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
     orderd_for = serializers.SerializerMethodField()
@@ -597,7 +598,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         return int(num_days)
     class Meta:
         model = Medician
-        fields = ['id', 'medicine_full', 'existence',  'dictionary_sale','num_sell','total_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
+        fields = ['id', 'medicine_full', 'pharm_group', 'existence',  'dictionary_sale','num_sell','total_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
         
     def get_medicine_full (self, obj):
         kind_name = ""
@@ -635,6 +636,15 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
                 
     def get_existence (self, obj):
         return obj.existence
+    def get_pharm_group (self, obj):
+        result = ''
+        if (obj.pharm_group):
+            if (obj.pharm_group.name_english):
+                result = obj.pharm_group.name_english
+            elif (obj.pharm_group.name_persian):
+                result = obj.pharm_group.name_persian
+        
+        return result
     
     def get_total_sell (self, obj):
         request = self.context['request']
@@ -956,6 +966,7 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     medicine_min_expire = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    medicine_existence = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     company_name = serializers.SerializerMethodField()
     
@@ -964,6 +975,13 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
             return res.entrance.company.name
         else:
             return ''
+        
+    def get_medicine_existence (self, res):
+        if ( res.medician):
+            if (res.medician.existence):
+                return res.medician.existence
+        else:
+            return 0
 
     def get_description(self, res):
         return res.entrance.description
@@ -1372,3 +1390,118 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
 class TrazSerializer(serializers.Serializer):
     entrances = EntranceThroughSerializer(many=True)
     prescriptions = PrescriptionThroughSerializer(many=True)
+
+
+class MedicineMinimumSerializer (serializers.Serializer):
+    medicine_id = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+    existence = serializers.SerializerMethodField()
+    minimum = serializers.SerializerMethodField()
+    maximum = serializers.SerializerMethodField()
+    need = serializers.SerializerMethodField()
+    details_1 = serializers.SerializerMethodField()
+    details_2 = serializers.SerializerMethodField()
+    details_3 = serializers.SerializerMethodField()
+    
+    def get_need (self, obj):
+        return float(obj.maximum_existence) - float(obj.existence)
+    
+    def get_medicine_id (self, obj):
+        return obj.id
+
+    def get_details_1(self, obj):
+        queryset = (
+            EntranceThrough.objects.filter(medician=obj.id)
+            .order_by("-id")
+            .values(
+                "entrance__company__name",
+                "entrance__company__market__name",
+                "quantity_bonus",
+                "each_price_factor",
+                "entrance__currency__name",
+                "timestamp",
+                "entrance__wholesale",
+            )
+        )[0:1]
+        data = list(queryset)
+        return data
+
+    def get_details_2(self, obj):
+        queryset = (
+            EntranceThrough.objects.filter(medician=obj.id)
+            .order_by("-id")
+            .values(
+                "entrance__company__name",
+                "entrance__company__market__name",
+                "quantity_bonus",
+                "each_price_factor",
+                "entrance__currency__name",
+                "timestamp",
+                "entrance__wholesale",
+            )
+        )[1:2]
+        data = list(queryset)
+        return data
+
+    def get_details_3(self, obj):
+        queryset = (
+            EntranceThrough.objects.filter(medician=obj.id)
+            .order_by("-id")
+            .values(
+                "entrance__company__name",
+                "entrance__company__market__name",
+                "quantity_bonus",
+                "each_price_factor",
+                "entrance__currency__name",
+                "timestamp",
+                "entrance__wholesale",
+            )
+        )[2:3]
+        data = list(queryset)
+        return data
+
+    def get_existence(self, obj):
+        return obj.existence
+    
+    def get_minimum(self, obj):
+        return obj.minmum_existence
+    
+    def get_minimum(self, obj):
+        return obj.maximum_existence
+
+    def get_medicine_full(self, res):
+        obj = res
+        kind_name = ""
+        country_name = ""
+        big_company_name = ""
+        generics = ""
+        ml = ""
+        weight = ""
+        if obj.kind and obj.kind.name_english:
+            kind_name = obj.kind.name_english + "."
+        if obj.country:
+            country_name = obj.country.name
+        if obj.big_company:
+            big_company_name = obj.big_company.name + " "
+        if obj.generic_name:
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} "
+        if obj.ml:
+            ml = obj.ml
+        if obj.weight:
+            weight = obj.weight
+
+        return (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        )
+
+    class Meta:
+        model = Medician
+        fields = "__all__"

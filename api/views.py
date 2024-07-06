@@ -22,6 +22,7 @@ from .serializers import (
     TrazSerializer,
     CitySerializer,
     MarketSerializer,
+    MedicineMinimumSerializer,
     RevenueSerializer,
     UserSerializer,
     MedicineWithGetSerializer,
@@ -157,9 +158,12 @@ class MedicianFilter(django_filters.FilterSet):
     ml = django_filters.CharFilter(lookup_expr="icontains")
     kind__name_english = django_filters.CharFilter(lookup_expr="icontains")
     kind__name_persian = django_filters.CharFilter(lookup_expr="icontains")
+    pharm_group__name_english = django_filters.CharFilter(lookup_expr="icontains")
+    pharm_group__name_persian = django_filters.CharFilter(lookup_expr="icontains")
     country__name = django_filters.CharFilter(lookup_expr="icontains")
     big_company__name = django_filters.CharFilter(lookup_expr="icontains")
     barcode__contains = CharArrayFilter(lookup_expr="contains", field_name="barcode")
+    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(method='filter_existence_lower_than_minimum_quantity')
 
     def all_filter(self, queryset, name, value):
         return queryset.filter(
@@ -167,10 +171,17 @@ class MedicianFilter(django_filters.FilterSet):
             | Q(generic_name__icontains=value)
             | Q(ml__icontains=value)
             | Q(country__name__icontains=value)
+            | Q(pharm_group__name_english=value)
+            | Q(pharm_group__name_persian=value)
             | Q(kind__name_english=value)
             | Q(kind__name_persian=value)
             | Q(big_company__name=value)
         )
+        
+    def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
+        if value:
+            return queryset.filter(minmum_existence__isnull=False).filter(existence__lt=F('minmum_existence'))
+        return queryset
 
     class Meta:
         model = Medician
@@ -191,6 +202,8 @@ class MedicianFilter(django_filters.FilterSet):
             "kind",
             "country",
             "department",
+            "pharm_group__name_english",
+            "pharm_group__name_persian",
             "id",
             "ids",
             "kind__name_english",
@@ -198,6 +211,8 @@ class MedicianFilter(django_filters.FilterSet):
             "kind__name_persian",
             "big_company__name",
         ]
+        
+
 
 
 class MedicianView(viewsets.ModelViewSet):
@@ -256,6 +271,26 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
+    ordering_fields = ['-id',]
+    
+class MedicianMinimuFilter(django_filters.FilterSet):
+    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(method='filter_existence_lower_than_minimum_quantity')
+    
+    class Meta:
+        model = Medician
+        fields = []
+
+    def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
+        if value:
+            return queryset.filter(minmum_existence__isnull=False).filter(existence__lt=F('minmum_existence'))
+        return queryset
+    
+class MedicianMinimumViewSet(viewsets.ModelViewSet):
+    queryset = Medician.objects.all()
+    serializer_class = MedicineMinimumSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MedicianMinimuFilter
     ordering_fields = ['-id',]
 
 

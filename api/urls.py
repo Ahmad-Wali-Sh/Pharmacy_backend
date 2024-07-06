@@ -34,6 +34,7 @@ from .views import (
     MedicineConflictView,
     MedicineBarcodeView,
     PuchaseListView,
+    MedicianMinimumViewSet,
     PrescriptionImageView,
     EntranceImageView,
     PurchaseListQueryView,
@@ -82,6 +83,7 @@ router.register(r"medicine-with", MedicineWithView)
 router.register(r"revenue-record", RevenueRecordViewSet)
 router.register(r"purchase-list-manual", PurchaseListManualView)
 router.register(r"medicine_order", MedicianOrderViewSet)
+router.register(r"medicine_minimum", MedicianMinimumViewSet)
 router.register(r"medicine-conflict", MedicineConflictView)
 router.register(
     r"entrance-through-expired", EntranceThroughExpiresView, basename="medicines"
