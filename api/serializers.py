@@ -556,6 +556,9 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
     pharm_group = serializers.SerializerMethodField()
     order = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    medicine_no_box = serializers.SerializerMethodField()
+    medicine_no_pocket = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
     orderd_for = serializers.SerializerMethodField()
     start_report_date = serializers.SerializerMethodField()
     total_days_for_sale = serializers.SerializerMethodField()
@@ -598,7 +601,8 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         return int(num_days)
     class Meta:
         model = Medician
-        fields = ['id', 'medicine_full', 'pharm_group', 'existence',  'dictionary_sale','num_sell','total_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
+        fields = ['id', 'medicine_full', 'medicine_no_box', 'pharm_group', 'medicine_no_pocket','existence',  'dictionary_sale','num_sell','total_sell', 'num_purchase', 'order', 'orderd_for', 'start_report_date', 'total_days_for_sale']
+
         
     def get_medicine_full (self, obj):
         kind_name = ""
@@ -636,6 +640,8 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
                 
     def get_existence (self, obj):
         return obj.existence
+    
+    
     def get_pharm_group (self, obj):
         result = ''
         if (obj.pharm_group):
@@ -645,6 +651,12 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
                 result = obj.pharm_group.name_persian
         
         return result
+
+    def get_medicine_no_box (self, obj):
+        return obj.no_box
+
+    def get_medicine_no_pocket (self, obj):
+        return obj.no_pocket
     
     def get_total_sell (self, obj):
         request = self.context['request']
