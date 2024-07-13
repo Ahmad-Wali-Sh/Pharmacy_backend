@@ -1296,11 +1296,12 @@ class PurchaseListManualSerializer(serializers.ModelSerializer):
             + " "
             + ml
             + " "
+            + generics
             + big_company_name
             + country_name
             + " "
             + weight
-        )
+        ) 
 
     class Meta:
         model = PurchaseListManual

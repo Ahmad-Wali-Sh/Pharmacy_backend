@@ -14,6 +14,8 @@ static
 # C extensions
 *.so
 
+backup.ps1
+
 *backups/
 
 **migrations/
