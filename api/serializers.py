@@ -1412,6 +1412,10 @@ class TrazSerializer(serializers.Serializer):
 class MedicineMinimumSerializer (serializers.Serializer):
     medicine_id = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
+    kind_persian = serializers.SerializerMethodField()
+    kind_english = serializers.SerializerMethodField()
+    pharm_group_persian = serializers.SerializerMethodField()
+    pharm_group_english = serializers.SerializerMethodField()
     existence = serializers.SerializerMethodField()
     minimum = serializers.SerializerMethodField()
     maximum = serializers.SerializerMethodField()
@@ -1419,6 +1423,29 @@ class MedicineMinimumSerializer (serializers.Serializer):
     details_1 = serializers.SerializerMethodField()
     details_2 = serializers.SerializerMethodField()
     details_3 = serializers.SerializerMethodField()
+    
+    def get_kind_persian (self, obj):
+        if (obj.kind):
+            if (obj.kind.name_persian):
+                return obj.kind.name_persian
+        return ''
+    
+    def get_kind_english (self, obj):
+        if (obj.kind):
+            if (obj.kind.name_english):
+                return obj.kind.name_english
+        return ''
+    
+    def get_pharm_group_persian (self, obj):
+        if (obj.pharm_group):
+            if (obj.pharm_group.name_persian):
+                return obj.pharm_group.name_persian
+        return ''
+    def get_pharm_group_english (self, obj):
+        if (obj.pharm_group):
+            if (obj.pharm_group.name_english):
+                return obj.pharm_group.name_english
+        return ''
     
     def get_need (self, obj):
         if (obj.maximum_existence):   
