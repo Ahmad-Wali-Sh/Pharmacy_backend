@@ -387,6 +387,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     department_name = serializers.SerializerMethodField()
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
+    order_user_name = serializers.SerializerMethodField()
     prescription_image = serializers.SerializerMethodField()
     history = serializers.SerializerMethodField()
 
@@ -403,6 +404,9 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     def get_patient_name(self, obj):
         if obj.name:
             return str(obj.name.id) + "." + obj.name.name
+    def get_order_user_name(self, obj):
+        if obj.order_user:
+            return obj.order_user.first_name
 
     def get_doctor_name(self, obj):
         if obj.doctor:
