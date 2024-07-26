@@ -19,6 +19,7 @@ from .views import (
     PaymentMethodView,
     EntranceThroughView,
     EntranceView,
+    EntrancePaginatedView,
     MedicianExcelView,
     TrazView,
     CityView,
@@ -60,6 +61,7 @@ router.register(r"unit", UnitView)
 router.register(r"medicine-barcode", MedicineBarcodeView)
 router.register(r"pharm-companies", PharmCompanyView)
 router.register(r"entrance", EntranceView)
+router.register(r"entrance-pg", EntrancePaginatedView)
 router.register(r"entrance-image", EntranceImageView)
 router.register(r"prescription-image", PrescriptionImageView)
 router.register(r"entrance-throug", EntranceThroughView)

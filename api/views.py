@@ -180,7 +180,7 @@ class MedicianFilter(django_filters.FilterSet):
         
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(existence__lt=F('minmum_existence'))
+            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(active=True).filter(existence__lt=F('minmum_existence'))
         return queryset
 
     class Meta:
@@ -282,7 +282,7 @@ class MedicianMinimuFilter(django_filters.FilterSet):
 
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(existence__lt=F('minmum_existence'))
+            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(active=True).filter(existence__lt=F('minmum_existence'))
         return queryset
     
 class MedicianMinimumViewSet(viewsets.ModelViewSet):
@@ -660,7 +660,13 @@ class EntranceFilterView(django_filters.FilterSet):
             "factor_date",
             "total_interest",
             "company",
+            "currency",
+            "deliver_by",
+            "recived_by",
+            "discount_percent",
             "payment_method",
+            "medicians",
+            "wholesale",
             "final_register",
             "store",
         ]
@@ -672,6 +678,14 @@ class EntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = EntranceFilterView
+    
+class EntrancePaginatedView(viewsets.ModelViewSet):
+    queryset = Entrance.objects.all().order_by("id")
+    serializer_class = EntranceSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = EntranceFilterView
+    pagination_class = StandardResultsSetPagination
 
 
 class EntranceImageView(viewsets.ModelViewSet):
