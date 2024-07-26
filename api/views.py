@@ -11,6 +11,7 @@ from .serializers import (
     CurrencySerializer,
     EntranceSerializer,
     EntranceThroughSerializer,
+    PrescriptionExcelSerializer,
     PaymentMethodSerializer,
     FinalRegisterSerializer,
     DepartmentSerializer,
@@ -97,6 +98,51 @@ from rest_framework.request import Request
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_xml.renderers import XMLRenderer
+
+class CustomXMLRendererPrescription(XMLRenderer):
+    item_tag_name = 'Prescription'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if isinstance(data, dict):
+            # This assumes the response structure has 'results' as the main list
+            data = data.get('results', data)
+
+        if isinstance(data, list):
+            for item in data:
+                self.rename_fields(item)
+        
+        return super(CustomXMLRendererPrescription, self).render(data, accepted_media_type, renderer_context)
+
+    def rename_fields(self, item):
+        # Define your custom header mappings
+        field_mapping = {
+            'id': 'ID',
+            'prescription_number': 'Prescription_Number',
+            'patient_name': 'Patient_Name',
+            'doctor_name': 'Doctor_Name',
+            'department_name': 'Department_Name',
+            'username': 'Created_By',
+            'order_user_name': 'Ordered_By',
+            'discount_money': 'Discount_Money',
+            'discount_percent': 'Discount_Percent',
+            'over_money': 'Over_Money',
+            'over_percent': 'Over_Percent',
+            'khairat': 'Khairat',
+            'zakat': 'Zakat',
+            'rounded_number': 'Rounded_Number',
+            'purchased_value': 'Purchased_Value',
+            'purchase_payment_date': 'Purchase_Payment_Date',
+            'revenue': 'Revenue',
+            'refund': 'To_Purchase',
+            'timestamp': 'Timestamp',
+            'sold': 'Sold',
+            'created': 'Created'
+        }
+        
+        for old_field, new_field in field_mapping.items():
+            if old_field in item:
+                item[new_field] = item.pop(old_field)
 
 
 @api_view(["GET"])
@@ -263,6 +309,7 @@ class MedicianExcelView(viewsets.ModelViewSet):
         "id",
     ]
     permission_classes = [D7896DjangoModelPermissions]
+
 
 
 class MedicianOrderViewSet(viewsets.ModelViewSet):
@@ -610,12 +657,13 @@ class PrescriptionPagination(PageNumberPagination):
     
     def get_paginated_response(self, data):
         
-        total_grand_total = sum(item['grand_total'] for item in data if 'grand_total' in item)
+        total_grand_total = sum(item['purchased_value'] for item in data if 'purchased_value' in item)
         total_zakat = sum(item['zakat'] for item in data if 'zakat' in item)
         total_khairat = sum(item['khairat'] for item in data if 'khairat' in item)
         total_rounded_number = sum(item['rounded_number'] for item in data if 'rounded_number' in item)
         total_over_money = sum(item['over_money'] for item in data if 'over_money' in item)
         total_discount_money = sum(item['discount_money'] for item in data if 'discount_money' in item)
+        total_to_sell = sum(item['refund'] for item in data if 'refund' in item)
         return Response({
             'count': self.page.paginator.count,
             'next': self.get_next_link(),
@@ -628,6 +676,7 @@ class PrescriptionPagination(PageNumberPagination):
             'total_discount_money': total_discount_money or 0,
             'total_rounded_number': total_rounded_number or 0,
             'total_pages': self.page.paginator.num_pages,
+            'total_to_sell': total_to_sell or 0,
             'results': data
         })
     
@@ -886,6 +935,23 @@ class RevenueRecordViewSet(viewsets.ModelViewSet):
     ]
     pagination_class = PrescriptionPagination
 
+class PrescriptionExcelView(viewsets.ModelViewSet):
+    queryset = Prescription.objects.all().order_by("id")
+    serializer_class = PrescriptionExcelSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = PrescriptionFilterView
+    ordering_fields = [
+        "id",
+    ]
+    ordering = [
+        "id",
+    ]
+    permission_classes = [D7896DjangoModelPermissions]
+    renderer_classes = [CustomXMLRendererPrescription]
 
 
 

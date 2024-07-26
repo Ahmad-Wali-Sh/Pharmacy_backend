@@ -426,6 +426,39 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
+class PrescriptionExcelSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+    order_user_name = serializers.SerializerMethodField()
+
+    def get_patient_name(self, obj):
+        if obj.name:
+            return str(obj.name.id) + "." + obj.name.name
+    def get_order_user_name(self, obj):
+        if obj.order_user:
+            return obj.order_user.first_name
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return str(obj.doctor.id) + "." + obj.doctor.name
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    def get_department_name(self, obj):
+        return obj.department.name
+
+    class Meta:
+        model = Prescription
+        fields = ['id', 'prescription_number', 'patient_name', 'doctor_name', 'department_name', 'username', 'order_user_name', 'discount_money', 'discount_percent', 'over_money', 'over_percent', 'khairat', 'zakat', 'rounded_number', 'purchased_value', 'purchase_payment_date', 'revenue', 'refund', 'timestamp', 'sold', 'created']
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
 
