@@ -577,7 +577,11 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "refund_not_equal",
             "name",
             "doctor",
+            "order_user",
             "grand_total",
+            "discount_money",
+            "zakat",
+            "khairat",
             "refund",
             "prescription_number",
             "sold",
@@ -600,16 +604,29 @@ class PrescriptionView(viewsets.ModelViewSet):
     ordering_fields = ["id", "created", "purchase_payment_date"]
     
 class PrescriptionPagination(PageNumberPagination):
-    page_size = 100
+    page_size = 60
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 60
     
     def get_paginated_response(self, data):
+        
+        total_grand_total = sum(item['grand_total'] for item in data if 'grand_total' in item)
+        total_zakat = sum(item['zakat'] for item in data if 'zakat' in item)
+        total_khairat = sum(item['khairat'] for item in data if 'khairat' in item)
+        total_rounded_number = sum(item['rounded_number'] for item in data if 'rounded_number' in item)
+        total_over_money = sum(item['over_money'] for item in data if 'over_money' in item)
+        total_discount_money = sum(item['discount_money'] for item in data if 'discount_money' in item)
         return Response({
             'count': self.page.paginator.count,
             'next': self.get_next_link(),
             'previous': self.get_previous_link(),
             'current_page': self.page.number,
+            'total_grand_total': total_grand_total or 0,
+            'total_zakat': total_zakat or 0,
+            'total_over_money': total_over_money or 0,
+            'total_khairat': total_khairat or 0,
+            'total_discount_money': total_discount_money or 0,
+            'total_rounded_number': total_rounded_number or 0,
             'total_pages': self.page.paginator.num_pages,
             'results': data
         })
