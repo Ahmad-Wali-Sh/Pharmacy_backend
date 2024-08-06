@@ -712,18 +712,25 @@ class PrescriptionPagination(PageNumberPagination):
             purchased_value = prescription['purchased_value']
             discount_percent = prescription['discount_percent']
             discount_money = prescription['discount_money']
-            grand_total = (purchased_value + discount_money) / (1 - (discount_percent / 100))
-            discount_percent_value = grand_total * (discount_percent / 100)
-            discount_value = discount_money + discount_percent_value
+            
+            if discount_percent != 0:
+                grand_total = (purchased_value + discount_money) / (1 - (discount_percent / 100))
+                discount_percent_value = grand_total * (discount_percent / 100)
+                discount_value = discount_money + discount_percent_value
+            else:
+                grand_total = purchased_value + discount_money
+                discount_value = discount_money
+
             grand_total_sum += grand_total
             discount_value_sum += discount_value
-        return grand_total_sum, discount_value_sum
-    
-    def get_paginated_response(self, data):
 
+        return grand_total_sum, discount_value_sum
+
+    def get_paginated_response(self, data):
         queryset = self.page.paginator.object_list
         prescriptions = list(queryset.values('purchased_value', 'discount_percent', 'discount_money'))
         grand_total_sum, discount_value_sum = self.calculate_discount_and_grand_total(prescriptions)
+
         total_grand_total = queryset.aggregate(Sum('purchased_value'))['purchased_value__sum'] or 0
         total_zakat = queryset.aggregate(Sum('zakat'))['zakat__sum'] or 0
         total_khairat = queryset.aggregate(Sum('khairat'))['khairat__sum'] or 0
@@ -732,6 +739,7 @@ class PrescriptionPagination(PageNumberPagination):
         total_discount_money = queryset.aggregate(Sum('discount_money'))['discount_money__sum'] or 0
         total_discount_percent = queryset.aggregate(Sum('discount_percent'))['discount_percent__sum'] or 0
         total_to_sell = queryset.aggregate(Sum('refund'))['refund__sum'] or 0
+
         return Response({
             'count': self.page.paginator.count,
             'next': self.get_next_link(),
