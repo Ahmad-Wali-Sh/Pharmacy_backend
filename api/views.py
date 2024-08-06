@@ -325,7 +325,7 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
 
 
 class StockView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().filter(active=true).annotate(
+    queryset = Medician.objects.all().filter(active=True).annotate(
         total_sell=Sum('prescriptionthrough__quantity'),
         total_purchase=Sum('entrancethrough__register_quantity')
     )
@@ -338,7 +338,7 @@ class StockView(viewsets.ModelViewSet):
     
 
 class StockExcelView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().filter(active=true).annotate(
+    queryset = Medician.objects.all().filter(active=True).annotate(
         total_sell=Sum('prescriptionthrough__quantity'),
         total_purchase=Sum('entrancethrough__register_quantity')
     )
