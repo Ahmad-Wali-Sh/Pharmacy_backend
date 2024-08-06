@@ -13,6 +13,7 @@ from .serializers import (
     EntranceThroughSerializer,
     PrescriptionExcelSerializer,
     PaymentMethodSerializer,
+    StockSerializer,
     FinalRegisterSerializer,
     DepartmentSerializer,
     DoctorNameSerializer,
@@ -126,6 +127,7 @@ class CustomXMLRendererPrescription(XMLRenderer):
             'order_user_name': 'Ordered_By',
             'discount_money': 'Discount_Money',
             'discount_percent': 'Discount_Percent',
+            'discount_value': 'Discount_Value',
             'over_money': 'Over_Money',
             'over_percent': 'Over_Percent',
             'khairat': 'Khairat',
@@ -137,6 +139,7 @@ class CustomXMLRendererPrescription(XMLRenderer):
             'refund': 'To_Purchase',
             'timestamp': 'Timestamp',
             'sold': 'Sold',
+            'quantity': 'Medicine_Count',
             'created': 'Created'
         }
         
@@ -319,6 +322,31 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
     ordering_fields = ['-id',]
+
+
+class StockView(viewsets.ModelViewSet):
+    queryset = Medician.objects.all().annotate(
+        total_sell=Sum('prescriptionthrough__quantity'),
+        total_purchase=Sum('entrancethrough__register_quantity')
+    )
+    serializer_class = StockSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MedicianFilter
+    ordering_fields = ['total_sell', 'total_purchase']
+    pagination_class = StandardResultsSetPagination
+    
+
+class StockExcelView(viewsets.ModelViewSet):
+    queryset = Medician.objects.all().annotate(
+        total_sell=Sum('prescriptionthrough__quantity'),
+        total_purchase=Sum('entrancethrough__register_quantity')
+    )
+    serializer_class = StockSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = MedicianFilter
+    ordering_fields = ['total_sell', 'total_purchase']
     
 class MedicianMinimuFilter(django_filters.FilterSet):
     existence_lower_than_minimum_quantity = django_filters.BooleanFilter(method='filter_existence_lower_than_minimum_quantity')
@@ -615,6 +643,14 @@ class PrescriptionFilterView(django_filters.FilterSet):
         field_name="grand_total", lookup_expr="exact", exclude=True
     )  # New field for refund not equal
 
+    has_prescriptionthrough = django_filters.BooleanFilter(
+        method='filter_has_prescriptionthrough'
+    ) 
+
+    purchased = django_filters.BooleanFilter(
+        method='filter_purchased'
+    ) 
+
     class Meta:
         model = Prescription
         fields = [
@@ -626,6 +662,8 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "doctor",
             "order_user",
             "grand_total",
+            'purchased_value',
+            'purchased',
             "discount_money",
             "zakat",
             "khairat",
@@ -636,6 +674,17 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "revenue",
             "grand_not_equal"
         ]
+
+    def filter_has_prescriptionthrough(self, queryset, name, value):
+        if value:
+            return queryset.filter(prescriptionthrough__isnull=False).distinct()
+        else:
+            return queryset.filter(prescriptionthrough__isnull=True).distinct()
+
+    def filter_purchased(self, queryset, name, value):
+        if value:
+            return queryset.filter(purchased_value__gt=0)
+        return queryset
 
 
 class PrescriptionView(viewsets.ModelViewSet):
@@ -654,16 +703,35 @@ class PrescriptionPagination(PageNumberPagination):
     page_size = 60
     page_size_query_param = 'page_size'
     max_page_size = 60
+
+    def calculate_discount_and_grand_total(self, prescriptions):
+        grand_total_sum = 0
+        discount_value_sum = 0
+
+        for prescription in prescriptions:
+            purchased_value = prescription['purchased_value']
+            discount_percent = prescription['discount_percent']
+            discount_money = prescription['discount_money']
+            grand_total = (purchased_value + discount_money) / (1 - (discount_percent / 100))
+            discount_percent_value = grand_total * (discount_percent / 100)
+            discount_value = discount_money + discount_percent_value
+            grand_total_sum += grand_total
+            discount_value_sum += discount_value
+        return grand_total_sum, discount_value_sum
     
     def get_paginated_response(self, data):
-        
-        total_grand_total = sum(item['purchased_value'] for item in data if 'purchased_value' in item)
-        total_zakat = sum(item['zakat'] for item in data if 'zakat' in item)
-        total_khairat = sum(item['khairat'] for item in data if 'khairat' in item)
-        total_rounded_number = sum(item['rounded_number'] for item in data if 'rounded_number' in item)
-        total_over_money = sum(item['over_money'] for item in data if 'over_money' in item)
-        total_discount_money = sum(item['discount_money'] for item in data if 'discount_money' in item)
-        total_to_sell = sum(item['refund'] for item in data if 'refund' in item)
+
+        queryset = self.page.paginator.object_list
+        prescriptions = list(queryset.values('purchased_value', 'discount_percent', 'discount_money'))
+        grand_total_sum, discount_value_sum = self.calculate_discount_and_grand_total(prescriptions)
+        total_grand_total = queryset.aggregate(Sum('purchased_value'))['purchased_value__sum'] or 0
+        total_zakat = queryset.aggregate(Sum('zakat'))['zakat__sum'] or 0
+        total_khairat = queryset.aggregate(Sum('khairat'))['khairat__sum'] or 0
+        total_rounded_number = queryset.aggregate(Sum('rounded_number'))['rounded_number__sum'] or 0
+        total_over_money = queryset.aggregate(Sum('over_money'))['over_money__sum'] or 0
+        total_discount_money = queryset.aggregate(Sum('discount_money'))['discount_money__sum'] or 0
+        total_discount_percent = queryset.aggregate(Sum('discount_percent'))['discount_percent__sum'] or 0
+        total_to_sell = queryset.aggregate(Sum('refund'))['refund__sum'] or 0
         return Response({
             'count': self.page.paginator.count,
             'next': self.get_next_link(),
@@ -674,6 +742,8 @@ class PrescriptionPagination(PageNumberPagination):
             'total_over_money': total_over_money or 0,
             'total_khairat': total_khairat or 0,
             'total_discount_money': total_discount_money or 0,
+            'total_discount_percent': total_discount_percent or 0,
+            'total_discount_value': discount_value_sum or 0,
             'total_rounded_number': total_rounded_number or 0,
             'total_pages': self.page.paginator.num_pages,
             'total_to_sell': total_to_sell or 0,
@@ -933,7 +1003,7 @@ class RevenueRecordViewSet(viewsets.ModelViewSet):
     filterset_fields = [
         "revenue", "prescription__prescription_number", 'record_type', 'amount'
     ]
-    pagination_class = PrescriptionPagination
+    pagination_class = StandardResultsSetPagination
 
 class PrescriptionExcelView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("id")

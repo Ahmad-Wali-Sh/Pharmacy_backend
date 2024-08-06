@@ -31,6 +31,8 @@ from .views import (
     BigCompanyView,
     EntranceThroughExpiresView,
     user_permissions,
+    StockView,
+    StockExcelView,
     MedicianOrderViewSet,
     MedicineConflictView,
     MedicineBarcodeView,
@@ -88,6 +90,8 @@ router.register(r"purchase-list-manual", PurchaseListManualView)
 router.register(r"medicine_order", MedicianOrderViewSet)
 router.register(r"medicine_minimum", MedicianMinimumViewSet)
 router.register(r"medicine-conflict", MedicineConflictView)
+router.register(r"stock", StockView)
+router.register(r"stock-excel", StockExcelView)
 router.register(r"prescription-excel", PrescriptionExcelView)
 router.register(
     r"entrance-through-expired", EntranceThroughExpiresView, basename="medicines"

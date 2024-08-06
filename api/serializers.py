@@ -433,6 +433,18 @@ class PrescriptionExcelSerializer(serializers.ModelSerializer):
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
     order_user_name = serializers.SerializerMethodField()
+    discount_value = serializers.SerializerMethodField()
+    quantity = serializers.SerializerMethodField()
+
+    def get_quantity(self, obj):
+        # Count the number of related PrescriptionThrough instances
+        return obj.prescriptionthrough_set.count()
+
+    def get_discount_value (self, obj):
+        grand_total = (obj.purchased_value + obj.discount_money) / (1 - (obj.discount_percent / 100))
+        discount_percent_value = grand_total * (obj.discount_percent / 100)
+        discount_value = obj.discount_money + discount_percent_value
+        return discount_value or 0
 
     def get_patient_name(self, obj):
         if obj.name:
@@ -456,7 +468,7 @@ class PrescriptionExcelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prescription
-        fields = ['id', 'prescription_number', 'patient_name', 'doctor_name', 'department_name', 'username', 'order_user_name', 'discount_money', 'discount_percent', 'over_money', 'over_percent', 'khairat', 'zakat', 'rounded_number', 'purchased_value', 'purchase_payment_date', 'revenue', 'refund', 'timestamp', 'sold', 'created']
+        fields = ['id', 'prescription_number', 'patient_name', 'doctor_name', 'department_name', 'username', 'order_user_name', 'discount_money', 'discount_percent', 'discount_value', 'over_money', 'over_percent', 'khairat', 'zakat', 'rounded_number', 'purchased_value', 'purchase_payment_date', 'revenue', 'refund', 'timestamp', 'sold', 'quantity', 'created']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -585,6 +597,52 @@ class MedicineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medician
         fields = "__all__"
+
+
+class StockSerializer(serializers.ModelSerializer):
+    medicine_full = serializers.SerializerMethodField()
+    total_sell = serializers.FloatField(read_only=True)
+    total_purchase = serializers.FloatField(read_only=True)
+    purchased_price = serializers.SerializerMethodField()
+        
+    def get_purchased_price (self, obj):
+        try:
+            latest_entrance = EntranceThrough.objects.filter(medician=obj.id).latest('timestamp')
+            return latest_entrance.each_purchase_price
+        except EntranceThrough.DoesNotExist:
+            return 0
+
+
+    def get_medicine_full(self, res):
+        obj = res
+        kind_name = (
+            obj.kind.name_english + "." if obj.kind and obj.kind.name_english else ""
+        )
+        country_name = obj.country.name if obj.country else ""
+        big_company_name = obj.big_company.name + " " if obj.big_company else ""
+        generics = (
+            "{" + str(",".join(map(str, obj.generic_name))) + "}"
+            if obj.generic_name
+            else ""
+        )
+        ml = obj.ml if obj.ml else ""
+        weight = obj.weight if obj.weight else ""
+        medicine_full = (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        )
+        return medicine_full
+
+    class Meta:
+        model = Medician
+        fields = ['id', 'medicine_full', 'no_box', 'no_pocket', 'purchased_price', 'price', 'total_purchase', 'total_sell']
         
 class MedicianOrderSerializer(serializers.ModelSerializer):
     existence = serializers.SerializerMethodField()
