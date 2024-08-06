@@ -712,14 +712,17 @@ class PrescriptionPagination(PageNumberPagination):
             purchased_value = prescription['purchased_value']
             discount_percent = prescription['discount_percent']
             discount_money = prescription['discount_money']
-            
-            if (discount_percent != 0) and (discount_percent / 100 != 0):
+
+            if discount_percent == 0:
+                grand_total = purchased_value + discount_money
+                discount_value = discount_money
+            elif discount_percent >= 100:
+                grand_total = purchased_value + discount_money
+                discount_value = purchased_value + discount_money
+            else:
                 grand_total = (purchased_value + discount_money) / (1 - (discount_percent / 100))
                 discount_percent_value = grand_total * (discount_percent / 100)
                 discount_value = discount_money + discount_percent_value
-            else:
-                grand_total = purchased_value + discount_money
-                discount_value = discount_money
 
             grand_total_sum += grand_total
             discount_value_sum += discount_value
