@@ -441,7 +441,9 @@ class PrescriptionExcelSerializer(serializers.ModelSerializer):
         return obj.prescriptionthrough_set.count()
 
     def get_discount_value (self, obj):
-        grand_total = (obj.purchased_value + obj.discount_money) / (1 - (obj.discount_percent / 100))
+        grand_total = PrescriptionThrough.objects.filter(
+            prescription_id=obj.id
+            ).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0
         discount_percent_value = grand_total * (obj.discount_percent / 100)
         discount_value = obj.discount_money + discount_percent_value
         return discount_value or 0
@@ -600,49 +602,108 @@ class MedicineSerializer(serializers.ModelSerializer):
 
 
 class StockSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
     medicine_full = serializers.SerializerMethodField()
-    total_sell = serializers.FloatField(read_only=True)
-    total_purchase = serializers.FloatField(read_only=True)
+    brand_name = serializers.SerializerMethodField()
+    kind_name_english = serializers.SerializerMethodField()
+    kind_name_persian = serializers.SerializerMethodField()
+    ml = serializers.SerializerMethodField()
+    pharm_group_name_persian = serializers.SerializerMethodField()
+    pharm_group_name_english = serializers.SerializerMethodField()
+    country_name = serializers.SerializerMethodField()
+    big_company_name = serializers.SerializerMethodField()
+    no_box = serializers.SerializerMethodField()
+    no_pocket = serializers.SerializerMethodField()
+    existence = serializers.SerializerMethodField()
     purchased_price = serializers.SerializerMethodField()
-        
-    def get_purchased_price (self, obj):
-        try:
-            latest_entrance = EntranceThrough.objects.filter(medician=obj.id).latest('timestamp')
-            return latest_entrance.each_purchase_price
-        except EntranceThrough.DoesNotExist:
-            return 0
+    price = serializers.SerializerMethodField()
+    total_purchase = serializers.SerializerMethodField()
+    total_sell = serializers.SerializerMethodField()
 
+    def get_id(self, obj):
+        return obj.id
 
-    def get_medicine_full(self, res):
-        obj = res
-        kind_name = (
-            obj.kind.name_english + "." if obj.kind and obj.kind.name_english else ""
-        )
+    def get_medicine_full(self, obj):
+        kind_name = obj.kind.name_english + "." if obj.kind and obj.kind.name_english else ""
         country_name = obj.country.name if obj.country else ""
         big_company_name = obj.big_company.name + " " if obj.big_company else ""
-        generics = (
-            "{" + str(",".join(map(str, obj.generic_name))) + "}"
-            if obj.generic_name
-            else ""
-        )
+        generics = "{" + str(",".join(map(str, obj.generic_name))) + "}" if obj.generic_name else ""
         ml = obj.ml if obj.ml else ""
         weight = obj.weight if obj.weight else ""
-        medicine_full = (
-            kind_name
-            + obj.brand_name
-            + " "
-            + ml
-            + " "
-            + big_company_name
-            + country_name
-            + " "
-            + weight
-        )
+        medicine_full = kind_name + obj.brand_name + " " + ml + " " + big_company_name + country_name + " " + weight
         return medicine_full
+
+    def get_brand_name(self, obj):
+        return obj.brand_name
+
+    def get_kind_name_english(self, obj):
+        return obj.kind.name_english if obj.kind else None
+
+    def get_kind_name_persian(self, obj):
+        return obj.kind.name_persian if obj.kind else None
+
+    def get_ml(self, obj):
+        return obj.ml
+
+    def get_pharm_group_name_persian(self, obj):
+        return obj.pharm_group.name_persian if obj.pharm_group else None
+
+    def get_pharm_group_name_english(self, obj):
+        return obj.pharm_group.name_english if obj.pharm_group else None
+
+    def get_country_name(self, obj):
+        return obj.country.name if obj.country else None
+
+    def get_big_company_name(self, obj):
+        return obj.big_company.name if obj.big_company else None
+
+    def get_no_box(self, obj):
+        return obj.no_box
+
+    def get_no_pocket(self, obj):
+        return obj.no_pocket
+
+    def get_existence(self, obj):
+        return obj.existence
+
+    def get_purchased_price(self, obj):
+        latest_entrance = EntranceThrough.objects.filter(medician=obj.id).order_by('-timestamp').first()
+        return latest_entrance.each_purchase_price if latest_entrance else 0
+
+    def get_total_purchase(self, obj):
+        latest_entrance = EntranceThrough.objects.filter(medician=obj.id).order_by('-timestamp').first()
+        if latest_entrance:
+            return latest_entrance.each_purchase_price * obj.existence
+        return 0
+
+    def get_price(self, obj):
+        return obj.price
+
+    def get_total_sell(self, obj):
+        return obj.price * obj.existence if obj.price and obj.existence else 0 
 
     class Meta:
         model = Medician
-        fields = ['id', 'medicine_full', 'no_box', 'no_pocket', 'purchased_price', 'price', 'total_purchase', 'total_sell']
+        fields = [
+            'id', 
+            'medicine_full', 
+            'brand_name', 
+            'kind_name_english', 
+            'kind_name_persian', 
+            'ml', 
+            'pharm_group_name_persian', 
+            'pharm_group_name_english', 
+            'country_name', 
+            'big_company_name', 
+            'no_box', 
+            'no_pocket', 
+            'existence', 
+            'purchased_price', 
+            'price', 
+            'total_purchase', 
+            'total_sell'
+        ]
+        
         
 class MedicianOrderSerializer(serializers.ModelSerializer):
     existence = serializers.SerializerMethodField()

@@ -709,18 +709,31 @@ class PrescriptionPagination(PageNumberPagination):
         discount_value_sum = 0
 
         for prescription in prescriptions:
-            purchased_value = prescription['purchased_value']
-            discount_percent = prescription['discount_percent']
-            discount_money = prescription['discount_money']
+            # Validate the presence of 'id' in each prescription
+            if 'id' not in prescription:
+                raise ValueError("Prescription ID is missing.")
 
+            try:
+                # Calculate grand total for each prescription based on PrescriptionThrough
+                grand_total = PrescriptionThrough.objects.filter(
+                    prescription_id=prescription['id']
+                ).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0
+            except Exception as e:
+                # Handle any exceptions that occur during the query
+                raise ValueError(f"Error calculating grand total for prescription ID {prescription['id']}: {str(e)}")
+
+            purchased_value = prescription.get('purchased_value', 0)
+            discount_percent = prescription.get('discount_percent', 0)
+            discount_money = prescription.get('discount_money', 0)
+
+            # Calculate discount value based on the discount type
             if discount_percent == 0:
-                grand_total = purchased_value + discount_money
                 discount_value = discount_money
-            elif discount_percent >= 100:
-                grand_total = purchased_value + discount_money
+            elif discount_percent > 100:
                 discount_value = purchased_value + discount_money
+            elif discount_percent == 100:
+                discount_value = grand_total
             else:
-                grand_total = (purchased_value + discount_money) / (1 - (discount_percent / 100))
                 discount_percent_value = grand_total * (discount_percent / 100)
                 discount_value = discount_money + discount_percent_value
 
@@ -731,9 +744,17 @@ class PrescriptionPagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
         queryset = self.page.paginator.object_list
-        prescriptions = list(queryset.values('purchased_value', 'discount_percent', 'discount_money'))
-        grand_total_sum, discount_value_sum = self.calculate_discount_and_grand_total(prescriptions)
+        prescriptions = list(queryset.values(
+            'purchased_value', 'discount_percent', 'discount_money', 'grand_total', 'id'
+        ))
 
+        try:
+            grand_total_sum, discount_value_sum = self.calculate_discount_and_grand_total(prescriptions)
+        except ValueError as e:
+            # Handle any errors during the calculation
+            return Response({'error': str(e)}, status=400)
+
+        # Aggregate other totals from the queryset
         total_grand_total = queryset.aggregate(Sum('purchased_value'))['purchased_value__sum'] or 0
         total_zakat = queryset.aggregate(Sum('zakat'))['zakat__sum'] or 0
         total_khairat = queryset.aggregate(Sum('khairat'))['khairat__sum'] or 0
@@ -748,7 +769,7 @@ class PrescriptionPagination(PageNumberPagination):
             'next': self.get_next_link(),
             'previous': self.get_previous_link(),
             'current_page': self.page.number,
-            'total_grand_total': total_grand_total or 0,
+            'total_grand_total': grand_total_sum,  # Use calculated grand_total_sum
             'total_zakat': total_zakat or 0,
             'total_over_money': total_over_money or 0,
             'total_khairat': total_khairat or 0,
