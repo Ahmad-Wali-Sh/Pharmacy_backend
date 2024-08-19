@@ -23,6 +23,7 @@ from .serializers import (
     MeidicainExcelSerializer,
     TrazSerializer,
     CitySerializer,
+    DepartmentReturnSerializer,
     MarketSerializer,
     MedicineMinimumSerializer,
     RevenueSerializer,
@@ -36,6 +37,9 @@ from .serializers import (
     PurchaseListQuerySerializer,
     MedicineBarcodeDisplaySerializer,
     MedicineBarcodeCreateUpdateSerializer,
+    PrescriptionReturnSerializer,
+    PrescriptionThroughReturnSerializer,
+    PrescriptionReturnImageSerializer,
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
     MedicianOrderSerializer,
@@ -54,6 +58,10 @@ from core.models import (
     Prescription,
     PharmCompany,
     Store,
+    DepartmentReturn,
+    PrescriptionReturn,
+    PrescriptionReturnThrough,
+    PrescriptionReturnImage,
     Currency,
     Entrance,
     PrescriptionImage,
@@ -472,6 +480,24 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
         delete_prescriptions = self.queryset.filter(prescription=delete_id)
         delete_prescriptions.delete()
         return Response(self.serializer_class(delete_prescriptions, many=True).data)
+    
+class PrescriptionReturnThroughView(viewsets.ModelViewSet):
+    queryset = PrescriptionReturnThrough.objects.all().order_by("id")
+    serializer_class = PrescriptionThroughReturnSerializer
+    filterset_fields = [
+        "prescription",
+    ]
+    permission_classes = [D7896DjangoModelPermissions]
+
+    @action(
+        methods=["DELETE", "GET"],
+        detail=False,
+    )
+    def delete(self, request: Request):
+        delete_id = request.GET["prescription"]
+        delete_prescriptions = self.queryset.filter(prescription=delete_id)
+        delete_prescriptions.delete()
+        return Response(self.serializer_class(delete_prescriptions, many=True).data)
 
 
 class PatientFilter(django_filters.FilterSet):
@@ -527,6 +553,19 @@ class BigCompanyView(viewsets.ModelViewSet):
 class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all().order_by("id")
     serializer_class = DepartmentSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    filterset_fields = [
+        "name",
+    ]
+    ordering_fields = [
+        "id",
+    ]
+    
+    
+class DepartmentReturnView(viewsets.ModelViewSet):
+    queryset = DepartmentReturn.objects.all().order_by("id")
+    serializer_class = DepartmentReturnSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     filterset_fields = [
@@ -685,12 +724,77 @@ class PrescriptionFilterView(django_filters.FilterSet):
         if value:
             return queryset.filter(purchased_value__gt=0)
         return queryset
+    
+    
+class PrescriptionReturnFilterView(django_filters.FilterSet):
+    created = django_filters.DateTimeFromToRangeFilter()
+    refund_not_equal = django_filters.NumberFilter(
+        field_name="refund", lookup_expr="exact", exclude=True
+    )  # New field for refund not equal
+    grand_not_equal = django_filters.NumberFilter(
+        field_name="grand_total", lookup_expr="exact", exclude=True
+    )  # New field for refund not equal
+
+    has_prescriptionthrough = django_filters.BooleanFilter(
+        method='filter_has_prescriptionthrough'
+    ) 
+
+    purchased = django_filters.BooleanFilter(
+        method='filter_purchased'
+    ) 
+
+    class Meta:
+        model = PrescriptionReturn
+        fields = [
+            "prescription_number",
+            "department",
+            "created",
+            "refund_not_equal",
+            "name",
+            "doctor",
+            "order_user",
+            "grand_total",
+            'purchased_value',
+            'purchased',
+            "discount_money",
+            "zakat",
+            "khairat",
+            "refund",
+            "prescription_number",
+            "sold",
+            "barcode_str",
+            "revenue",
+            "grand_not_equal"
+        ]
+
+    def filter_has_prescriptionthrough(self, queryset, name, value):
+        if value:
+            return queryset.filter(prescriptionthrough__isnull=False).distinct()
+        else:
+            return queryset.filter(prescriptionthrough__isnull=True).distinct()
+
+    def filter_purchased(self, queryset, name, value):
+        if value:
+            return queryset.filter(purchased_value__gt=0)
+        return queryset
 
 
 class PrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("id")
     serializer_class = PrescriptionSerializer
     filterset_class = PrescriptionFilterView
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    permission_classes = [D7896DjangoModelPermissions]
+    ordering_fields = ["id", "created", "purchase_payment_date"]
+    
+class PrescriptionReturnView(viewsets.ModelViewSet):
+    queryset = PrescriptionReturn.objects.all().order_by("id")
+    serializer_class = PrescriptionReturnSerializer
+    filterset_class = PrescriptionReturnFilterView
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
@@ -800,6 +904,25 @@ class LastPrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("-id")[:1]
     serializer_class = PrescriptionSerializer
     permission_classes = [D7896DjangoModelPermissions]
+    
+class PrescriptionReturnPaginatedView(viewsets.ModelViewSet):
+    queryset = PrescriptionReturn.objects.all().order_by("id")
+    serializer_class = PrescriptionReturnSerializer
+    filterset_class = PrescriptionReturnFilterView
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    permission_classes = [D7896DjangoModelPermissions]
+    ordering_fields = ["id", "created", "purchase_payment_date"]
+    pagination_class = StandardResultsSetPagination
+
+
+class LastPrescriptionReturnView(viewsets.ModelViewSet):
+    queryset = PrescriptionReturn.objects.all().order_by("-id")[:1]
+    serializer_class = PrescriptionReturnSerializer
+    permission_classes = [D7896DjangoModelPermissions]
 
 
 class UnitView(viewsets.ModelViewSet):
@@ -869,6 +992,14 @@ class EntranceImageView(viewsets.ModelViewSet):
 class PrescriptionImageView(viewsets.ModelViewSet):
     queryset = PrescriptionImage.objects.all().order_by("id")
     serializer_class = PrescriptionImageSerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = [
+        "prescription",
+    ]
+class PrescriptionReturnImageView(viewsets.ModelViewSet):
+    queryset = PrescriptionReturnImage.objects.all().order_by("id")
+    serializer_class = PrescriptionReturnImageSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = [
@@ -1101,4 +1232,38 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
         except Prescription.DoesNotExist:
+            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+class PrescriptionReturnViewSet(viewsets.ModelViewSet):
+    queryset = PrescriptionReturn.objects.all()
+    serializer_class = PrescriptionReturnSerializer
+
+    @action(detail=True, methods=['get'], url_path='previous')
+    def previous(self, request, pk=None):
+        try:
+            prescription = self.get_object()
+            department_prescriptions = PrescriptionReturn.objects.filter(department=prescription.department, id__lt=prescription.id).order_by('-id')
+
+            if department_prescriptions.exists():
+                previous_prescription = department_prescriptions.first()
+                serializer = self.get_serializer(previous_prescription)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'No previous prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PrescriptionReturn.DoesNotExist:
+            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+    @action(detail=True, methods=['get'], url_path='next')
+    def next(self, request, pk=None):
+        try:
+            prescription = self.get_object()
+            department_prescriptions = PrescriptionReturn.objects.filter(department=prescription.department, id__gt=prescription.id).order_by('id')
+
+            if department_prescriptions.exists():
+                next_prescription = department_prescriptions.first()
+                serializer = self.get_serializer(next_prescription)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+        except PrescriptionReturn.DoesNotExist:
             return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)

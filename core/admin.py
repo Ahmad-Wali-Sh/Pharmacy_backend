@@ -23,6 +23,10 @@ from core.models import (
     Department,
     DoctorName,
     PatientName,
+    PrescriptionReturn,
+    PrescriptionReturnThrough,
+    PrescriptionReturnImage,
+    DepartmentReturn,
     MedicineSaleDictionary,
     PrescriptionThrough,
     City,
@@ -203,6 +207,10 @@ admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, MedicineAdmin)
 admin.site.register(Kind, ImportAdmin)
 admin.site.register(Country, ImportAdmin)
+admin.site.register(PrescriptionReturn, ImportAdmin)
+admin.site.register(PrescriptionReturnThrough, ImportAdmin)
+admin.site.register(PrescriptionReturnImage, ImportAdmin)
+admin.site.register(DepartmentReturn, ImportAdmin)
 admin.site.register(Unit, ImportAdmin)
 admin.site.register(RevenueRecord, ImportAdmin)
 admin.site.register(Prescription, ImportAdmin)

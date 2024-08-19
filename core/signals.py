@@ -13,20 +13,38 @@ from django.db.models import Sum
 @receiver([post_delete, post_save], sender=models.RevenueRecord)
 def calcualting_purchase_value (sender, instance, **kwargs):
     
-    purchased_total = (
-        models.RevenueRecord.objects.filter(prescription=instance.prescription)
-        .aggregate(Sum("amount"))
-        .get("amount__sum", 0)
-    )
-    
-    if purchased_total:
-        instance.prescription.purchased_value = purchased_total
-        instance.prescription.refund = instance.prescription.grand_total - purchased_total
-    else:
-        instance.prescription.purchased_value = 0
-        instance.prescription.refund = instance.prescription.grand_total
+    if(instance.prescription):        
+        purchased_total = (
+            models.RevenueRecord.objects.filter(prescription=instance.prescription)
+            .aggregate(Sum("amount"))
+            .get("amount__sum", 0)
+        )
+        
+        if purchased_total:
+            instance.prescription.purchased_value = purchased_total
+            instance.prescription.refund = instance.prescription.grand_total - purchased_total
+        else:
+            instance.prescription.purchased_value = 0
+            instance.prescription.refund = instance.prescription.grand_total
+        
+        instance.prescription.save()
+            
+    if(instance.prescription_return):
+        purchased_total = (
+            models.RevenueRecord.objects.filter(prescription_return=instance.prescription_return)
+            .aggregate(Sum("amount"))
+            .get("amount__sum", 0)
+        )
+        
+        if purchased_total:
+            instance.prescription_return.purchased_value = purchased_total
+            instance.prescription_return.refund = instance.prescription_return.grand_total - purchased_total
+        else:
+            instance.prescription_return.purchased_value = 0
+            instance.prescription_return.refund = instance.prescription_return.grand_total
 
-    instance.prescription.save()
+        instance.prescription_return.save()
+    
 
 
 @receiver(post_delete, sender=models.PrescriptionThrough)
@@ -245,6 +263,7 @@ def prescription_through_post_delete(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=models.EntranceThrough)
 @receiver([post_save, post_delete], sender=models.PrescriptionThrough)
+@receiver([post_save, post_delete], sender=models.PrescriptionReturnThrough)
 def update_medician_existence(sender, instance, **kwargs):
     medician = instance.medician
     entrance_sum_query = (
@@ -257,13 +276,19 @@ def update_medician_existence(sender, instance, **kwargs):
         .aggregate(Sum("quantity"))
         .get("quantity__sum", 0)
     )
+    prescription_return_sum_query = (
+        models.PrescriptionReturnThrough.objects.filter(medician_id=medician.id)
+        .aggregate(Sum("quantity"))
+        .get("quantity__sum", 0)
+    )
 
     entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
     prescription_sum = (
         prescription_sum_query if prescription_sum_query is not None else 0
     )
+    prescription_return_sum = prescription_return_sum_query if prescription_return_sum_query is not None else 0
 
-    existence = entrance_sum - prescription_sum
+    existence = entrance_sum - prescription_sum + prescription_return_sum
     if existence is None:
         existence = 0
     medician.existence = round(existence, 1)

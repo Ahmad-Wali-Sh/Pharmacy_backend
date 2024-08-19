@@ -8,6 +8,9 @@ from core.models import (
     Country,
     Unit,
     Prescription,
+    PrescriptionReturn,
+    PrescriptionReturnThrough,
+    PrescriptionReturnImage,
     PharmCompany,
     Store,
     Currency,
@@ -22,6 +25,7 @@ from core.models import (
     City,
     Market,
     MedicineBarcode,
+    DepartmentReturn,
     Revenue,
     PrescriptionImage,
     MedicineSaleDictionary,
@@ -424,6 +428,49 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
         fields = "__all__"
+        
+class PrescriptionReturnSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+    order_user_name = serializers.SerializerMethodField()
+    prescription_image = serializers.SerializerMethodField()
+    history = serializers.SerializerMethodField()
+
+    def get_history(self, obj):
+        history_list = obj.history.all()
+        history_dicts = [log_entry_to_dict(entry) for entry in history_list]
+        return history_dicts
+
+    def get_prescription_image(self, obj):
+        entrance_image_obj = PrescriptionReturnImage.objects.filter(prescription=obj.id)
+        json_entrance_image = PrescriptionReturnImageSerializer(entrance_image_obj, many=True)
+        return json_entrance_image.data
+
+    def get_patient_name(self, obj):
+        if obj.name:
+            return str(obj.name.id) + "." + obj.name.name
+    def get_order_user_name(self, obj):
+        if obj.order_user:
+            return obj.order_user.first_name
+
+    def get_doctor_name(self, obj):
+        if obj.doctor:
+            return str(obj.doctor.id) + "." + obj.doctor.name
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    def get_department_name(self, obj):
+        return obj.department.name
+
+    class Meta:
+        model = PrescriptionReturn
+        fields = "__all__"
 
 
 
@@ -484,6 +531,19 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Department
+        fields = "__all__"
+        
+class DepartmentReturnSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = DepartmentReturn
         fields = "__all__"
 
 
@@ -1128,6 +1188,11 @@ class PrescriptionImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrescriptionImage
         fields = "__all__"
+        
+class PrescriptionReturnImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescriptionReturnImage
+        fields = "__all__"
 
 
 class EntranceThroughSerializer(serializers.ModelSerializer):
@@ -1274,48 +1339,68 @@ class RevenueRecordSerializer(serializers.ModelSerializer):
     
     discount_money = serializers.SerializerMethodField()
     def get_discount_money(self, obj):
-        if (obj.prescription.discount_money):
+        if (obj.prescription and obj.prescription.discount_money):
             return obj.prescription.discount_money
+        if (obj.prescription_return and obj.prescription_return.discount_money):
+            return obj.prescription_return.discount_money
         else:
             return 0
         
     discount_percent = serializers.SerializerMethodField()
     def get_discount_percent(self, obj):
-        if (obj.prescription.discount_percent):
+        if (obj.prescription and obj.prescription.discount_percent):
             return obj.prescription.discount_percent
+        if (obj.prescription_return and obj.prescription_return.discount_percent):
+            return obj.prescription_return.discount_percent
         else:
             return 0
     khairat = serializers.SerializerMethodField()
     def get_khairat(self, obj):
-        if (obj.prescription.khairat):
+        if (obj.prescription and obj.prescription.khairat):
             return obj.prescription.khairat
+        if (obj.prescription_return and obj.prescription_return.khairat):
+            return obj.prescription_return.khairat
         else:
             return 0
     zakat = serializers.SerializerMethodField()
     def get_zakat(self, obj):
-        if (obj.prescription.zakat):
+        if (obj.prescription and obj.prescription.zakat):
             return obj.prescription.zakat
+        if (obj.prescription_return and obj.prescription_return.zakat):
+            return obj.prescription_return.zakat
         else:
             return 0
     rounded_number = serializers.SerializerMethodField()
     def get_rounded_number(self, obj):
-        if (obj.prescription.rounded_number):
+        if (obj.prescription and obj.prescription.rounded_number):
             return obj.prescription.rounded_number
+        if (obj.prescription_return and obj.prescription_return.rounded_number):
+            return obj.prescription_return.rounded_number
         else:
             return 0
     
 
     def get_patient_name(self, obj):
-        if obj.prescription.name:
+        if (obj.prescription and obj.prescription.name):
             return obj.prescription.name.name
+        if (obj.prescription_return and obj.prescription_return.name):
+            return obj.prescription_return.name.name
         else:
-            return ""
+            return 0
 
     def get_prescription_number(self, obj):
-        return obj.prescription.prescription_number
+        if(obj.prescription):
+            return obj.prescription.prescription_number
+        if(obj.prescription_return):
+            return obj.prescription_return.prescription_number
+        else: return ''
 
     def get_department_name(self, obj):
-        return obj.prescription.department.name
+        if(obj.prescription):
+            return obj.prescription.department.name
+        if(obj.prescription_return):
+            return obj.prescription_return.department.name
+        else: return ''
 
     def get_username(self, res):
         if res.user and res.user.first_name:
@@ -1553,6 +1638,97 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PrescriptionThrough
+        fields = "__all__"
+        
+class PrescriptionThroughReturnSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    medicine_cautions = serializers.SerializerMethodField()
+    medicine_usage = serializers.SerializerMethodField()
+    medicine_full = serializers.SerializerMethodField()
+    medicine_no_box = serializers.SerializerMethodField()
+    medicine_no_quantity = serializers.SerializerMethodField()
+    prescription_number = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
+    medicine_existence = serializers.SerializerMethodField()
+
+    def get_medicine_existence(self, res):
+        if res.medician and res.medician.existence:
+            return res.medician.existence
+        else:
+            """"""
+
+    def get_department_name(self, res):
+        return res.prescription.department.name
+
+    def get_prescription_number(self, res):
+        return res.prescription.prescription_number
+
+    def get_medicine_full(self, res):
+        obj = res.medician
+        kind_name = ""
+        country_name = ""
+        big_company_name = ""
+        generics = ""
+        ml = ""
+        weight = ""
+        if obj.kind and obj.kind.name_english:
+            kind_name = obj.kind.name_english + "."
+        if obj.country:
+            country_name = obj.country.name
+        if obj.big_company:
+            big_company_name = obj.big_company.name + " "
+        if obj.generic_name:
+            generics = "{" + str(",".join(map(str, obj.generic_name))) + "} "
+        if obj.ml:
+            ml = obj.ml
+        if obj.weight:
+            weight = obj.weight
+
+        return (
+            kind_name
+            + obj.brand_name
+            + " "
+            + ml
+            + " "
+            + generics
+            + big_company_name
+            + country_name
+            + " "
+            + weight
+        )
+
+    def get_medicine_cautions(self, obj):
+        if obj.medician.cautions:
+            return obj.medician.cautions
+        else:
+            return ""
+
+    def get_medicine_no_box(self, obj):
+        if obj.medician.no_box:
+            return obj.medician.no_box
+        else:
+            return ""
+
+    def get_medicine_no_quantity(self, obj):
+        if obj.medician.no_pocket:
+            return obj.medician.no_pocket
+        else:
+            return ""
+
+    def get_medicine_usage(self, obj):
+        if obj.medician.usages:
+            return obj.medician.usages
+        else:
+            return ""
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = PrescriptionReturnThrough
         fields = "__all__"
 
 

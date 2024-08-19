@@ -251,22 +251,18 @@ class Medician(models.Model):
         if self.existence is None:
             self.existence = 0
         super().save(*args, **kwargs)
-        
+
     def get_medicine_full(self, obj):
         kind_name = f"{obj.kind.name_english}." if obj.kind else ""
         country_name = f"{obj.country.name}" if obj.country else ""
         big_company_name = f"{obj.big_company.name} " if obj.big_company else ""
         generics = (
-            f"{{{','.join(map(str, obj.generic_name))}}}"
-            if obj.generic_name
-            else ""
+            f"{{{','.join(map(str, obj.generic_name))}}}" if obj.generic_name else ""
         )
         ml = f"{obj.ml}" if obj.ml else ""
         weight = f"{obj.weight}" if obj.weight else ""
 
-        medicine_full = (
-            f"{kind_name}{obj.brand_name} {ml} {big_company_name} {country_name} {weight}"
-        )
+        medicine_full = f"{kind_name}{obj.brand_name} {ml} {big_company_name} {country_name} {weight}"
         return medicine_full
 
 
@@ -434,18 +430,17 @@ class Prescription(models.Model):
                 self.grand_total = round(grand_total, 0)
 
         purchased_total = (
-            RevenueRecord.objects.filter(prescription=self.id)
-            .aggregate(Sum("amount"))
-            .get("amount__sum", 0)
+            RevenueRecord.objects.filter(prescription=self.id, prescription_return__isnull=True)
+            .aggregate(total=Sum("amount"))
+            .get("total") or 0
         )
-        
-        if (purchased_total):
+
+        if purchased_total :
             self.purchased_value = purchased_total
             self.refund = self.grand_total - purchased_total
         else:
             self.purchased_value = 0
             self.refund = self.grand_total
-            
 
         today_jalali = jdatetime.now()
         start_jalali_date = jdatetime(today_jalali.year, today_jalali.month, 1)
@@ -515,19 +510,232 @@ class Prescription(models.Model):
         return super().save(*args, **kwargs)
 
 
+# Prescriptio Returns Models...
+
+
+class DepartmentReturn(models.Model):
+    name = models.CharField(max_length=240)
+    over_price_money = models.FloatField(default=0)
+    over_price_percent = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+    celling_start = models.FloatField(default=0)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return self.name
+
+
+class PrescriptionReturn(models.Model):
+    department = models.ForeignKey(DepartmentReturn, on_delete=models.RESTRICT)
+    prescription_number = models.CharField(
+        max_length=60, unique=True, null=True, blank=True, editable=False
+    )
+    name = models.ForeignKey(
+        PatientName, on_delete=models.RESTRICT, null=True, blank=True
+    )
+    doctor = models.ForeignKey(
+        DoctorName, on_delete=models.RESTRICT, null=True, blank=True
+    )
+    history = AuditlogHistoryField()
+    grand_total = models.FloatField(default=0)
+    discount_money = models.FloatField(default=0)
+    discount_percent = models.FloatField(default=0)
+    over_money = models.FloatField(default=0)
+    over_percent = models.FloatField(default=0)
+    zakat = models.FloatField(default=0)
+    khairat = models.FloatField(default=0)
+    created = models.DateField(auto_now_add=True)
+    id = models.AutoField(primary_key=True)
+    rounded_number = models.FloatField(default=0)
+    sold = models.BooleanField(default=False)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+    timestamp = models.DateTimeField(default=timezone.now, editable=False)
+    refund = models.FloatField(default=0)
+    barcode_str = models.CharField(max_length=255, blank=True, editable=False)
+    purchase_payment_date = models.DateTimeField(null=True, blank=True)
+    purchased_value = models.FloatField(default=0)
+    revenue = models.ForeignKey(
+        Revenue, on_delete=models.RESTRICT, null=True, blank=True
+    )
+    order_user = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        related_name="prescription_order_user",
+    )
+
+    def __str__(self):
+        return self.prescription_number
+
+    def save(self, *args, **kwargs):
+        if self.prescription_number:
+            prescription_through_total = list(
+                PrescriptionReturnThrough.objects.filter(prescription_id=self.id)
+                .aggregate(Sum("total_price"))
+                .values()
+            )[0]
+            discount_percent = float(self.discount_percent)
+            over_percent = float(self.over_percent)
+            discount_amount = 0
+            if prescription_through_total:
+                discount_amount = prescription_through_total * (discount_percent / 100)
+                over_amount = prescription_through_total * (over_percent / 100)
+                self.rounded_number = calculate_rounded_value(
+                    int(float(prescription_through_total)),
+                    self.department.celling_start,
+                )
+                grand_total = -(
+                    float(prescription_through_total)
+                    - discount_amount
+                    - float(self.zakat)
+                    - float(self.khairat)
+                    - float(self.discount_money)
+                    + float(self.rounded_number)
+                    + over_amount
+                    + float(self.over_money)
+                )
+                self.grand_total = round(grand_total, 1)
+                
+        purchased_total = (
+            RevenueRecord.objects.filter(prescription_return=self.id, prescription__isnull=True)
+            .aggregate(total=Sum("amount"))
+            .get("total") or 0
+        )
+
+        if purchased_total :
+            self.purchased_value = purchased_total
+            self.refund = self.grand_total - purchased_total
+        else:
+            self.purchased_value = 0
+            self.refund = self.grand_total
+
+        today_jalali = jdatetime.now()
+        start_jalali_date = jdatetime(today_jalali.year, today_jalali.month, 1)
+
+        start_gregorian_date = start_jalali_date.togregorian()
+        end_gregorian_date = today_jalali.togregorian()
+
+        j_year = today_jalali.year
+        j_month = today_jalali.month
+
+        objects_count = PrescriptionReturn.objects.filter(
+            created__range=(start_gregorian_date, end_gregorian_date)
+        ).count()
+
+        count_of_month = objects_count + 1 if objects_count > 0 else 1
+
+        if not self.prescription_number:
+            if count_of_month == 1:
+                self.prescription_number = f"{j_year}-{j_month:02d}-{count_of_month}"
+            else:
+                self.prescription_number = f"{j_year}-{j_month:02d}-{count_of_month}"
+
+        if self.barcode_str == "":
+            settings = GlobalSettings.get_settings()
+            number = random.randint(1000000000000, 9999999999999)
+            buffer = BytesIO()
+
+            if settings.barcode_type == "code39":
+                code39 = Code39(f"{number}", writer=ImageWriter())
+                code39.write(buffer)
+                self.barcode_str = code39.get_fullcode()
+
+            elif settings.barcode_type == "code128":
+                code128 = Code128(f"{number}", writer=ImageWriter())
+                code128.write(buffer)
+                self.barcode_str = code128.get_fullcode()
+
+            elif settings.barcode_type == "ean13":
+                ean13 = EAN13(f"{number}", writer=ImageWriter())
+                ean13.write(buffer)
+                self.barcode_str = ean13.get_fullcode()
+
+            elif settings.barcode_type == "upca":
+                upca = UPCA(f"{number}", writer=ImageWriter())
+                upca.write(buffer)
+                self.barcode_str = upca.get_fullcode()
+
+        return super().save(*args, **kwargs)
+
+
+auditlog.register(
+    PrescriptionReturn,
+    include_fields=[
+        "name",
+        "doctor",
+        "purchased_value",
+        "order_user",
+        "revenue",
+        "zakat",
+        "sold",
+        "khairat",
+        "discount_money",
+        "discount_percent",
+        "over_percent",
+        "over_money",
+    ],
+)
+
+
+class PrescriptionReturnImage(models.Model):
+    prescription = models.ForeignKey(PrescriptionReturn, on_delete=models.CASCADE)
+    image = OptimizedImageField(
+        null=True,
+        blank=True,
+        default="",
+        upload_to="frontend/public/dist/images/prescription_returns",
+    )
+
+
+class PrescriptionReturnThrough(models.Model):
+    medician = models.ForeignKey(Medician, on_delete=models.RESTRICT)
+    prescription = models.ForeignKey(PrescriptionReturn, on_delete=models.CASCADE)
+    quantity = models.FloatField(default=0)
+    each_price = models.FloatField(default=0)
+    total_price = models.FloatField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
+    def __str__(self):
+        return self.prescription.prescription_number
+
+    def save(self, *args, **kwargs):
+        """Calculation of Total Price for total_price field"""
+        if self.quantity:
+            self.total_price = round(self.quantity * self.each_price, 0)
+        else:
+            self.quantity = 1
+            self.total_price = round(1 * self.each_price, 0)
+
+        super(PrescriptionReturnThrough, self).save(*args, **kwargs)
+
+        self.prescription.save()
+
+
+# Prescription Return End
+
+
 class RevenueRecord(models.Model):
     revenue = models.ForeignKey(Revenue, on_delete=models.RESTRICT)
-    prescription = models.ForeignKey(Prescription, on_delete=models.RESTRICT)
+    prescription = models.ForeignKey(
+        Prescription, null=True, blank=True, on_delete=models.RESTRICT
+    )
+    prescription_return = models.ForeignKey(
+        PrescriptionReturn, null=True, blank=True, on_delete=models.RESTRICT
+    )
     record_type = models.CharField(max_length=30)
     amount = models.FloatField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
-        return (
-            str(self.revenue.id) + " | " + str(self.prescription.prescription_number)
-        )
-
+        if (self.prescription):            
+            return str(self.revenue.id) + " | " + str(self.prescription.prescription_number)
+        if (self.prescription_return):
+            return str(self.revenue.id) + " | " + str(self.prescription_return.prescription_number)
+        else: str(self.revenue.id)
 
 auditlog.register(
     Prescription,
@@ -786,14 +994,19 @@ class EntranceThrough(models.Model):
 
 
 class MedicineWith(models.Model):
-    medician  = models.ForeignKey(Medician, on_delete=models.RESTRICT, related_name="add_medicine")
+    medician = models.ForeignKey(
+        Medician, on_delete=models.RESTRICT, related_name="add_medicine"
+    )
     additional = models.ManyToManyField(Medician, blank=True, null=True)
 
     def __str__(self):
         return self.medician.brand_name
-    
+
+
 class MedicineSaleDictionary(models.Model):
-    medician  = models.ForeignKey(Medician, on_delete=models.RESTRICT, related_name="list_medicine")
+    medician = models.ForeignKey(
+        Medician, on_delete=models.RESTRICT, related_name="list_medicine"
+    )
     sale = models.FloatField(blank=True, null=True)
 
     def __str__(self):

@@ -19,6 +19,12 @@ from .views import (
     PaymentMethodView,
     EntranceThroughView,
     EntranceView,
+    PrescriptionReturnThroughView,
+    PrescriptionReturnView,
+    PrescriptionReturnPaginatedView,
+    LastPrescriptionReturnView,
+    PrescriptionReturnImageView,
+    DepartmentReturnView,
     EntrancePaginatedView,
     MedicianExcelView,
     TrazView,
@@ -36,6 +42,7 @@ from .views import (
     MedicianOrderViewSet,
     MedicineConflictView,
     MedicineBarcodeView,
+    PrescriptionReturnViewSet,
     PuchaseListView,
     MedicianMinimumViewSet,
     PrescriptionImageView,
@@ -45,13 +52,12 @@ from .views import (
     PurchaseListManualView,
     PrescriptionPaginatedView,
     RevenueRecordViewSet,
-    PrescriptionViewSet
+    PrescriptionViewSet,
 )
 
 prescription_extra_actions = {
-    'previous': 'previous',
+    "previous": "previous",
 }
-
 
 
 router = routers.DefaultRouter()
@@ -60,6 +66,7 @@ router.register(r"kind", KindView)
 router.register(r"pharm-groub", PharmGroupView)
 router.register(r"country", CountryView)
 router.register(r"prescription", PrescriptionView)
+router.register(r"prescription-return", PrescriptionReturnView)
 router.register(r"unit", UnitView)
 router.register(r"medicine-barcode", MedicineBarcodeView)
 router.register(r"pharm-companies", PharmCompanyView)
@@ -67,19 +74,24 @@ router.register(r"entrance", EntranceView)
 router.register(r"entrance-pg", EntrancePaginatedView)
 router.register(r"entrance-image", EntranceImageView)
 router.register(r"prescription-image", PrescriptionImageView)
+router.register(r"prescription-return-image", PrescriptionReturnImageView)
 router.register(r"entrance-throug", EntranceThroughView)
 router.register(r"store", StoreView)
 router.register(r"final-register", FinalRegisterView)
 router.register(r"prescription-through", PrescriptionThroughView)
+router.register(r"prescription-return-through", PrescriptionReturnThroughView)
 router.register(r"patient", PatientNameView)
 router.register(r"doctor", DoctorNameView)
 router.register(r"department", DepartmentView)
+router.register(r"department-return", DepartmentReturnView)
 router.register(r"currency", CurrencyView)
 router.register(r"payment-method", PaymentMethodView)
 router.register(r"revenue", RevenueView)
 router.register(r"medician-excel", MedicianExcelView)
 router.register(r"prescription-pg", PrescriptionPaginatedView)
+router.register(r"prescription-return-pg", PrescriptionReturnPaginatedView)
 router.register(r"last-entrance", LastEntranceView)
+router.register(r"last-prescription-return", LastPrescriptionReturnView)
 router.register(r"last-prescription", LastPrescriptionView)
 router.register(r"big-company", BigCompanyView)
 router.register(r"purchase-list", PurchaseListQueryView)
@@ -103,6 +115,24 @@ router.register(r"traz", TrazView, basename="traz")
 urlpatterns = [
     path("", include(router.urls)),
     path("user/permissions/", user_permissions, name="user_permissions"),
-    path('prescription/<int:pk>/previous/', PrescriptionViewSet.as_view({'get': 'previous'}), name='prescription-previous'),
-    path('prescription/<int:pk>/next/', PrescriptionViewSet.as_view({'get': 'next'}), name='prescription-next'),
+    path(
+        "prescription/<int:pk>/previous/",
+        PrescriptionViewSet.as_view({"get": "previous"}),
+        name="prescription-previous",
+    ),
+    path(
+        "prescription/<int:pk>/next/",
+        PrescriptionViewSet.as_view({"get": "next"}),
+        name="prescription-next",
+    ),
+    path(
+        "prescription-return/<int:pk>/previous/",
+        PrescriptionReturnViewSet.as_view({"get": "previous"}),
+        name="prescription-previous",
+    ),
+    path(
+        "prescription-return/<int:pk>/next/",
+        PrescriptionReturnViewSet.as_view({"get": "next"}),
+        name="prescription-next",
+    ),
 ]
