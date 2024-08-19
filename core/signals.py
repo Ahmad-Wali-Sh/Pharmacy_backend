@@ -95,6 +95,55 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
         instance.prescription.refund = instance.prescription.grand_total
 
     instance.prescription.save()
+    
+@receiver(post_delete, sender=models.PrescriptionReturnThrough)
+def deleting_prescriptionThrough(sender, instance, **kwargs):
+
+    prescription_through_total = list(
+        models.PrescriptionReturnThrough.objects.filter(
+            prescription_id=instance.prescription.id
+        )
+        .aggregate(Sum("total_price"))
+        .values()
+    )[0]
+    discount_percent = float(instance.prescription.discount_percent)
+    over_percent = float(instance.prescription.over_percent)
+    if prescription_through_total:
+        discount_amount = prescription_through_total * (discount_percent / 100)
+        over_amount = prescription_through_total * (over_percent / 100)
+        grand_total = -(
+            float(prescription_through_total)
+            - discount_amount
+            - float(instance.prescription.zakat)
+            - float(instance.prescription.khairat)
+            - float(instance.prescription.discount_money)
+            + float(instance.prescription.rounded_number)
+            + over_amount
+            + float(instance.prescription.over_money)
+        )
+    else:
+        grand_total = 0
+
+    if prescription_through_total and grand_total:
+        instance.prescription.grand_total = round(grand_total, 0)
+
+    else:
+        instance.prescription.grand_total = 0
+        
+    purchased_total = (
+        models.RevenueRecord.objects.filter(prescription_return=instance.prescription, prescription__isnull=True)
+        .aggregate(Sum("amount"))
+        .get("amount__sum", 0)
+    )
+
+    if purchased_total:
+        instance.prescription.purchased_value = purchased_total
+        instance.prescription.refund = instance.prescription.grand_total - purchased_total
+    else:
+        instance.prescription.purchased_value = 0
+        instance.prescription.refund = instance.prescription.grand_total
+
+    instance.prescription.save()
 
 
 def get_medicine_full(res):
