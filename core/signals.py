@@ -82,10 +82,10 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
         instance.prescription.grand_total = 0
         
     purchased_total = (
-        models.RevenueRecord.objects.filter(prescription=instance.prescription)
-        .aggregate(Sum("amount"))
-        .get("amount__sum", 0)
-    )
+           models.RevenueRecord.objects.filter(prescription=instance.prescription, prescription_return__isnull=True)
+            .aggregate(total=Sum("amount"))
+            .get("total") or 0
+        )
 
     if purchased_total:
         instance.prescription.purchased_value = purchased_total
@@ -97,7 +97,7 @@ def deleting_prescriptionThrough(sender, instance, **kwargs):
     instance.prescription.save()
     
 @receiver(post_delete, sender=models.PrescriptionReturnThrough)
-def deleting_prescriptionThrough(sender, instance, **kwargs):
+def deleting_prescriptionReturnThrough(sender, instance, **kwargs):
 
     prescription_through_total = list(
         models.PrescriptionReturnThrough.objects.filter(
