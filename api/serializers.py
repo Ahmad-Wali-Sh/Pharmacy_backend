@@ -1202,6 +1202,12 @@ class EntranceThroughSerializer(serializers.ModelSerializer):
     medicine_existence = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     company_name = serializers.SerializerMethodField()
+    entrance_department = serializers.SerializerMethodField()
+    
+    def get_entrance_department(self, obj):
+        if(obj.entrance.final_register):
+            return obj.entrance.final_register.name
+        return ''
     
     def get_company_name (self, res):
         if ( res.entrance.company):
@@ -1559,6 +1565,13 @@ class PrescriptionThroughSerializer(serializers.ModelSerializer):
     prescription_number = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
     medicine_existence = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    
+    def get_patient_name (self, res):
+        if (res.prescription and res.prescription.name):
+            return res.prescription.name.name
+        else:
+            return ''
 
     def get_medicine_existence(self, res):
         if res.medician and res.medician.existence:
@@ -1650,6 +1663,13 @@ class PrescriptionThroughReturnSerializer(serializers.ModelSerializer):
     prescription_number = serializers.SerializerMethodField()
     department_name = serializers.SerializerMethodField()
     medicine_existence = serializers.SerializerMethodField()
+    patient_name = serializers.SerializerMethodField()
+    
+    def get_patient_name (self, res):
+        if (res.prescription and res.prescription.name):
+            return res.prescription.name.name
+        else:
+            return ''
 
     def get_medicine_existence(self, res):
         if res.medician and res.medician.existence:

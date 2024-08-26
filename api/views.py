@@ -1105,6 +1105,10 @@ class TrazView(FlatMultipleModelAPIViewSet):
             "queryset": PrescriptionThrough.objects.all(),
             "serializer_class": PrescriptionThroughSerializer,
         },
+        {
+            "queryset": PrescriptionReturnThrough.objects.all(),
+            "serializer_class": PrescriptionThroughReturnSerializer,
+        }
     ]
     model = EntranceThrough
     filter_backends = [
@@ -1116,12 +1120,15 @@ class TrazView(FlatMultipleModelAPIViewSet):
     ordering_fields = ["id", "timestamp"]
     ordering = ["id", "timestamp"]
     
+    def get_queryset(self):
+        # Return the queryset for the model defined in the view
+        return EntranceThrough.objects.all()
+    
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         
         medicine = request.query_params.get('medician')
 
-        # Filter the EntranceThrough objects based on the selected medicine and date range
         entrance_throughs = EntranceThrough.objects.filter(
             medician=medicine
         )
@@ -1129,8 +1136,11 @@ class TrazView(FlatMultipleModelAPIViewSet):
         prescription_throughs = PrescriptionThrough.objects.filter(
             medician=medicine
         )
+        
+        prescription_return_throughs = PrescriptionReturnThrough.objects.filter(
+            medician=medicine
+        )
 
-        # Calculate the total register_quantity for the filtered EntranceThrough objects
         entrance_through_total = entrance_throughs.aggregate(
             total=Sum('register_quantity')
         )['total'] or 0
@@ -1138,14 +1148,17 @@ class TrazView(FlatMultipleModelAPIViewSet):
         prescription_through_total = prescription_throughs.aggregate(
             total=Sum('quantity')
         )['total'] or 0
+        
+        prescription_return_through_total = prescription_return_throughs.aggregate(
+            total=Sum('quantity')
+        )['total'] or 0
 
-        # Calculate the totals
 
-        # Add the totals to the response data
         response_data = {
             'results': response.data,
             'entrance_through_total': entrance_through_total,
             'prescription_through_total': prescription_through_total,
+            'prescription_return_through_total': prescription_return_through_total
         }
 
         return Response(response_data)
