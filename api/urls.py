@@ -53,6 +53,8 @@ from .views import (
     PrescriptionPaginatedView,
     RevenueRecordViewSet,
     PrescriptionViewSet,
+    JournalEntryView,
+    JournalCategoryView
 )
 
 prescription_extra_actions = {
@@ -102,6 +104,8 @@ router.register(r"purchase-list-manual", PurchaseListManualView)
 router.register(r"medicine_order", MedicianOrderViewSet)
 router.register(r"medicine_minimum", MedicianMinimumViewSet)
 router.register(r"medicine-conflict", MedicineConflictView)
+router.register(r"journal-category", JournalCategoryView)
+router.register(r"journal-entry", JournalEntryView)
 router.register(r"stock", StockView)
 router.register(r"stock-excel", StockExcelView)
 router.register(r"prescription-excel", PrescriptionExcelView)

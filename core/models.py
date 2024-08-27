@@ -1071,6 +1071,36 @@ class PurchaseListManual(models.Model):
             self.medicine.unsubmited_existence = self.arrival
             self.medicine.save()
         super(PurchaseListManual, self).save(*args, **kwargs)
-
+        
+class JournalCategory(models.Model):
+    name = models.CharField(max_length=150)
+    info = models.TextField(null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)   
+    
+    def __str__(self):
+        return self.name  
+         
+class JournalEntry(models.Model):
+    related_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='related_user')
+    amount = models.FloatField(default=0)
+    category = models.ForeignKey(JournalCategory, on_delete=models.PROTECT)
+    description = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+    history = AuditlogHistoryField()
+    
+    def __str__(self):
+        return f'{self.related_user}: {self.amount}, {self.category.name}'
+    
+auditlog.register(
+    JournalEntry,
+    include_fields=[
+        "related_user",
+        "amount",
+        "category",
+        "description",
+        'user'
+    ]
+)
 
 from . import signals

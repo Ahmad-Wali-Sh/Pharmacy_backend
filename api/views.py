@@ -43,7 +43,9 @@ from .serializers import (
     PurchaseListManualSerializer,
     EntranceImageSeriazlier,
     MedicianOrderSerializer,
-    RevenueRecordSerializer
+    RevenueRecordSerializer,
+    JournalCategorySerializer,
+    JournalEntrySerializer
 )
 from rest_framework import status
 from django.db.models import Sum
@@ -84,6 +86,8 @@ from core.models import (
     MedicineConflict,
     PurchaseList,
     PurchaseListManual,
+    JournalCategory,
+    JournalEntry
 )
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -1280,3 +1284,25 @@ class PrescriptionReturnViewSet(viewsets.ModelViewSet):
                 return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
         except PrescriptionReturn.DoesNotExist:
             return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+class JournalCategoryView(viewsets.ModelViewSet):
+    queryset = JournalCategory.objects.all().order_by("id")
+    serializer_class = JournalCategorySerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['name', 'info','user']
+    
+class JournalEntryFilter(django_filters.FilterSet):
+    timestamp = django_filters.DateFilter(field_name='timestamp', lookup_expr='date')
+    
+    class Meta:
+        model = JournalEntry
+        fields = ['related_user', 'amount', 'category__name', 'description', 'user', 'timestamp']
+    
+class JournalEntryView(viewsets.ModelViewSet):
+    queryset = JournalEntry.objects.all().order_by("id")
+    serializer_class = JournalEntrySerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = JournalEntryFilter

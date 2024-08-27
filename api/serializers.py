@@ -37,6 +37,8 @@ from core.models import (
     MedicineConflict,
     PurchaseListManual,
     RevenueRecord,
+    JournalCategory,
+    JournalEntry
 )
 import ast
 import datetime
@@ -1898,4 +1900,43 @@ class MedicineMinimumSerializer (serializers.Serializer):
 
     class Meta:
         model = Medician
+        fields = "__all__"
+        
+        
+class JournalEntrySerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    related_user_name = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+    
+    def get_category_name(self, obj):
+        return obj.category.name
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+        
+    def get_related_user_name(self, res):
+        if res.related_user and res.related_user.first_name:
+            return res.related_user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = JournalEntry
+        fields = "__all__"
+        
+class JournalCategorySerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = JournalCategory
         fields = "__all__"

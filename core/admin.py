@@ -36,6 +36,8 @@ from core.models import (
     EntranceImage,
     MedicineWith,
     RevenueRecord,
+    JournalCategory, 
+    JournalEntry,
     BigCompany,
     MedicineConflict,
     PurchaseListManual,
@@ -220,6 +222,8 @@ admin.site.register(Entrance, EntracnceAdmin)
 admin.site.register(MedicineBarcode, ImportAdmin)
 admin.site.register(Store, ImportAdmin)
 admin.site.register(PurchaseListManual, ImportAdmin)
+admin.site.register(JournalEntry, ImportAdmin)
+admin.site.register(JournalCategory, ImportAdmin)
 admin.site.register(EntranceImage, ImportAdmin)
 admin.site.register(MedicineWith, ImportAdmin)
 admin.site.register(Currency, ImportAdmin)
