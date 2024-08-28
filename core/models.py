@@ -466,46 +466,22 @@ class Prescription(models.Model):
         if self.barcode_str == "":
             settings = GlobalSettings.get_settings()
             number = random.randint(1000000000000, 9999999999999)
-            buffer = BytesIO()
 
             if settings.barcode_type == "code39":
                 code39 = Code39(f"{number}", writer=ImageWriter())
-                code39.write(buffer)
                 self.barcode_str = code39.get_fullcode()
-
-            elif settings.barcode_type == "qrcode":
-                qr = qrcode.QRCode(
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data(str(number))
-                qr.make(fit=True)
-
-                img = qr.make_image(fill_color="black", back_color="white")
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                self.barcode.save(
-                    f"{number}.png", ContentFile(buffer.getvalue()), save=False
-                )
 
             elif settings.barcode_type == "code128":
                 code128 = Code128(f"{number}", writer=ImageWriter())
-                code128.write(buffer)
                 self.barcode_str = code128.get_fullcode()
 
             elif settings.barcode_type == "ean13":
                 ean13 = EAN13(f"{number}", writer=ImageWriter())
-                ean13.write(buffer)
                 self.barcode_str = ean13.get_fullcode()
 
             elif settings.barcode_type == "upca":
                 upca = UPCA(f"{number}", writer=ImageWriter())
-                upca.write(buffer)
                 self.barcode_str = upca.get_fullcode()
-
-            self.barcode.save(f"{number}" + ".png", File(buffer), save=False)
 
         return super().save(*args, **kwargs)
 
@@ -635,26 +611,21 @@ class PrescriptionReturn(models.Model):
         if self.barcode_str == "":
             settings = GlobalSettings.get_settings()
             number = random.randint(1000000000000, 9999999999999)
-            buffer = BytesIO()
 
             if settings.barcode_type == "code39":
                 code39 = Code39(f"{number}", writer=ImageWriter())
-                code39.write(buffer)
                 self.barcode_str = code39.get_fullcode()
 
             elif settings.barcode_type == "code128":
                 code128 = Code128(f"{number}", writer=ImageWriter())
-                code128.write(buffer)
                 self.barcode_str = code128.get_fullcode()
 
             elif settings.barcode_type == "ean13":
                 ean13 = EAN13(f"{number}", writer=ImageWriter())
-                ean13.write(buffer)
                 self.barcode_str = ean13.get_fullcode()
 
             elif settings.barcode_type == "upca":
                 upca = UPCA(f"{number}", writer=ImageWriter())
-                upca.write(buffer)
                 self.barcode_str = upca.get_fullcode()
 
         return super().save(*args, **kwargs)
