@@ -41,7 +41,8 @@ from core.models import (
     BigCompany,
     MedicineConflict,
     PurchaseListManual,
-    GlobalSettings
+    GlobalSettings,
+    SalaryEntry
 )
 
 from django_jalali.admin.filters import JDateFieldListFilter
@@ -54,7 +55,7 @@ UserAdmin.list_filter += ("image",)
 
 UserAdmin.list_display += ("get_additional_permissions",)
 UserAdmin.fieldsets += (
-    ("Extra Fields", {"fields": ("image", "additional_permissions")}),
+    ("Extra Fields", {"fields": ("image", "hourly_rate","additional_permissions")}),
 )
 
 class GlobalSettingsAdmin(admin.ModelAdmin):
@@ -235,6 +236,7 @@ admin.site.register(BigCompany, ImportAdmin)
 admin.site.register(DoctorName, ImportAdmin)
 admin.site.register(City, ImportAdmin)
 admin.site.register(Market, ImportAdmin)
+admin.site.register(SalaryEntry, ImportAdmin)
 admin.site.register(PatientName, ImportAdmin)
 admin.site.register(Revenue, ImportAdmin)
 admin.site.register(MedicineConflict, ImportAdmin)

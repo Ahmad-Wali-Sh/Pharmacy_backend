@@ -69,7 +69,8 @@ class User(AbstractUser):
         null=True, blank=True, default="", upload_to="frontend/public/dist/images/users"
     )
     additional_permissions = models.ManyToManyField(AdditionalPermission, blank=True)
-    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name"]
+    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name", 'hourly_rate']
+    hourly_rate = models.FloatField(null=True, blank=True)
 
     def get_additional_permissions(self):
         return ", ".join(str(p) for p in self.additional_permissions.all())
@@ -1073,5 +1074,22 @@ auditlog.register(
         'user'
     ]
 )
+
+class SalaryEntry(models.Model):
+    employee = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='salary_employee')
+    payment_date = models.DateField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    hourly_rate = models.FloatField(null=True, blank=True)
+    total_hours = models.FloatField(null=True, blank=True)
+    amount = models.FloatField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    penalty = models.FloatField(null=True, blank=True)
+    bonus = models.FloatField(null=True, blank=True)
+    checked = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='user')
+    
+    def __str__(self):
+        return f"Salary for {self.employee.first_name} on {self.payment_date} - {self.amount}"
+    
 
 from . import signals

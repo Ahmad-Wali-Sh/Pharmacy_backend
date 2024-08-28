@@ -45,7 +45,8 @@ from .serializers import (
     MedicianOrderSerializer,
     RevenueRecordSerializer,
     JournalCategorySerializer,
-    JournalEntrySerializer
+    JournalEntrySerializer,
+    SalaryEntrySerializer
 )
 from rest_framework import status
 from django.db.models import Sum
@@ -87,7 +88,8 @@ from core.models import (
     PurchaseList,
     PurchaseListManual,
     JournalCategory,
-    JournalEntry
+    JournalEntry,
+    SalaryEntry
 )
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -1306,3 +1308,24 @@ class JournalEntryView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = JournalEntryFilter
+    
+class SalaryEntryFilter(django_filters.FilterSet):
+    timestamp = django_filters.DateFilter(field_name='timestamp', lookup_expr='date') 
+    payment_date = django_filters.DateFromToRangeFilter(field_name='payment_date')
+    checked = django_filters.BooleanFilter(field_name='checked')
+    amount = django_filters.NumberFilter(field_name='amount', lookup_expr='exact')
+    penalty = django_filters.NumberFilter(field_name='penalty', lookup_expr='gt')
+    bonus = django_filters.NumberFilter(field_name='bonus', lookup_expr='gt')
+    employee = django_filters.ModelChoiceFilter(queryset=User.objects.all())
+    
+    class Meta:
+        model: SalaryEntry
+        fields = ['employee', 'payment_date', 'amount', 'checked', 'penalty', 'bonus']
+    
+class SalaryEntryViewSet(viewsets.ModelViewSet):
+    queryset = SalaryEntry.objects.all().order_by("id")
+    serializer_class = SalaryEntrySerializer
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = SalaryEntryFilter
+    pagination_class = StandardResultsSetPagination

@@ -54,7 +54,8 @@ from .views import (
     RevenueRecordViewSet,
     PrescriptionViewSet,
     JournalEntryView,
-    JournalCategoryView
+    JournalCategoryView,
+    SalaryEntryViewSet
 )
 
 prescription_extra_actions = {
@@ -113,6 +114,7 @@ router.register(
     r"entrance-through-expired", EntranceThroughExpiresView, basename="medicines"
 )
 router.register(r"market", MarketView)
+router.register(r"salary-entry", SalaryEntryViewSet)
 router.register(r"traz", TrazView, basename="traz")
 
 

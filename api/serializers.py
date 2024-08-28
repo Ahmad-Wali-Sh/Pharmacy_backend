@@ -38,7 +38,8 @@ from core.models import (
     PurchaseListManual,
     RevenueRecord,
     JournalCategory,
-    JournalEntry
+    JournalEntry,
+    SalaryEntry
 )
 import ast
 import datetime
@@ -77,8 +78,8 @@ def log_entry_to_dict(log_entry):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "first_name")
-        read_only_fields = ("username", "first_name")
+        fields = ["id", "username", "first_name", "hourly_rate"]
+        read_only_fields = ("username", "first_name", "hourly_rate")
         read_and_write_fields = ("id",)
 
 
@@ -1939,4 +1940,25 @@ class JournalCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JournalCategory
+        fields = "__all__"
+        
+class SalaryEntrySerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    employee_name = serializers.SerializerMethodField()
+    
+    def get_employee_name (self, obj):
+        if obj.employee and obj.employee.first_name:
+            return obj.employee.first_name
+        else:
+            return ''
+
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    class Meta:
+        model = SalaryEntry
         fields = "__all__"
