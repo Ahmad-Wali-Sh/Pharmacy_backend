@@ -50,6 +50,7 @@ from .serializers import (
 )
 from rest_framework import status
 from django.db.models import Sum
+from auditlog.registry import auditlog
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import (
@@ -796,6 +797,48 @@ class PrescriptionView(viewsets.ModelViewSet):
     ]
     permission_classes = [D7896DjangoModelPermissions]
     ordering_fields = ["id", "created", "purchase_payment_date"]
+    
+    @action(detail=True, methods=['post'])
+    def duplicate(self, request, pk=None):
+        try:
+            prescription = self.get_object()
+
+            new_prescription = Prescription.objects.create(
+                department=prescription.department,
+                name=prescription.name,
+                doctor=prescription.doctor,
+                grand_total=prescription.grand_total,
+                discount_money=prescription.discount_money,
+                discount_percent=prescription.discount_percent,
+                over_money=prescription.over_money,
+                over_percent=prescription.over_percent,
+                zakat=prescription.zakat,
+                khairat=prescription.khairat,
+                image=prescription.image,
+                sold=prescription.sold,
+                user=prescription.user,
+                refund=prescription.refund,
+                barcode=prescription.barcode,
+                barcode_str=prescription.barcode_str,
+                purchase_payment_date=prescription.purchase_payment_date,
+                purchased_value=prescription.purchased_value,
+                revenue=prescription.revenue,
+                order_user=prescription.order_user
+            )
+
+            prescription_throughs = PrescriptionThrough.objects.filter(prescription=pk).order_by('id')
+            for through in prescription_throughs:
+                through.pk = None
+                through.prescription = new_prescription
+                through.save()
+
+            serializer = self.get_serializer(new_prescription)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Prescription.DoesNotExist:
+            return Response({"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 class PrescriptionReturnView(viewsets.ModelViewSet):
     queryset = PrescriptionReturn.objects.all().order_by("id")
