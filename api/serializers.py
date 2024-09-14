@@ -42,7 +42,7 @@ from core.models import (
     SalaryEntry
 )
 import ast
-import datetime
+from datetime import datetime, timedelta
 
 def get_num_days(start_date):
         today = datetime.date.today()
@@ -1962,3 +1962,29 @@ class SalaryEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryEntry
         fields = "__all__"
+        
+class BatchDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EntranceThrough
+        fields = "__all__"
+        
+class UniqueMedicineSerializer(serializers.ModelSerializer):
+    batches = serializers.SerializerMethodField()
+    medician = MedicineSerializer()  # Use MedicineSerializer here
+    
+    class Meta:
+        model = EntranceThrough
+        fields = ['medician', 'batches']
+        
+    def get_batches(self, obj):
+        # Ensure obj is a dictionary with 'medician' key
+        medician_id = obj.medician  # Adjust based on your data structure
+        if medician_id is None:
+            return []
+        expire_in = self.context.get('expire_in', 3)
+        today = datetime.now().date()
+        end_date = today + timedelta(days=expire_in * 30)
+        
+        # Fetch all batches related to this medicine
+        batches = EntranceThrough.objects.filter(medician=medician_id, expire_date__lte=end_date)
+        return BatchDetailSerializer(batches, many=True).data

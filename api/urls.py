@@ -55,7 +55,8 @@ from .views import (
     PrescriptionViewSet,
     JournalEntryView,
     JournalCategoryView,
-    SalaryEntryViewSet
+    SalaryEntryViewSet,
+    UniqueMedicineViewSet
 )
 
 prescription_extra_actions = {
@@ -116,6 +117,7 @@ router.register(
 router.register(r"market", MarketView)
 router.register(r"salary-entry", SalaryEntryViewSet)
 router.register(r"traz", TrazView, basename="traz")
+router.register(r"medicine-expiry", UniqueMedicineViewSet, basename="medicine-expiry")
 
 
 urlpatterns = [

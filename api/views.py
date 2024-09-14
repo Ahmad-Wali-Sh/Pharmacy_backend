@@ -46,8 +46,11 @@ from .serializers import (
     RevenueRecordSerializer,
     JournalCategorySerializer,
     JournalEntrySerializer,
-    SalaryEntrySerializer
+    SalaryEntrySerializer,
+    UniqueMedicineSerializer
 )
+from django.db.models import Max
+from datetime import datetime, timedelta
 from rest_framework import status
 from django.db.models import Sum
 from auditlog.registry import auditlog
@@ -115,6 +118,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_xml.renderers import XMLRenderer
+from decimal import Decimal
 
 class CustomXMLRendererPrescription(XMLRenderer):
     item_tag_name = 'Prescription'
@@ -1372,3 +1376,38 @@ class SalaryEntryViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = SalaryEntryFilter
     pagination_class = StandardResultsSetPagination
+    
+
+class ExpiryMedicineFilter(django_filters.FilterSet):
+    expire_in = django_filters.NumberFilter(method='filter_expire_in')
+
+    class Meta:
+        model = EntranceThrough
+        fields = ['expire_in']
+
+    def filter_expire_in(self, queryset, name, value):
+        if value is None or value <= 0:
+            return queryset
+        
+        today = datetime.today()
+        try:
+            # Convert value to float if it's Decimal
+            if isinstance(value, Decimal):
+                value = float(value)
+            
+            # Calculate the date range based on the number of months until expiration
+            end_date = today + timedelta(days=int(value * 30))  # Approximate month as 30 days
+            return queryset.filter(expire_date__lte=end_date)
+        except (ValueError, TypeError) as e:
+            # Log the error or handle it appropriately
+            return queryset
+
+    
+class UniqueMedicineViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = UniqueMedicineSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ExpiryMedicineFilter
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        return EntranceThrough.objects.distinct('medician')
