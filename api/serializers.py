@@ -1964,6 +1964,14 @@ class SalaryEntrySerializer(serializers.ModelSerializer):
         fields = "__all__"
         
 class BatchDetailSerializer(serializers.ModelSerializer):
+    company_name = serializers.SerializerMethodField()
+    
+    def get_company_name (self, obj):
+        if obj.entrance:
+            if obj.entrance.company:
+                if obj.entrance.company.name:
+                    return obj.entrance.company.name
+        else: return '---'
     class Meta:
         model = EntranceThrough
         fields = "__all__"
