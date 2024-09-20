@@ -1023,7 +1023,7 @@ class PurchaseList(models.Model):
 
 class PurchaseListManual(models.Model):
     medicine = models.ForeignKey(Medician, on_delete=models.CASCADE)
-    quantity = models.FloatField()
+    quantity = models.CharField(max_length=150, null=True, blank=True)
     arrival = models.FloatField(default=0)
     approved = models.BooleanField(default=False)
     shortaged = models.BooleanField(default=False)
