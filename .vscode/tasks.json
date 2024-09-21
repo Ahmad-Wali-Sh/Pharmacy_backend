@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Run Django Server",
+        "type": "shell",
+        "command": "..\\env_1\\Scripts\\Activate; python manage.py runserver",
+        "group": "build",
+        "detail": "Starts Django Development Server",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:pharmacy_backend}"
+        }
+      },
+      {
+        "label": "Run React Server",
+        "type": "shell",
+        "command": "npm run dev",
+        "group": "build",
+        "detail": "Starts React Development Server",
+        "problemMatcher": [],
+        "options": {
+          "cwd": "${workspaceFolder:pharmacy_frontend}"
+        }
+      },
+      {
+        "label": "Run Both Servers",
+        "dependsOn": ["Run Django Server", "Run React Server"],
+        "dependsOrder": "parallel"
+      }
+    ]
+  }
