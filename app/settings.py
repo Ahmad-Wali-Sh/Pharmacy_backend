@@ -67,6 +67,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
         "rest_framework_xml.renderers.XMLRenderer",
+        'app.renderer.UTF8CSVRenderer',
     ),
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
@@ -74,6 +75,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_CHARSET': 'utf-8',
 }
 
 OPTIMIZED_IMAGE_METHOD = "pillow"
