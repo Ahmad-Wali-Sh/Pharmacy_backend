@@ -45,7 +45,7 @@ import ast
 from datetime import datetime, timedelta
 
 def get_num_days(start_date):
-        today = datetime.date.today()
+        today = datetime.today().date()
         num_days = (today - start_date).days
         return num_days
 
@@ -682,6 +682,10 @@ class StockSerializer(serializers.ModelSerializer):
     price = serializers.SerializerMethodField()
     total_purchase = serializers.SerializerMethodField()
     total_sell = serializers.SerializerMethodField()
+    sold_quantity = serializers.SerializerMethodField()
+    
+    def get_sold_quantity(self, obj):  # Serializer method for sold_quantity
+        return obj.sold_quantity
 
     def get_id(self, obj):
         return obj.id
@@ -764,7 +768,8 @@ class StockSerializer(serializers.ModelSerializer):
             'purchased_price', 
             'price', 
             'total_purchase', 
-            'total_sell'
+            'total_sell',
+            'sold_quantity'
         ]
         
         
@@ -796,7 +801,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         start_date_str = request.query_params.get('start_date')
         if not start_date_str:
             start_date_str = datetime.date.today().replace(month=1, day=1).isoformat()  
-        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         total_days = get_num_days(start_date)
         
         return total_days
@@ -807,7 +812,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
 
         if not start_date:
             start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
 
         return start_date
     
@@ -883,7 +888,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
 
         if not start_date:
             start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         prescripion_through_total = PrescriptionThrough.objects.filter(
             medician=obj,
             timestamp__gte=start_date
@@ -900,7 +905,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
 
         if not start_date:
             start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         prescripion_through_total = PrescriptionThrough.objects.filter(
             medician=obj,
             timestamp__gte=start_date
@@ -914,7 +919,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
 
         if not start_date:
             start_date = datetime.date.today().replace(month=1, day=1).isoformat()           
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
         result = EntranceThrough.objects.filter(
             medician=obj,
             timestamp__gte=start_date
@@ -930,7 +935,7 @@ class MedicianOrderSerializer(serializers.ModelSerializer):
         start_date_str = request.query_params.get('start_date')
         if not start_date_str:
             start_date_str = datetime.date.today().replace(month=1, day=1).isoformat()  
-        start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         total_days = get_num_days(start_date)
           
         if num_days:

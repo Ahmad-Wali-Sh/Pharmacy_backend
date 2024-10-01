@@ -47,8 +47,9 @@ from .serializers import (
     JournalCategorySerializer,
     JournalEntrySerializer,
     SalaryEntrySerializer,
-    UniqueMedicineSerializer
+    UniqueMedicineSerializer,
 )
+from rest_framework_csv.renderers import CSVRenderer
 from django.db.models import Max
 from datetime import datetime, timedelta
 from rest_framework import status
@@ -93,7 +94,7 @@ from core.models import (
     PurchaseListManual,
     JournalCategory,
     JournalEntry,
-    SalaryEntry
+    SalaryEntry,
 )
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -120,48 +121,51 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_xml.renderers import XMLRenderer
 from decimal import Decimal
 
+
 class CustomXMLRendererPrescription(XMLRenderer):
-    item_tag_name = 'Prescription'
+    item_tag_name = "Prescription"
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         if isinstance(data, dict):
             # This assumes the response structure has 'results' as the main list
-            data = data.get('results', data)
+            data = data.get("results", data)
 
         if isinstance(data, list):
             for item in data:
                 self.rename_fields(item)
-        
-        return super(CustomXMLRendererPrescription, self).render(data, accepted_media_type, renderer_context)
+
+        return super(CustomXMLRendererPrescription, self).render(
+            data, accepted_media_type, renderer_context
+        )
 
     def rename_fields(self, item):
         # Define your custom header mappings
         field_mapping = {
-            'id': 'ID',
-            'prescription_number': 'Prescription_Number',
-            'patient_name': 'Patient_Name',
-            'doctor_name': 'Doctor_Name',
-            'department_name': 'Department_Name',
-            'username': 'Created_By',
-            'order_user_name': 'Ordered_By',
-            'discount_money': 'Discount_Money',
-            'discount_percent': 'Discount_Percent',
-            'discount_value': 'Discount_Value',
-            'over_money': 'Over_Money',
-            'over_percent': 'Over_Percent',
-            'khairat': 'Khairat',
-            'zakat': 'Zakat',
-            'rounded_number': 'Rounded_Number',
-            'purchased_value': 'Purchased_Value',
-            'purchase_payment_date': 'Purchase_Payment_Date',
-            'revenue': 'Revenue',
-            'refund': 'To_Purchase',
-            'timestamp': 'Timestamp',
-            'sold': 'Sold',
-            'quantity': 'Medicine_Count',
-            'created': 'Created'
+            "id": "ID",
+            "prescription_number": "Prescription_Number",
+            "patient_name": "Patient_Name",
+            "doctor_name": "Doctor_Name",
+            "department_name": "Department_Name",
+            "username": "Created_By",
+            "order_user_name": "Ordered_By",
+            "discount_money": "Discount_Money",
+            "discount_percent": "Discount_Percent",
+            "discount_value": "Discount_Value",
+            "over_money": "Over_Money",
+            "over_percent": "Over_Percent",
+            "khairat": "Khairat",
+            "zakat": "Zakat",
+            "rounded_number": "Rounded_Number",
+            "purchased_value": "Purchased_Value",
+            "purchase_payment_date": "Purchase_Payment_Date",
+            "revenue": "Revenue",
+            "refund": "To_Purchase",
+            "timestamp": "Timestamp",
+            "sold": "Sold",
+            "quantity": "Medicine_Count",
+            "created": "Created",
         }
-        
+
         for old_field, new_field in field_mapping.items():
             if old_field in item:
                 item[new_field] = item.pop(old_field)
@@ -231,7 +235,9 @@ class MedicianFilter(django_filters.FilterSet):
     country__name = django_filters.CharFilter(lookup_expr="icontains")
     big_company__name = django_filters.CharFilter(lookup_expr="icontains")
     barcode__contains = CharArrayFilter(lookup_expr="contains", field_name="barcode")
-    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(method='filter_existence_lower_than_minimum_quantity')
+    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(
+        method="filter_existence_lower_than_minimum_quantity"
+    )
 
     def all_filter(self, queryset, name, value):
         return queryset.filter(
@@ -245,10 +251,15 @@ class MedicianFilter(django_filters.FilterSet):
             | Q(kind__name_persian=value)
             | Q(big_company__name=value)
         )
-        
+
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(active=True).filter(existence__lt=F('minmum_existence'))
+            return (
+                queryset.filter(minmum_existence__isnull=False)
+                .filter(minmum_existence__gt=0)
+                .filter(active=True)
+                .filter(existence__lt=F("minmum_existence"))
+            )
         return queryset
 
     class Meta:
@@ -279,8 +290,6 @@ class MedicianFilter(django_filters.FilterSet):
             "kind__name_persian",
             "big_company__name",
         ]
-        
-
 
 
 class MedicianView(viewsets.ModelViewSet):
@@ -307,9 +316,9 @@ class MedicineBarcodeView(viewsets.ModelViewSet):
     filterset_fields = ["barcode", "medicine"]
     permission_classes = [D7896DjangoModelPermissions]
     pagination_class = StandardResultsSetPagination
-    
+
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ["list", "retrieve"]:
             return MedicineBarcodeDisplaySerializer
         return MedicineBarcodeCreateUpdateSerializer
 
@@ -333,59 +342,103 @@ class MedicianExcelView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
 
 
-
 class MedicianOrderViewSet(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicianOrderSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
-    ordering_fields = ['-id',]
+    ordering_fields = [
+        "-id",
+    ]
 
 
 class StockView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().filter(active=True).annotate(
-        total_sell=Sum('prescriptionthrough__quantity'),
-        total_purchase=Sum('entrancethrough__register_quantity')
+    queryset = (
+        Medician.objects.all()
+        .filter(active=True)
+        .annotate(
+            total_sell=Sum("prescriptionthrough__quantity"),
+            total_purchase=Sum("entrancethrough__register_quantity"),
+            sold_quantity=Sum("prescriptionthrough__quantity"),
+        )
     )
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
-    ordering_fields = ['total_sell', 'total_purchase']
+    ordering_fields = ["total_sell", "total_purchase"]
     pagination_class = StandardResultsSetPagination
-    
+
+class StockExcelSort(CSVRenderer):
+    header = [
+            'id', 
+            'medicine_full', 
+            'brand_name', 
+            'kind_name_english', 
+            'kind_name_persian', 
+            'ml', 
+            'pharm_group_name_persian', 
+            'pharm_group_name_english', 
+            'country_name', 
+            'big_company_name', 
+            'no_box', 
+            'no_pocket', 
+            'existence', 
+            'purchased_price', 
+            'price', 
+            'total_purchase', 
+            'total_sell',
+            'sold_quantity'
+        ]
 
 class StockExcelView(viewsets.ModelViewSet):
-    queryset = Medician.objects.all().filter(active=True).annotate(
-        total_sell=Sum('prescriptionthrough__quantity'),
-        total_purchase=Sum('entrancethrough__register_quantity')
+    queryset = (
+        Medician.objects.all()
+        .filter(active=True)
+        .annotate(
+            total_sell=Sum("prescriptionthrough__quantity"),
+            total_purchase=Sum("entrancethrough__register_quantity"),
+            sold_quantity=Sum("prescriptionthrough__quantity"),
+        )
     )
+    renderer_classes = (StockExcelSort,)
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
-    ordering_fields = ['total_sell', 'total_purchase']
-    
+    ordering_fields = ["total_sell", "total_purchase"]
+
+
 class MedicianMinimuFilter(django_filters.FilterSet):
-    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(method='filter_existence_lower_than_minimum_quantity')
-    
+    existence_lower_than_minimum_quantity = django_filters.BooleanFilter(
+        method="filter_existence_lower_than_minimum_quantity"
+    )
+
     class Meta:
         model = Medician
         fields = []
 
     def filter_existence_lower_than_minimum_quantity(self, queryset, name, value):
         if value:
-            return queryset.filter(minmum_existence__isnull=False).filter(minmum_existence__gt=0).filter(active=True).filter(existence__lt=F('minmum_existence'))
+            return (
+                queryset.filter(minmum_existence__isnull=False)
+                .filter(minmum_existence__gt=0)
+                .filter(active=True)
+                .filter(existence__lt=F("minmum_existence"))
+            )
         return queryset
-    
+
+
 class MedicianMinimumViewSet(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
     serializer_class = MedicineMinimumSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianMinimuFilter
-    ordering_fields = ['-id',]
+    ordering_fields = [
+        "-id",
+    ]
 
 
 class UserView(viewsets.ModelViewSet):
@@ -491,7 +544,8 @@ class PrescriptionThroughView(viewsets.ModelViewSet):
         delete_prescriptions = self.queryset.filter(prescription=delete_id)
         delete_prescriptions.delete()
         return Response(self.serializer_class(delete_prescriptions, many=True).data)
-    
+
+
 class PrescriptionReturnThroughView(viewsets.ModelViewSet):
     queryset = PrescriptionReturnThrough.objects.all().order_by("id")
     serializer_class = PrescriptionThroughReturnSerializer
@@ -559,7 +613,7 @@ class BigCompanyView(viewsets.ModelViewSet):
     serializer_class = BigCompanySerializer
     filterset_class = BigCompanyFilter
     permission_classes = [D7896DjangoModelPermissions]
-    
+
 
 class DepartmentView(viewsets.ModelViewSet):
     queryset = Department.objects.all().order_by("id")
@@ -572,8 +626,8 @@ class DepartmentView(viewsets.ModelViewSet):
     ordering_fields = [
         "id",
     ]
-    
-    
+
+
 class DepartmentReturnView(viewsets.ModelViewSet):
     queryset = DepartmentReturn.objects.all().order_by("id")
     serializer_class = DepartmentReturnSerializer
@@ -694,12 +748,10 @@ class PrescriptionFilterView(django_filters.FilterSet):
     )  # New field for refund not equal
 
     has_prescriptionthrough = django_filters.BooleanFilter(
-        method='filter_has_prescriptionthrough'
-    ) 
+        method="filter_has_prescriptionthrough"
+    )
 
-    purchased = django_filters.BooleanFilter(
-        method='filter_purchased'
-    ) 
+    purchased = django_filters.BooleanFilter(method="filter_purchased")
 
     class Meta:
         model = Prescription
@@ -712,8 +764,8 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "doctor",
             "order_user",
             "grand_total",
-            'purchased_value',
-            'purchased',
+            "purchased_value",
+            "purchased",
             "discount_money",
             "zakat",
             "khairat",
@@ -722,7 +774,7 @@ class PrescriptionFilterView(django_filters.FilterSet):
             "sold",
             "barcode_str",
             "revenue",
-            "grand_not_equal"
+            "grand_not_equal",
         ]
 
     def filter_has_prescriptionthrough(self, queryset, name, value):
@@ -735,8 +787,8 @@ class PrescriptionFilterView(django_filters.FilterSet):
         if value:
             return queryset.filter(purchased_value__gt=0)
         return queryset
-    
-    
+
+
 class PrescriptionReturnFilterView(django_filters.FilterSet):
     created = django_filters.DateTimeFromToRangeFilter()
     refund_not_equal = django_filters.NumberFilter(
@@ -747,12 +799,10 @@ class PrescriptionReturnFilterView(django_filters.FilterSet):
     )  # New field for refund not equal
 
     has_prescriptionthrough = django_filters.BooleanFilter(
-        method='filter_has_prescriptionthrough'
-    ) 
+        method="filter_has_prescriptionthrough"
+    )
 
-    purchased = django_filters.BooleanFilter(
-        method='filter_purchased'
-    ) 
+    purchased = django_filters.BooleanFilter(method="filter_purchased")
 
     class Meta:
         model = PrescriptionReturn
@@ -765,8 +815,8 @@ class PrescriptionReturnFilterView(django_filters.FilterSet):
             "doctor",
             "order_user",
             "grand_total",
-            'purchased_value',
-            'purchased',
+            "purchased_value",
+            "purchased",
             "discount_money",
             "zakat",
             "khairat",
@@ -775,7 +825,7 @@ class PrescriptionReturnFilterView(django_filters.FilterSet):
             "sold",
             "barcode_str",
             "revenue",
-            "grand_not_equal"
+            "grand_not_equal",
         ]
 
     def filter_has_prescriptionthrough(self, queryset, name, value):
@@ -801,8 +851,8 @@ class PrescriptionView(viewsets.ModelViewSet):
     ]
     permission_classes = [D7896DjangoModelPermissions]
     ordering_fields = ["id", "created", "purchase_payment_date"]
-    
-    @action(detail=True, methods=['post'])
+
+    @action(detail=True, methods=["post"])
     def duplicate(self, request, pk=None):
         try:
             prescription = self.get_object()
@@ -827,10 +877,12 @@ class PrescriptionView(viewsets.ModelViewSet):
                 purchase_payment_date=prescription.purchase_payment_date,
                 purchased_value=prescription.purchased_value,
                 revenue=prescription.revenue,
-                order_user=prescription.order_user
+                order_user=prescription.order_user,
             )
 
-            prescription_throughs = PrescriptionThrough.objects.filter(prescription=pk).order_by('id')
+            prescription_throughs = PrescriptionThrough.objects.filter(
+                prescription=pk
+            ).order_by("id")
             for through in prescription_throughs:
                 through.pk = None
                 through.prescription = new_prescription
@@ -840,10 +892,13 @@ class PrescriptionView(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except Prescription.DoesNotExist:
-            return Response({"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class PrescriptionReturnView(viewsets.ModelViewSet):
     queryset = PrescriptionReturn.objects.all().order_by("id")
     serializer_class = PrescriptionReturnSerializer
@@ -855,10 +910,11 @@ class PrescriptionReturnView(viewsets.ModelViewSet):
     ]
     permission_classes = [D7896DjangoModelPermissions]
     ordering_fields = ["id", "created", "purchase_payment_date"]
-    
+
+
 class PrescriptionPagination(PageNumberPagination):
     page_size = 60
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 60
 
     def calculate_discount_and_grand_total(self, prescriptions):
@@ -867,21 +923,26 @@ class PrescriptionPagination(PageNumberPagination):
 
         for prescription in prescriptions:
             # Validate the presence of 'id' in each prescription
-            if 'id' not in prescription:
+            if "id" not in prescription:
                 raise ValueError("Prescription ID is missing.")
 
             try:
                 # Calculate grand total for each prescription based on PrescriptionThrough
-                grand_total = PrescriptionThrough.objects.filter(
-                    prescription_id=prescription['id']
-                ).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0
+                grand_total = (
+                    PrescriptionThrough.objects.filter(
+                        prescription_id=prescription["id"]
+                    ).aggregate(grand_total=Sum("total_price"))["grand_total"]
+                    or 0
+                )
             except Exception as e:
                 # Handle any exceptions that occur during the query
-                raise ValueError(f"Error calculating grand total for prescription ID {prescription['id']}: {str(e)}")
+                raise ValueError(
+                    f"Error calculating grand total for prescription ID {prescription['id']}: {str(e)}"
+                )
 
-            purchased_value = prescription.get('purchased_value', 0)
-            discount_percent = prescription.get('discount_percent', 0)
-            discount_money = prescription.get('discount_money', 0)
+            purchased_value = prescription.get("purchased_value", 0)
+            discount_percent = prescription.get("discount_percent", 0)
+            discount_money = prescription.get("discount_money", 0)
 
             # Calculate discount value based on the discount type
             if discount_percent == 0:
@@ -901,44 +962,63 @@ class PrescriptionPagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
         queryset = self.page.paginator.object_list
-        prescriptions = list(queryset.values(
-            'purchased_value', 'discount_percent', 'discount_money', 'grand_total', 'id'
-        ))
+        prescriptions = list(
+            queryset.values(
+                "purchased_value",
+                "discount_percent",
+                "discount_money",
+                "grand_total",
+                "id",
+            )
+        )
 
         try:
-            grand_total_sum, discount_value_sum = self.calculate_discount_and_grand_total(prescriptions)
+            grand_total_sum, discount_value_sum = (
+                self.calculate_discount_and_grand_total(prescriptions)
+            )
         except ValueError as e:
             # Handle any errors during the calculation
-            return Response({'error': str(e)}, status=400)
+            return Response({"error": str(e)}, status=400)
 
         # Aggregate other totals from the queryset
-        total_grand_total = queryset.aggregate(Sum('purchased_value'))['purchased_value__sum'] or 0
-        total_zakat = queryset.aggregate(Sum('zakat'))['zakat__sum'] or 0
-        total_khairat = queryset.aggregate(Sum('khairat'))['khairat__sum'] or 0
-        total_rounded_number = queryset.aggregate(Sum('rounded_number'))['rounded_number__sum'] or 0
-        total_over_money = queryset.aggregate(Sum('over_money'))['over_money__sum'] or 0
-        total_discount_money = queryset.aggregate(Sum('discount_money'))['discount_money__sum'] or 0
-        total_discount_percent = queryset.aggregate(Sum('discount_percent'))['discount_percent__sum'] or 0
-        total_to_sell = queryset.aggregate(Sum('refund'))['refund__sum'] or 0
+        total_grand_total = (
+            queryset.aggregate(Sum("purchased_value"))["purchased_value__sum"] or 0
+        )
+        total_zakat = queryset.aggregate(Sum("zakat"))["zakat__sum"] or 0
+        total_khairat = queryset.aggregate(Sum("khairat"))["khairat__sum"] or 0
+        total_rounded_number = (
+            queryset.aggregate(Sum("rounded_number"))["rounded_number__sum"] or 0
+        )
+        total_over_money = queryset.aggregate(Sum("over_money"))["over_money__sum"] or 0
+        total_discount_money = (
+            queryset.aggregate(Sum("discount_money"))["discount_money__sum"] or 0
+        )
+        total_discount_percent = (
+            queryset.aggregate(Sum("discount_percent"))["discount_percent__sum"] or 0
+        )
+        total_to_sell = queryset.aggregate(Sum("refund"))["refund__sum"] or 0
 
-        return Response({
-            'count': self.page.paginator.count,
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
-            'current_page': self.page.number,
-            'total_grand_total': grand_total_sum,  # Use calculated grand_total_sum
-            'total_zakat': total_zakat or 0,
-            'total_over_money': total_over_money or 0,
-            'total_khairat': total_khairat or 0,
-            'total_discount_money': total_discount_money or 0,
-            'total_discount_percent': total_discount_percent or 0,
-            'total_discount_value': discount_value_sum or 0,
-            'total_rounded_number': total_rounded_number or 0,
-            'total_pages': self.page.paginator.num_pages,
-            'total_to_sell': total_to_sell or 0,
-            'results': data
-        })
-    
+        return Response(
+            {
+                "count": self.page.paginator.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "current_page": self.page.number,
+                "total_grand_total": grand_total_sum,  # Use calculated grand_total_sum
+                "total_zakat": total_zakat or 0,
+                "total_over_money": total_over_money or 0,
+                "total_khairat": total_khairat or 0,
+                "total_discount_money": total_discount_money or 0,
+                "total_discount_percent": total_discount_percent or 0,
+                "total_discount_value": discount_value_sum or 0,
+                "total_rounded_number": total_rounded_number or 0,
+                "total_pages": self.page.paginator.num_pages,
+                "total_to_sell": total_to_sell or 0,
+                "results": data,
+            }
+        )
+
+
 class PrescriptionPaginatedView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("id")
     serializer_class = PrescriptionSerializer
@@ -957,7 +1037,8 @@ class LastPrescriptionView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("-id")[:1]
     serializer_class = PrescriptionSerializer
     permission_classes = [D7896DjangoModelPermissions]
-    
+
+
 class PrescriptionReturnPaginatedView(viewsets.ModelViewSet):
     queryset = PrescriptionReturn.objects.all().order_by("id")
     serializer_class = PrescriptionReturnSerializer
@@ -1022,7 +1103,8 @@ class EntranceView(viewsets.ModelViewSet):
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = EntranceFilterView
-    
+
+
 class EntrancePaginatedView(viewsets.ModelViewSet):
     queryset = Entrance.objects.all().order_by("id")
     serializer_class = EntranceSerializer
@@ -1050,6 +1132,8 @@ class PrescriptionImageView(viewsets.ModelViewSet):
     filterset_fields = [
         "prescription",
     ]
+
+
 class PrescriptionReturnImageView(viewsets.ModelViewSet):
     queryset = PrescriptionReturnImage.objects.all().order_by("id")
     serializer_class = PrescriptionReturnImageSerializer
@@ -1104,11 +1188,11 @@ class MedicineWithView(viewsets.ModelViewSet):
     queryset = MedicineWith.objects.all().order_by("id")
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = ("medician",)
-    
+
     def get_serializer_class(self):
-        if self.request.method in ['GET']:
+        if self.request.method in ["GET"]:
             return MedicineWithGetSerializer
-        elif self.request.method in ['POST', 'PATCH', 'PUT', 'DELETE']:
+        elif self.request.method in ["POST", "PATCH", "PUT", "DELETE"]:
             return MedicineWithPostSerializer
         return MedicineWithPostSerializer
 
@@ -1139,14 +1223,12 @@ class MedicineConflictView(viewsets.ModelViewSet):
     filterset_fields = ("medicine_1",)
 
 
-
 class MultipleModelPermissions(permissions.DjangoModelPermissions):
     def has_permission(self, request, view):
         # Workaround to ensure DjangoModelPermissions are not applied
         # to the root view when using DefaultRouter.
         return True
 
-    
 
 class TrazView(FlatMultipleModelAPIViewSet):
     querylist = [
@@ -1161,7 +1243,7 @@ class TrazView(FlatMultipleModelAPIViewSet):
         {
             "queryset": PrescriptionReturnThrough.objects.all(),
             "serializer_class": PrescriptionThroughReturnSerializer,
-        }
+        },
     ]
     model = EntranceThrough
     filter_backends = [
@@ -1172,46 +1254,41 @@ class TrazView(FlatMultipleModelAPIViewSet):
     filterset_fields = ("medician",)
     ordering_fields = ["id", "timestamp"]
     ordering = ["id", "timestamp"]
-    
+
     def get_queryset(self):
         # Return the queryset for the model defined in the view
         return EntranceThrough.objects.all()
-    
+
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        
-        medicine = request.query_params.get('medician')
 
-        entrance_throughs = EntranceThrough.objects.filter(
-            medician=medicine
-        )
-        
-        prescription_throughs = PrescriptionThrough.objects.filter(
-            medician=medicine
-        )
-        
+        medicine = request.query_params.get("medician")
+
+        entrance_throughs = EntranceThrough.objects.filter(medician=medicine)
+
+        prescription_throughs = PrescriptionThrough.objects.filter(medician=medicine)
+
         prescription_return_throughs = PrescriptionReturnThrough.objects.filter(
             medician=medicine
         )
 
-        entrance_through_total = entrance_throughs.aggregate(
-            total=Sum('register_quantity')
-        )['total'] or 0
-        
-        prescription_through_total = prescription_throughs.aggregate(
-            total=Sum('quantity')
-        )['total'] or 0
-        
-        prescription_return_through_total = prescription_return_throughs.aggregate(
-            total=Sum('quantity')
-        )['total'] or 0
+        entrance_through_total = (
+            entrance_throughs.aggregate(total=Sum("register_quantity"))["total"] or 0
+        )
 
+        prescription_through_total = (
+            prescription_throughs.aggregate(total=Sum("quantity"))["total"] or 0
+        )
+
+        prescription_return_through_total = (
+            prescription_return_throughs.aggregate(total=Sum("quantity"))["total"] or 0
+        )
 
         response_data = {
-            'results': response.data,
-            'entrance_through_total': entrance_through_total,
-            'prescription_through_total': prescription_through_total,
-            'prescription_return_through_total': prescription_return_through_total
+            "results": response.data,
+            "entrance_through_total": entrance_through_total,
+            "prescription_through_total": prescription_through_total,
+            "prescription_return_through_total": prescription_return_through_total,
         }
 
         return Response(response_data)
@@ -1223,16 +1300,21 @@ class PurchaseListFilter(django_filters.FilterSet):
     class Meta:
         model = PurchaseListManual
         fields = ["approved", "medicine", "created"]
-        
+
+
 class RevenueRecordViewSet(viewsets.ModelViewSet):
     queryset = RevenueRecord.objects.all().order_by("-timestamp")
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     serializer_class = RevenueRecordSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filterset_fields = [
-        "revenue", "prescription__prescription_number", 'record_type', 'amount'
+        "revenue",
+        "prescription__prescription_number",
+        "record_type",
+        "amount",
     ]
     pagination_class = StandardResultsSetPagination
+
 
 class PrescriptionExcelView(viewsets.ModelViewSet):
     queryset = Prescription.objects.all().order_by("id")
@@ -1253,7 +1335,6 @@ class PrescriptionExcelView(viewsets.ModelViewSet):
     renderer_classes = [CustomXMLRendererPrescription]
 
 
-
 class PurchaseListManualView(viewsets.ModelViewSet):
     queryset = PurchaseListManual.objects.all().order_by("-id")
     serializer_class = PurchaseListManualSerializer
@@ -1270,105 +1351,145 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
     queryset = Prescription.objects.all()
     serializer_class = PrescriptionSerializer
 
-    @action(detail=True, methods=['get'], url_path='previous')
+    @action(detail=True, methods=["get"], url_path="previous")
     def previous(self, request, pk=None):
         try:
             prescription = self.get_object()
-            department_prescriptions = Prescription.objects.filter(department=prescription.department, id__lt=prescription.id).order_by('-id')
+            department_prescriptions = Prescription.objects.filter(
+                department=prescription.department, id__lt=prescription.id
+            ).order_by("-id")
 
             if department_prescriptions.exists():
                 previous_prescription = department_prescriptions.first()
                 serializer = self.get_serializer(previous_prescription)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'No previous prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "No previous prescription found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         except Prescription.DoesNotExist:
-            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-    @action(detail=True, methods=['get'], url_path='next')
+            return Response(
+                {"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["get"], url_path="next")
     def next(self, request, pk=None):
         try:
             prescription = self.get_object()
-            department_prescriptions = Prescription.objects.filter(department=prescription.department, id__gt=prescription.id).order_by('id')
+            department_prescriptions = Prescription.objects.filter(
+                department=prescription.department, id__gt=prescription.id
+            ).order_by("id")
 
             if department_prescriptions.exists():
                 next_prescription = department_prescriptions.first()
                 serializer = self.get_serializer(next_prescription)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "No next prescription found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         except Prescription.DoesNotExist:
-            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response(
+                {"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class PrescriptionReturnViewSet(viewsets.ModelViewSet):
     queryset = PrescriptionReturn.objects.all()
     serializer_class = PrescriptionReturnSerializer
 
-    @action(detail=True, methods=['get'], url_path='previous')
+    @action(detail=True, methods=["get"], url_path="previous")
     def previous(self, request, pk=None):
         try:
             prescription = self.get_object()
-            department_prescriptions = PrescriptionReturn.objects.filter(department=prescription.department, id__lt=prescription.id).order_by('-id')
+            department_prescriptions = PrescriptionReturn.objects.filter(
+                department=prescription.department, id__lt=prescription.id
+            ).order_by("-id")
 
             if department_prescriptions.exists():
                 previous_prescription = department_prescriptions.first()
                 serializer = self.get_serializer(previous_prescription)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'No previous prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "No previous prescription found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         except PrescriptionReturn.DoesNotExist:
-            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-    @action(detail=True, methods=['get'], url_path='next')
+            return Response(
+                {"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["get"], url_path="next")
     def next(self, request, pk=None):
         try:
             prescription = self.get_object()
-            department_prescriptions = PrescriptionReturn.objects.filter(department=prescription.department, id__gt=prescription.id).order_by('id')
+            department_prescriptions = PrescriptionReturn.objects.filter(
+                department=prescription.department, id__gt=prescription.id
+            ).order_by("id")
 
             if department_prescriptions.exists():
                 next_prescription = department_prescriptions.first()
                 serializer = self.get_serializer(next_prescription)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'No next prescription found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "No next prescription found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         except PrescriptionReturn.DoesNotExist:
-            return Response({'detail': 'Prescription not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        
+            return Response(
+                {"detail": "Prescription not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class JournalCategoryView(viewsets.ModelViewSet):
     queryset = JournalCategory.objects.all().order_by("id")
     serializer_class = JournalCategorySerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['name', 'info','user']
-    
+    filterset_fields = ["name", "info", "user"]
+
+
 class JournalEntryFilter(django_filters.FilterSet):
-    timestamp = django_filters.DateFilter(field_name='timestamp', lookup_expr='date')
-    
+    timestamp = django_filters.DateFilter(field_name="timestamp", lookup_expr="date")
+
     class Meta:
         model = JournalEntry
-        fields = ['related_user', 'amount', 'category__name', 'description', 'user', 'timestamp']
-    
+        fields = [
+            "related_user",
+            "amount",
+            "category__name",
+            "description",
+            "user",
+            "timestamp",
+        ]
+
+
 class JournalEntryView(viewsets.ModelViewSet):
     queryset = JournalEntry.objects.all().order_by("id")
     serializer_class = JournalEntrySerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = JournalEntryFilter
-    
+
+
 class SalaryEntryFilter(django_filters.FilterSet):
-    timestamp = django_filters.DateFilter(field_name='timestamp', lookup_expr='date') 
-    payment_date = django_filters.DateFromToRangeFilter(field_name='payment_date')
-    checked = django_filters.BooleanFilter(field_name='checked')
-    amount = django_filters.NumberFilter(field_name='amount', lookup_expr='exact')
-    penalty = django_filters.NumberFilter(field_name='penalty', lookup_expr='gt')
-    bonus = django_filters.NumberFilter(field_name='bonus', lookup_expr='gt')
+    timestamp = django_filters.DateFilter(field_name="timestamp", lookup_expr="date")
+    payment_date = django_filters.DateFromToRangeFilter(field_name="payment_date")
+    checked = django_filters.BooleanFilter(field_name="checked")
+    amount = django_filters.NumberFilter(field_name="amount", lookup_expr="exact")
+    penalty = django_filters.NumberFilter(field_name="penalty", lookup_expr="gt")
+    bonus = django_filters.NumberFilter(field_name="bonus", lookup_expr="gt")
     employee = django_filters.ModelChoiceFilter(queryset=User.objects.all())
-    
+
     class Meta:
         model: SalaryEntry
-        fields = ['employee', 'payment_date', 'amount', 'checked', 'penalty', 'bonus']
-    
+        fields = ["employee", "payment_date", "amount", "checked", "penalty", "bonus"]
+
+
 class SalaryEntryViewSet(viewsets.ModelViewSet):
     queryset = SalaryEntry.objects.all().order_by("id")
     serializer_class = SalaryEntrySerializer
@@ -1376,33 +1497,35 @@ class SalaryEntryViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_class = SalaryEntryFilter
     pagination_class = StandardResultsSetPagination
-    
+
 
 class ExpiryMedicineFilter(django_filters.FilterSet):
-    expire_in = django_filters.NumberFilter(method='filter_expire_in')
+    expire_in = django_filters.NumberFilter(method="filter_expire_in")
 
     class Meta:
         model = EntranceThrough
-        fields = ['expire_in']
+        fields = ["expire_in"]
 
     def filter_expire_in(self, queryset, name, value):
         if value is None or value <= 0:
             return queryset
-        
+
         today = datetime.today()
         try:
             # Convert value to float if it's Decimal
             if isinstance(value, Decimal):
                 value = float(value)
-            
+
             # Calculate the date range based on the number of months until expiration
-            end_date = today + timedelta(days=int(value * 30))  # Approximate month as 30 days
+            end_date = today + timedelta(
+                days=int(value * 30)
+            )  # Approximate month as 30 days
             return queryset.filter(expire_date__lte=end_date)
         except (ValueError, TypeError) as e:
             # Log the error or handle it appropriately
             return queryset
 
-    
+
 class UniqueMedicineViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UniqueMedicineSerializer
     filter_backends = [DjangoFilterBackend]
@@ -1410,4 +1533,4 @@ class UniqueMedicineViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        return EntranceThrough.objects.distinct('medician')
+        return EntranceThrough.objects.distinct("medician")
