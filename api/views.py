@@ -1126,7 +1126,91 @@ class EntranceSortedRenderer(CSVRenderer):
       "description",
       ]
 
-  
+
+class EntranceThroughExcelFilterView(django_filters.FilterSet):
+    factor_number = django_filters.NumberFilter(field_name='entrance__factor_number')
+    factor_date = django_filters.DateFromToRangeFilter(field_name='entrance__factor_date')
+    total_interest = django_filters.NumberFilter(field_name='entrance__total_interest')
+    company = django_filters.CharFilter(field_name='entrance__company')
+    currency = django_filters.CharFilter(field_name='entrance__currency')
+    deliver_by = django_filters.CharFilter(field_name='entrance__deliver_by')
+    received_by = django_filters.CharFilter(field_name='entrance__recived_by')
+    discount_percent = django_filters.NumberFilter(field_name='entrance__discount_percent')
+    payment_method = django_filters.CharFilter(field_name='entrance__payment_method')
+    wholesale = django_filters.ChoiceFilter(field_name='entrance__wholesale', choices=WHOLESALE_CHOICE)
+    final_register = django_filters.CharFilter(field_name='entrance__final_register')
+    store = django_filters.CharFilter(field_name='entrance__store' )
+    user = django_filters.CharFilter(field_name='entrance__user')
+    id = django_filters.CharFilter(field_name='entrance__id')
+    
+    class Meta:
+        model = EntranceThrough
+        fields = [
+            'id',
+            'medician',          
+            'entrance',              
+            'factor_number',         
+            'factor_date',          
+            'total_interest',       
+            'company',             
+            'currency',             
+            'deliver_by',           
+            'received_by',         
+            'discount_percent',    
+            'payment_method',             
+            'wholesale',         
+            'final_register',    
+            'store',          
+            'user'         
+        ]
+class EntranceTroughSortedRenderer(CSVRenderer):
+    header = [
+    "id",
+    "username",
+    "medician",
+    "medicine_full",
+    "medicine_existence",
+    "company_name",
+    "entrance",
+    "entrance_department",
+    "rate_name",
+    "rate",
+    "number_in_factor",
+    "each_price_factor",
+    "each_price",
+    "discount_money",
+    "no_box",
+    "discount_percent",
+    "total_purchaseـafghani",
+    "total_purchaseـcurrency",
+    "total_purchase_currency_before",
+    "discount_value",
+    "each_quantity",
+    "quantity_bonus",
+    "bonus_value",
+    "shortage",
+    "lease",
+    "each_purchase_price",
+    "each_sell_price",
+    "each_sell_price_afg",
+    "total_sell",
+    "interest_percent",
+    "register_quantity",
+    "total_interest",
+    "expire_date",
+    "timestamp",
+    "batch_number",
+    "interest_money",
+    "bonus_interest",
+      ]  
+    
+class EntranceThroughExcelView(viewsets.ModelViewSet):
+    queryset = EntranceThrough.objects.all().order_by("id")
+    serializer_class = EntranceThroughSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = EntranceThroughExcelFilterView
+    permission_classes = [D7896DjangoModelPermissions]
+    renderer_classes = (EntranceTroughSortedRenderer,)
 class EntranceExcelView (viewsets.ModelViewSet):
     queryset = Entrance.objects.all().order_by("id")
     serializer_class = EntranceExcelSerializer
