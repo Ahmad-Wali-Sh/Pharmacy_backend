@@ -1075,13 +1075,15 @@ class PharmCompanyView(viewsets.ModelViewSet):
     ]
     permission_classes = [D7896DjangoModelPermissions]
 
-
+WHOLESALE_CHOICE = (("WHOLESALE", "WHOLESALE"), ("SINGULAR", "SINGULAR"))
 class EntranceFilterView(django_filters.FilterSet):
     factor_date = django_filters.DateFromToRangeFilter()
+    wholesale = django_filters.ChoiceFilter(choices=WHOLESALE_CHOICE)
 
     class Meta:
         model = Entrance
         fields = [
+            "id",
             "factor_number",
             "factor_date",
             "total_interest",
@@ -1095,6 +1097,7 @@ class EntranceFilterView(django_filters.FilterSet):
             "wholesale",
             "final_register",
             "store",
+            'user'
         ]
 class EntranceSortedRenderer(CSVRenderer):
     header = [
