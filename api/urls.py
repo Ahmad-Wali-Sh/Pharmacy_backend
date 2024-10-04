@@ -56,6 +56,7 @@ from .views import (
     JournalEntryView,
     JournalCategoryView,
     SalaryEntryViewSet,
+    EntranceExcelView,
     UniqueMedicineViewSet
 )
 
@@ -77,6 +78,7 @@ router.register(r"pharm-companies", PharmCompanyView)
 router.register(r"entrance", EntranceView)
 router.register(r"entrance-pg", EntrancePaginatedView, basename='entrance-paginated')
 router.register(r"entrance-image", EntranceImageView)
+router.register(r"entrance-excel", EntranceExcelView, basename='entrance-excel')
 router.register(r"prescription-image", PrescriptionImageView)
 router.register(r"prescription-return-image", PrescriptionReturnImageView)
 router.register(r"entrance-throug", EntranceThroughView)

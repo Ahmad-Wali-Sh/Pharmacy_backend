@@ -1158,6 +1158,10 @@ class EntranceSerializer(serializers.ModelSerializer):
     currency_name = serializers.SerializerMethodField()
     entrance_image = serializers.SerializerMethodField()
     entrance_total = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
+    final_register_name = serializers.SerializerMethodField()
+    store_name = serializers.SerializerMethodField()
+    payment_method_name = serializers.SerializerMethodField()
 
     def get_entrance_total(self, obj):
         total = list(
@@ -1181,6 +1185,175 @@ class EntranceSerializer(serializers.ModelSerializer):
     def get_currency_name(self, obj):
         return obj.currency.name
 
+    def get_company_name(self, obj):
+        return obj.company.name
+    
+    def get_final_register_name(self, obj):
+        return obj.final_register.name
+    
+    def get_store_name(self, obj):
+        return obj.store.name
+    
+    def get_payment_method_name(self, obj):
+        return obj.payment_method.name
+    class Meta:
+        model = Entrance
+        fields = "__all__"
+        
+class EntranceExcelSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    currency_name = serializers.SerializerMethodField()
+    entrance_total_purchase = serializers.SerializerMethodField()
+    total_sell = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
+    final_register_name = serializers.SerializerMethodField()
+    store_name = serializers.SerializerMethodField()
+    payment_method_name = serializers.SerializerMethodField()
+    discount_value = serializers.SerializerMethodField()
+    bonus_quantity = serializers.SerializerMethodField()
+    entrance_through_count = serializers.SerializerMethodField()
+    total_before_discount = serializers.SerializerMethodField()
+    
+    total_interest_percent = serializers.SerializerMethodField()
+    total_interest = serializers.SerializerMethodField()
+    
+    grand_total = serializers.SerializerMethodField()
+    grand_total_afg = serializers.SerializerMethodField()
+    
+    
+    def get_grand_total (self,obj):
+        total_before_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('total_purchase_currency_before'))
+            .values()
+        )[0]
+        total_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('discount_value'))
+            .values()
+        )[0]
+        result = float(total_before_discount) - float(total_discount)
+        return result
+    
+    def get_grand_total_afg (self,obj):
+        total_before_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('total_purchase_currency_before'))
+            .values()
+        )[0]
+        total_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('discount_value'))
+            .values()
+        )[0]
+        result = float(total_before_discount) - float(total_discount)
+        return result * float(obj.currency.rate)
+    
+    def get_total_interest (self, obj):
+        total_sell = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("total_sell"))
+            .values()
+        )[0]
+        total_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('discount_value'))
+            .values()
+        )[0]
+        total_before_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('total_purchase_currency_before'))
+            .values()
+        )[0]
+        result = float(total_sell) + float(total_discount) - float(total_before_discount)
+        return result
+    
+    
+    def get_total_interest_percent (self, obj):
+        total_sell = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("total_sell"))
+            .values()
+        )[0]
+        total_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('discount_value'))
+            .values()
+        )[0]
+        total_before_discount = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum('total_purchase_currency_before'))
+            .values()
+        )[0]
+        total_interest = float(total_sell) + float(total_discount) - float(total_before_discount)
+        result = (float(total_interest) / float(total_before_discount)) * 100 
+        return result
+
+    def get_entrance_through_count (self,obj):
+        total = EntranceThrough.objects.filter(entrance=obj.id).count()
+        return total
+    
+    def get_discount_value (self,obj):
+        total = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("discount_value"))
+            .values()
+        )[0]
+        return total
+    
+    def get_total_before_discount (self,obj):
+        total = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("total_purchase_currency_before"))
+            .values()
+        )[0]
+        return total
+    
+    def get_total_sell (self,obj):
+        total = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("total_sell"))
+            .values()
+        )[0]
+        return total
+
+    def get_entrance_total_purchase(self, obj):
+        total = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("total_purchaseـcurrency"))
+            .values()
+        )[0]
+        return total
+
+    def get_bonus_quantity(self, obj):
+        total = list(
+            EntranceThrough.objects.filter(entrance=obj.id)
+            .aggregate(Sum("quantity_bonus"))
+            .values()
+        )[0]
+        return total
+
+
+    def get_username(self, res):
+        if res.user and res.user.first_name:
+            return res.user.first_name
+        else:
+            return ""
+
+    def get_currency_name(self, obj):
+        return obj.currency.name
+
+    def get_company_name(self, obj):
+        return obj.company.name
+    
+    def get_final_register_name(self, obj):
+        return obj.final_register.name
+    
+    def get_store_name(self, obj):
+        return obj.store.name
+    
+    def get_payment_method_name(self, obj):
+        return obj.payment_method.name
     class Meta:
         model = Entrance
         fields = "__all__"

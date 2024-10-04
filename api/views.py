@@ -47,6 +47,7 @@ from .serializers import (
     JournalCategorySerializer,
     JournalEntrySerializer,
     SalaryEntrySerializer,
+    EntranceExcelSerializer,
     UniqueMedicineSerializer,
 )
 from rest_framework_csv.renderers import CSVRenderer
@@ -1095,7 +1096,41 @@ class EntranceFilterView(django_filters.FilterSet):
             "final_register",
             "store",
         ]
+class EntranceSortedRenderer(CSVRenderer):
+    header = [
+      "id",
+      "factor_number",
+      "final_register_name",
+      "company_name",
+      "store_name",
+      "payment_method_name",
+      "currency_name",
+      "currency_rate",
+      "entrance_through_count",
+      "total_before_discount",
+      "discount_value",
+      "bonus_quantity",
+      "total_sell",
+      "total_interest",
+      "total_interest_percent",
+      "grand_total",
+      "grand_total_afg",
+      "deliver_by",
+      "recived_by",
+      "factor_date",
+      "wholesale",
+      "username",
+      "description",
+      ]
 
+  
+class EntranceExcelView (viewsets.ModelViewSet):
+    queryset = Entrance.objects.all().order_by("id")
+    serializer_class = EntranceExcelSerializer
+    renderer_classes = (EntranceSortedRenderer,)
+    permission_classes = [D7896DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = EntranceFilterView
 
 class EntranceView(viewsets.ModelViewSet):
     queryset = Entrance.objects.all().order_by("id")
