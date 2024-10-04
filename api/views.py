@@ -1436,6 +1436,33 @@ class RevenueRecordViewSet(viewsets.ModelViewSet):
         "amount",
     ]
     pagination_class = StandardResultsSetPagination
+    
+class PrescriptionSortedView (CSVRenderer):
+    header = {
+            "id": "ID",
+            "prescription_number": "Prescription_Number",
+            "patient_name": "Patient_Name",
+            "doctor_name": "Doctor_Name",
+            "department_name": "Department_Name",
+            "username": "Created_By",
+            "order_user_name": "Ordered_By",
+            "discount_money": "Discount_Money",
+            "discount_percent": "Discount_Percent",
+            "discount_value": "Discount_Value",
+            "over_money": "Over_Money",
+            "over_percent": "Over_Percent",
+            "khairat": "Khairat",
+            "zakat": "Zakat",
+            "rounded_number": "Rounded_Number",
+            "purchased_value": "Purchased_Value",
+            "purchase_payment_date": "Purchase_Payment_Date",
+            "revenue": "Revenue",
+            "refund": "To_Purchase",
+            "timestamp": "Timestamp",
+            "sold": "Sold",
+            "quantity": "Medicine_Count",
+            "created": "Created",
+        }
 
 
 class PrescriptionExcelView(viewsets.ModelViewSet):
@@ -1454,7 +1481,7 @@ class PrescriptionExcelView(viewsets.ModelViewSet):
         "id",
     ]
     permission_classes = [D7896DjangoModelPermissions]
-    renderer_classes = [CustomXMLRendererPrescription]
+    renderer_classes = (PrescriptionSortedView,)
 
 
 class PurchaseListManualView(viewsets.ModelViewSet):
