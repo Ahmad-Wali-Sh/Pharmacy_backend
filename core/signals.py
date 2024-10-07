@@ -9,6 +9,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from . import models
 from django.db.models import Sum
+from django.db import transaction
 
 @receiver([post_delete, post_save], sender=models.RevenueRecord)
 def calcualting_purchase_value (sender, instance, **kwargs):
@@ -315,35 +316,47 @@ def prescription_through_post_delete(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=models.PrescriptionReturnThrough)
 def update_medician_existence(sender, instance, **kwargs):
     medician = instance.medician
-    entrance_sum_query = (
-        models.EntranceThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("register_quantity"))
-        .get("register_quantity__sum", 0)
-    )
-    prescription_sum_query = (
-        models.PrescriptionThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("quantity"))
-        .get("quantity__sum", 0)
-    )
-    prescription_return_sum_query = (
-        models.PrescriptionReturnThrough.objects.filter(medician_id=medician.id)
-        .aggregate(Sum("quantity"))
-        .get("quantity__sum", 0)
-    )
+    
+    with transaction.atomic(): 
+        
+        post_save.disconnect(update_medician_existence, sender=models.EntranceThrough)
+        post_save.disconnect(update_medician_existence, sender=models.PrescriptionThrough)
+        post_save.disconnect(update_medician_existence, sender=models.PrescriptionReturnThrough)
+        
+        entrance_sum_query = (
+            models.EntranceThrough.objects.filter(medician_id=medician.id)
+            .aggregate(Sum("register_quantity"))
+            .get("register_quantity__sum", 0)
+        )
+        prescription_sum_query = (
+            models.PrescriptionThrough.objects.filter(medician_id=medician.id)
+            .aggregate(Sum("quantity"))
+            .get("quantity__sum", 0)
+        )
+        prescription_return_sum_query = (
+            models.PrescriptionReturnThrough.objects.filter(medician_id=medician.id)
+            .aggregate(Sum("quantity"))
+            .get("quantity__sum", 0)
+        )
 
-    entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
-    prescription_sum = (
-        prescription_sum_query if prescription_sum_query is not None else 0
-    )
-    prescription_return_sum = prescription_return_sum_query if prescription_return_sum_query is not None else 0
+        entrance_sum = entrance_sum_query if entrance_sum_query is not None else 0
+        prescription_sum = (
+            prescription_sum_query if prescription_sum_query is not None else 0
+        )
+        prescription_return_sum = prescription_return_sum_query if prescription_return_sum_query is not None else 0
 
-    existence = entrance_sum - prescription_sum + prescription_return_sum
-    if existence is None:
-        existence = 0
-    medician.existence = round(existence, 1)
+        existence = entrance_sum - prescription_sum + prescription_return_sum
+        if existence is None:
+            existence = 0
+        medician.existence = round(existence, 1)
 
-    # Update unsubmited_existence based on comparison with entrance quantity
-    if existence >= medician.unsubmited_existence:
-        medician.unsubmited_existence = 0
+        if existence >= medician.unsubmited_existence:
+            medician.unsubmited_existence = 0
 
-    medician.save()
+        medician.save()
+        
+        post_save.connect(update_medician_existence, sender=models.EntranceThrough)
+        post_save.connect(update_medician_existence, sender=models.PrescriptionThrough)
+        post_save.connect(update_medician_existence, sender=models.PrescriptionReturnThrough)
+    
+    
