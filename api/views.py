@@ -862,7 +862,6 @@ class PrescriptionView(viewsets.ModelViewSet):
                 department=prescription.department,
                 name=prescription.name,
                 doctor=prescription.doctor,
-                grand_total=prescription.grand_total,
                 discount_money=prescription.discount_money,
                 discount_percent=prescription.discount_percent,
                 over_money=prescription.over_money,
@@ -870,15 +869,7 @@ class PrescriptionView(viewsets.ModelViewSet):
                 zakat=prescription.zakat,
                 khairat=prescription.khairat,
                 image=prescription.image,
-                sold=prescription.sold,
-                user=prescription.user,
-                refund=prescription.refund,
-                barcode=prescription.barcode,
-                barcode_str=prescription.barcode_str,
-                purchase_payment_date=prescription.purchase_payment_date,
-                purchased_value=prescription.purchased_value,
-                revenue=prescription.revenue,
-                order_user=prescription.order_user,
+                user=request.user
             )
 
             prescription_throughs = PrescriptionThrough.objects.filter(
@@ -887,6 +878,9 @@ class PrescriptionView(viewsets.ModelViewSet):
             for through in prescription_throughs:
                 through.pk = None
                 through.prescription = new_prescription
+                through.each_price = through.medician.price
+                through.total_price = float(through.medician.price) * float(through.quantity)
+                through.user = request.user
                 through.save()
 
             serializer = self.get_serializer(new_prescription)
