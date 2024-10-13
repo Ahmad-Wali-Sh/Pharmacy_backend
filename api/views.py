@@ -876,10 +876,11 @@ class PrescriptionView(viewsets.ModelViewSet):
                 prescription=pk
             ).order_by("id")
             for through in prescription_throughs:
+                medician = Medician.objects.get(pk=through.medician.pk)
                 through.pk = None
                 through.prescription = new_prescription
-                through.each_price = through.medician.price
-                through.total_price = float(through.medician.price) * float(through.quantity)
+                through.each_price = medician.price
+                through.total_price = float(medician.price) * float(through.quantity)
                 through.user = request.user
                 through.save()
 
