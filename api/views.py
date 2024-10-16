@@ -354,10 +354,6 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
         "-id",
     ]
     
-def filter_by_generics_stock(queryset, name, value):
-    values = str(value).split(",")
-    return queryset.filter(generic_name=values)
-
 class StockFilter(django_filters.FilterSet):
     generic_name = django_filters.CharFilter(
         lookup_expr="icontains"
