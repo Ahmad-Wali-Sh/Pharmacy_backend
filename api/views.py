@@ -404,7 +404,8 @@ class StockExcelSort(CSVRenderer):
             'total_purchase', 
             'total_sell',
             'sold_quantity',
-            'returned_quantity'
+            'returned_quantity',
+            'purchased_quantity'
         ]
 
 class StockExcelView(viewsets.ModelViewSet):
