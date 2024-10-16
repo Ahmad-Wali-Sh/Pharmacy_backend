@@ -683,9 +683,13 @@ class StockSerializer(serializers.ModelSerializer):
     total_purchase = serializers.SerializerMethodField()
     total_sell = serializers.SerializerMethodField()
     sold_quantity = serializers.SerializerMethodField()
+    returned_quantity = serializers.SerializerMethodField()
     
     def get_sold_quantity(self, obj):  # Serializer method for sold_quantity
-        return obj.sold_quantity
+        return float(obj.sold_quantity or 0) - float(obj.returned_quantity or 0)
+    
+    def get_returned_quantity(self, obj):  # Serializer method for sold_quantity
+        return float(obj.returned_quantity or 0)
 
     def get_id(self, obj):
         return obj.id
@@ -769,7 +773,8 @@ class StockSerializer(serializers.ModelSerializer):
             'price', 
             'total_purchase', 
             'total_sell',
-            'sold_quantity'
+            'sold_quantity',
+            'returned_quantity'
         ]
         
         

@@ -362,6 +362,7 @@ class StockView(viewsets.ModelViewSet):
             total_sell=Sum("prescriptionthrough__quantity"),
             total_purchase=Sum("entrancethrough__register_quantity"),
             sold_quantity=Sum("prescriptionthrough__quantity"),
+            returned_quantity=Sum('prescriptionreturnthrough__quantity')
         )
     )
     serializer_class = StockSerializer
@@ -390,7 +391,8 @@ class StockExcelSort(CSVRenderer):
             'price', 
             'total_purchase', 
             'total_sell',
-            'sold_quantity'
+            'sold_quantity',
+            'returned_quantity'
         ]
 
 class StockExcelView(viewsets.ModelViewSet):
@@ -401,6 +403,7 @@ class StockExcelView(viewsets.ModelViewSet):
             total_sell=Sum("prescriptionthrough__quantity"),
             total_purchase=Sum("entrancethrough__register_quantity"),
             sold_quantity=Sum("prescriptionthrough__quantity"),
+            returned_quantity=Sum('prescriptionreturnthrough__quantity')
         )
     )
     renderer_classes = (StockExcelSort,)
