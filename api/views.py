@@ -354,12 +354,27 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
         "-id",
     ]
 
+class StockFilter(django_filters.FilterSet):
+    generic_name = django_filters.BaseInFilter(
+        lookup_expr="contains", method=filter_by_generics
+    )
+    class Meta:
+        model = Medician
+        fields = [
+            "brand_name",
+            "generic_name",
+            "company",
+            "pharm_group",
+            "kind",
+            "country",
+            "big_company"
+        ]
 
 class StockView(viewsets.ModelViewSet):
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_class = MedicianFilter
+    filterset_class = StockFilter
     ordering_fields = ["total_sell", "total_purchase"]
     pagination_class = StandardResultsSetPagination
     
@@ -399,9 +414,6 @@ class StockView(viewsets.ModelViewSet):
             start_date = today.replace(year=today.year - 1, month=1, day=1)
             end_date = start_date.replace(month=12, day=29) + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
-        # Convert to Gregorian for filtering
-        print("start:", start_date)
-        print("end:", end_date)
         return start_date.togregorian(), end_date.togregorian()
     
     def get_queryset (self):
@@ -484,42 +496,40 @@ class StockExcelView(viewsets.ModelViewSet):
     ordering_fields = ["total_sell", "total_purchase"]
     
     def get_date_range(self, shortcut):
-        # Get today's date in the Jalali calendar
         today = jdatetime.date.today()
 
-        # Default start and end dates
         start_date = None
         end_date = None
 
         if shortcut == "today":
-            start_date = end_date = today
+            # Start of today
+            start_date = today
+            # End of today (to include the entire day)
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         elif shortcut == "this_week":
-            # Start of the current week (Saturday in the Jalali calendar)
             start_date = today - jdatetime.timedelta(days=today.weekday())
-            end_date = today
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         elif shortcut == "last_week":
-            # Start and end of the previous week
             start_date = today - jdatetime.timedelta(days=today.weekday() + 7)
             end_date = start_date + jdatetime.timedelta(days=6)
 
         elif shortcut == "this_month":
             start_date = today.replace(day=1)
-            end_date = today
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         elif shortcut == "last_six_months":
             start_date = today - jdatetime.timedelta(days=6 * 30)
-            end_date = today
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         elif shortcut == "this_year":
             start_date = today.replace(month=1, day=1)
-            end_date = today
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         elif shortcut == "last_year":
-            # Get the previous year (Jalali year)
             start_date = today.replace(year=today.year - 1, month=1, day=1)
-            end_date = start_date.replace(month=12, day=29)  # End of the last Jalali year
+            end_date = start_date.replace(month=12, day=29) + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
 
         return start_date.togregorian(), end_date.togregorian()
     
