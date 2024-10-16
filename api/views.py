@@ -55,6 +55,8 @@ from django.db.models import Subquery, OuterRef, Sum
 from datetime import datetime, timedelta
 from rest_framework import status
 from auditlog.registry import auditlog
+from django.utils.timezone import now
+import jdatetime
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import (
@@ -354,35 +356,100 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
 
 
 class StockView(viewsets.ModelViewSet):
-    queryset = (
-        Medician.objects.filter(active=True)
-        .annotate(
-            total_sell=Subquery(
-                PrescriptionThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')  # Group by the 'medician' field
-                .annotate(total_sell=Sum('quantity'))  # Sum the sold quantities
-                .values('total_sell'),  # Return the calculated sum
-            ),
-            total_purchase=Subquery(
-                EntranceThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')
-                .annotate(total_purchase=Sum('register_quantity'))
-                .values('total_purchase')
-            ),
-            returned_quantity=Subquery(
-                PrescriptionReturnThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')
-                .annotate(returned_quantity=Sum('quantity'))
-                .values('returned_quantity')
-            )
-        )
-    )
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
     ordering_fields = ["total_sell", "total_purchase"]
     pagination_class = StandardResultsSetPagination
+    
+    def get_date_range(self, shortcut):
+        today = jdatetime.date.today()
+
+        start_date = None
+        end_date = None
+
+        if shortcut == "today":
+            # Start of today
+            start_date = today
+            # End of today (to include the entire day)
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        elif shortcut == "this_week":
+            start_date = today - jdatetime.timedelta(days=today.weekday())
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        elif shortcut == "last_week":
+            start_date = today - jdatetime.timedelta(days=today.weekday() + 7)
+            end_date = start_date + jdatetime.timedelta(days=6)
+
+        elif shortcut == "this_month":
+            start_date = today.replace(day=1)
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        elif shortcut == "last_six_months":
+            start_date = today - jdatetime.timedelta(days=6 * 30)
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        elif shortcut == "this_year":
+            start_date = today.replace(month=1, day=1)
+            end_date = today + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        elif shortcut == "last_year":
+            start_date = today.replace(year=today.year - 1, month=1, day=1)
+            end_date = start_date.replace(month=12, day=29) + jdatetime.timedelta(days=1) - jdatetime.timedelta(seconds=1)
+
+        # Convert to Gregorian for filtering
+        print("start:", start_date)
+        print("end:", end_date)
+        return start_date.togregorian(), end_date.togregorian()
+    
+    def get_queryset (self):
+        shortcut = self.request.query_params.get('shortcut')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if shortcut: 
+            start_date, end_date = self.get_date_range(shortcut)
+            
+        prescription_filter = {}
+        entrance_filter = {}
+        return_filter = {}
+        
+        if start_date and end_date:
+            prescription_filter = {"timestamp__range": [start_date, end_date]}
+            entrance_filter = {"timestamp__range": [start_date, end_date]}
+            return_filter = {"timestamp__range": [start_date, end_date]}
+        queryset = (
+            Medician.objects.filter(active=True)
+            .annotate(
+                total_sell=Subquery(
+                    PrescriptionThrough.objects.filter(
+                        medician=OuterRef('pk'), **prescription_filter
+                    )
+                    .values('medician')
+                    .annotate(total_sell=Sum('quantity'))
+                    .values('total_sell'),
+                ),
+                total_purchase=Subquery(
+                    EntranceThrough.objects.filter(
+                        medician=OuterRef('pk'), **entrance_filter
+                    )
+                    .values('medician')
+                    .annotate(total_purchase=Sum('register_quantity'))
+                    .values('total_purchase'),
+                ),
+                returned_quantity=Subquery(
+                    PrescriptionReturnThrough.objects.filter(
+                        medician=OuterRef('pk'), **return_filter
+                    )
+                    .values('medician')
+                    .annotate(returned_quantity=Sum('quantity'))
+                    .values('returned_quantity'),
+                )
+            )
+        )
+        return queryset
 
 class StockExcelSort(CSVRenderer):
     header = [
@@ -409,35 +476,99 @@ class StockExcelSort(CSVRenderer):
         ]
 
 class StockExcelView(viewsets.ModelViewSet):
-    queryset = (
-        Medician.objects.filter(active=True)
-        .annotate(
-            total_sell=Subquery(
-                PrescriptionThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')  # Group by the 'medician' field
-                .annotate(total_sell=Sum('quantity'))  # Sum the sold quantities
-                .values('total_sell'),  # Return the calculated sum
-            ),
-            total_purchase=Subquery(
-                EntranceThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')
-                .annotate(total_purchase=Sum('register_quantity'))
-                .values('total_purchase')
-            ),
-            returned_quantity=Subquery(
-                PrescriptionReturnThrough.objects.filter(medician=OuterRef('pk'))
-                .values('medician')
-                .annotate(returned_quantity=Sum('quantity'))
-                .values('returned_quantity')
-            )
-        )
-    )
     renderer_classes = (StockExcelSort,)
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = MedicianFilter
     ordering_fields = ["total_sell", "total_purchase"]
+    
+    def get_date_range(self, shortcut):
+        # Get today's date in the Jalali calendar
+        today = jdatetime.date.today()
+
+        # Default start and end dates
+        start_date = None
+        end_date = None
+
+        if shortcut == "today":
+            start_date = end_date = today
+
+        elif shortcut == "this_week":
+            # Start of the current week (Saturday in the Jalali calendar)
+            start_date = today - jdatetime.timedelta(days=today.weekday())
+            end_date = today
+
+        elif shortcut == "last_week":
+            # Start and end of the previous week
+            start_date = today - jdatetime.timedelta(days=today.weekday() + 7)
+            end_date = start_date + jdatetime.timedelta(days=6)
+
+        elif shortcut == "this_month":
+            start_date = today.replace(day=1)
+            end_date = today
+
+        elif shortcut == "last_six_months":
+            start_date = today - jdatetime.timedelta(days=6 * 30)
+            end_date = today
+
+        elif shortcut == "this_year":
+            start_date = today.replace(month=1, day=1)
+            end_date = today
+
+        elif shortcut == "last_year":
+            # Get the previous year (Jalali year)
+            start_date = today.replace(year=today.year - 1, month=1, day=1)
+            end_date = start_date.replace(month=12, day=29)  # End of the last Jalali year
+
+        return start_date.togregorian(), end_date.togregorian()
+    
+    def get_queryset (self):
+        shortcut = self.request.query_params.get('shortcut')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if shortcut: 
+            start_date, end_date = self.get_date_range(shortcut)
+            
+        prescription_filter = {}
+        entrance_filter = {}
+        return_filter = {}
+        
+        if start_date and end_date:
+            prescription_filter = {"timestamp__range": [start_date, end_date]}
+            entrance_filter = {"timestamp__range": [start_date, end_date]}
+            return_filter = {"timestamp__range": [start_date, end_date]}
+        queryset = (
+            Medician.objects.filter(active=True)
+            .annotate(
+                total_sell=Subquery(
+                    PrescriptionThrough.objects.filter(
+                        medician=OuterRef('pk'), **prescription_filter
+                    )
+                    .values('medician')
+                    .annotate(total_sell=Sum('quantity'))
+                    .values('total_sell'),
+                ),
+                total_purchase=Subquery(
+                    EntranceThrough.objects.filter(
+                        medician=OuterRef('pk'), **entrance_filter
+                    )
+                    .values('medician')
+                    .annotate(total_purchase=Sum('register_quantity'))
+                    .values('total_purchase'),
+                ),
+                returned_quantity=Subquery(
+                    PrescriptionReturnThrough.objects.filter(
+                        medician=OuterRef('pk'), **return_filter
+                    )
+                    .values('medician')
+                    .annotate(returned_quantity=Sum('quantity'))
+                    .values('returned_quantity'),
+                )
+            )
+        )
+        return queryset
 
 
 class MedicianMinimuFilter(django_filters.FilterSet):
