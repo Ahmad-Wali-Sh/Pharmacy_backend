@@ -353,11 +353,16 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "-id",
     ]
+    
+def filter_by_generics_stock(queryset, name, value):
+    values = str(value).split(",")
+    return queryset.filter(generic_name=values)
 
 class StockFilter(django_filters.FilterSet):
-    generic_name = django_filters.BaseInFilter(
-        lookup_expr="contains", method=filter_by_generics
+    generic_name = django_filters.CharFilter(
+        lookup_expr="icontains"
     )
+    brand_name = django_filters.CharFilter(lookup_expr="istartswith")
     class Meta:
         model = Medician
         fields = [
@@ -492,7 +497,7 @@ class StockExcelView(viewsets.ModelViewSet):
     serializer_class = StockSerializer
     permission_classes = [D7896DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_class = MedicianFilter
+    filterset_class = StockFilter
     ordering_fields = ["total_sell", "total_purchase"]
     
     def get_date_range(self, shortcut):
