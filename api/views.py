@@ -51,10 +51,9 @@ from .serializers import (
     UniqueMedicineSerializer,
 )
 from rest_framework_csv.renderers import CSVRenderer
-from django.db.models import Max
+from django.db.models import Subquery, OuterRef, Sum
 from datetime import datetime, timedelta
 from rest_framework import status
-from django.db.models import Sum
 from auditlog.registry import auditlog
 
 from rest_framework.pagination import PageNumberPagination
@@ -356,13 +355,26 @@ class MedicianOrderViewSet(viewsets.ModelViewSet):
 
 class StockView(viewsets.ModelViewSet):
     queryset = (
-        Medician.objects.all()
-        .filter(active=True)
+        Medician.objects.filter(active=True)
         .annotate(
-            total_sell=Sum("prescriptionthrough__quantity"),
-            total_purchase=Sum("entrancethrough__register_quantity"),
-            sold_quantity=Sum("prescriptionthrough__quantity"),
-            returned_quantity=Sum('prescriptionreturnthrough__quantity')
+            total_sell=Subquery(
+                PrescriptionThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')  # Group by the 'medician' field
+                .annotate(total_sell=Sum('quantity'))  # Sum the sold quantities
+                .values('total_sell'),  # Return the calculated sum
+            ),
+            total_purchase=Subquery(
+                EntranceThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')
+                .annotate(total_purchase=Sum('register_quantity'))
+                .values('total_purchase')
+            ),
+            returned_quantity=Subquery(
+                PrescriptionReturnThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')
+                .annotate(returned_quantity=Sum('quantity'))
+                .values('returned_quantity')
+            )
         )
     )
     serializer_class = StockSerializer
@@ -397,13 +409,26 @@ class StockExcelSort(CSVRenderer):
 
 class StockExcelView(viewsets.ModelViewSet):
     queryset = (
-        Medician.objects.all()
-        .filter(active=True)
+        Medician.objects.filter(active=True)
         .annotate(
-            total_sell=Sum("prescriptionthrough__quantity"),
-            total_purchase=Sum("entrancethrough__register_quantity"),
-            sold_quantity=Sum("prescriptionthrough__quantity"),
-            returned_quantity=Sum('prescriptionreturnthrough__quantity')
+            total_sell=Subquery(
+                PrescriptionThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')  # Group by the 'medician' field
+                .annotate(total_sell=Sum('quantity'))  # Sum the sold quantities
+                .values('total_sell'),  # Return the calculated sum
+            ),
+            total_purchase=Subquery(
+                EntranceThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')
+                .annotate(total_purchase=Sum('register_quantity'))
+                .values('total_purchase')
+            ),
+            returned_quantity=Subquery(
+                PrescriptionReturnThrough.objects.filter(medician=OuterRef('pk'))
+                .values('medician')
+                .annotate(returned_quantity=Sum('quantity'))
+                .values('returned_quantity')
+            )
         )
     )
     renderer_classes = (StockExcelSort,)
