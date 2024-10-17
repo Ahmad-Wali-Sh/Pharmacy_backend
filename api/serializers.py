@@ -1962,6 +1962,21 @@ class MedicineMinimumSerializer (serializers.Serializer):
     details_1 = serializers.SerializerMethodField()
     details_2 = serializers.SerializerMethodField()
     details_3 = serializers.SerializerMethodField()
+    sold_quantity = serializers.SerializerMethodField()
+    purchased_quantity = serializers.SerializerMethodField()
+    returned_quantity = serializers.SerializerMethodField()
+    
+    def get_sold_quantity(self, obj):
+        result = PrescriptionThrough.objects.filter(medician=obj.id).aggregate(total_sold=Sum('quantity'))
+        return result['total_sold'] or 0
+    
+    def get_returned_quantity(self, obj):
+        result = PrescriptionReturnThrough.objects.filter(medician=obj.id).aggregate(total_returned=Sum('quantity'))
+        return result['total_returned'] or 0
+    
+    def get_purchased_quantity(self, obj):
+        result = EntranceThrough.objects.filter(medician=obj.id).aggregate(total_purchased=Sum('register_quantity'))
+        return result['total_purchased'] or 0
     
     def get_kind_persian (self, obj):
         if (obj.kind):

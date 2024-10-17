@@ -57,6 +57,7 @@ from rest_framework import status
 from auditlog.registry import auditlog
 from django.utils.timezone import now
 import jdatetime
+from rest_framework.renderers import JSONRenderer
 
 from rest_framework.pagination import PageNumberPagination
 from core.models import (
@@ -601,6 +602,22 @@ class MedicianMinimuFilter(django_filters.FilterSet):
             )
         return queryset
 
+class MedicianMinimumSorted(CSVRenderer):
+    header = [
+        'medicine_id',
+        'medicine_full',
+        'kind_persian',
+        'kind_english',
+        'pharm_group_persian',
+        'pharm_group_english',
+        'existence',
+        'minimum',
+        'maximum',
+        'need',
+        'sold_quantity',
+        'purchased_quantity',
+        'returned_quantity'
+      ]
 
 class MedicianMinimumViewSet(viewsets.ModelViewSet):
     queryset = Medician.objects.all()
@@ -611,6 +628,7 @@ class MedicianMinimumViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "-id",
     ]
+    renderer_classes = [JSONRenderer, MedicianMinimumSorted]
 
 
 class UserView(viewsets.ModelViewSet):
