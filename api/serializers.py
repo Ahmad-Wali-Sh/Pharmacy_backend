@@ -397,6 +397,37 @@ class PrescriptionSerializer(serializers.ModelSerializer):
     order_user_name = serializers.SerializerMethodField()
     prescription_image = serializers.SerializerMethodField()
     history = serializers.SerializerMethodField()
+    discount_value = serializers.SerializerMethodField()
+    over_value = serializers.SerializerMethodField()
+    grand_total = serializers.SerializerMethodField()
+    
+    def get_grand_total (self, obj):
+        grand_total = PrescriptionThrough.objects.filter(prescription=obj.id).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0 
+        return round(max(grand_total, 0), 1)
+    
+    def get_over_value (self, obj):
+        over_money = float(obj.over_money) or 0
+        over_percent = float(obj.over_percent) or 0
+        grand_total = PrescriptionThrough.objects.filter(prescription=obj.id).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0
+        over_from_percent = (over_percent / 100) * grand_total if over_percent > 0 else 0
+        total_after_percent_over = grand_total + over_from_percent
+        net_total = total_after_percent_over + over_money if over_money > 0 else total_after_percent_over
+        over_value = net_total - grand_total
+        
+        return round(max(over_value, 0), 1)
+               
+    
+    def get_discount_value (self, obj):
+        discount_money = float(obj.discount_money) or 0
+        discount_percent = float(obj.discount_percent) or 0
+        grand_total = PrescriptionThrough.objects.filter(prescription=obj.id).aggregate(grand_total=Sum('total_price'))['grand_total'] or 0
+        discount_from_percent = (discount_percent / 100) * grand_total if discount_percent > 0 else 0
+        total_after_percent_discount = grand_total - discount_from_percent
+        net_total = total_after_percent_discount - discount_money if discount_money > 0 else total_after_percent_discount
+        discount_value = grand_total - net_total
+        return round(max(discount_value, 0), 1)
+    
+        
 
     def get_history(self, obj):
         history_list = obj.history.all()
