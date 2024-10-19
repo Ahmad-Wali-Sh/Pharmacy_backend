@@ -123,6 +123,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_xml.renderers import XMLRenderer
 from decimal import Decimal
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
 
 
 class CustomXMLRendererPrescription(XMLRenderer):
@@ -183,6 +185,29 @@ def user_permissions(request):
     additional_permissions_list = [str(p) for p in additional_permissions]
     all_permissions = permissions + additional_permissions_list
     return JsonResponse({"permissions": all_permissions})
+
+
+class TerminateTokenView(APIView):
+    def post(self, request):
+        # Extract username and password from the request data
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        # Authenticate the user using Django's built-in authentication
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            try:
+                # Try to retrieve the token associated with the user
+                token = Token.objects.get(user=user)
+                token.delete()  # Delete the token if it exists
+                return Response({'detail': 'Token successfully deleted.'}, status=status.HTTP_200_OK)
+            except Token.DoesNotExist:
+                # Handle the case where the token does not exist for the user
+                return Response({'detail': 'No active token found for this user.'}, status=status.HTTP_200_OK)
+        else:
+            # If authentication fails, return a 401 unauthorized response
+            return Response({'detail': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class ArrayOverlapFilter(Filter):
