@@ -443,7 +443,9 @@ class PrescriptionSerializer(serializers.ModelSerializer):
         if obj.name:
             return str(obj.name.id) + "." + obj.name.name
     def get_order_user_name(self, obj):
-        if obj.order_user:
+        if obj.order_user and obj.order_user.first_name and obj.order_user.last_name:
+            return obj.order_user.first_name + ' ' + obj.order_user.last_name
+        if obj.order_user and obj.order_user.first_name:
             return obj.order_user.first_name
 
     def get_doctor_name(self, obj):
