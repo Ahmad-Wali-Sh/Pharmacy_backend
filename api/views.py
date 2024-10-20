@@ -209,6 +209,25 @@ class TerminateTokenView(APIView):
             # If authentication fails, return a 401 unauthorized response
             return Response({'detail': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            try:
+                token = Token.objects.get(user=user)
+                token.delete()
+            except Token.DoesNotExist:
+                pass
+
+            new_token, created = Token.objects.get_or_create(user=user)
+
+            return Response({'token': new_token.key}, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class ArrayOverlapFilter(Filter):
     field_class = SimpleArrayField
