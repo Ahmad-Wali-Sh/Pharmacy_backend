@@ -47,15 +47,50 @@ class GlobalSettings(models.Model):
         ("qrcode", "QR Code"),
     )
 
-    ticket_paper_width = models.CharField(max_length=20, default='250px')
-    ticket_fields = models.JSONField(default=dict)
-    detailed_paper_width = models.CharField(max_length=20, default='2600px')
-    detailed_fields = models.JSONField(default=dict)
-    detailed_printer = models.CharField(max_length=255, default='default-printer')
-    ticket_printer = models.CharField(max_length=255, default='default-printer')
-    
-    barcode_type = models.CharField(max_length=10, choices=BARCODE_TYPES, default="code128")
+    ticket_paper_width = models.CharField(max_length=20, default="250px")
+    ticket_fields = models.JSONField(
+        default=dict(
+            {
+                "title": "دواخانه شریف",
+                "time": True,
+                "prescription_number": True,
+                "department": True,
+                "barcode": True,
+                "payment": True,
+            }
+        )
+    )
+    detailed_paper_width = models.CharField(max_length=20, default="2600px")
+    detailed_fields = models.JSONField(
+        default=dict(
+            {
+                "title": "دواخانه شریف",
+                "time": True,
+                "date": True,
+                "patient_name": True,
+                "prescription_number": True,
+                "discount_value": True,
+                "over_value": True,
+                "medicine_title": "اقلام",
+                "index": True,
+                "medicine_full": True,
+                "quantity": True,
+                "each_price": True,
+                "total_price": True,
+                "medicine_length": True,
+                "grand_total": True,
+                "payment_value": True,
+                "order_by": True,
+                "barcode": True,
+            }
+        )
+    )
+    detailed_printer = models.CharField(max_length=255, default="default-printer")
+    ticket_printer = models.CharField(max_length=255, default="default-printer")
 
+    barcode_type = models.CharField(
+        max_length=10, choices=BARCODE_TYPES, default="code128"
+    )
 
     @classmethod
     def get_settings(cls):
@@ -74,7 +109,7 @@ class User(AbstractUser):
         null=True, blank=True, default="", upload_to="frontend/public/dist/images/users"
     )
     additional_permissions = models.ManyToManyField(AdditionalPermission, blank=True)
-    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name", 'hourly_rate']
+    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name", "hourly_rate"]
     hourly_rate = models.FloatField(null=True, blank=True)
 
     def get_additional_permissions(self):
@@ -436,12 +471,15 @@ class Prescription(models.Model):
                 self.grand_total = round(grand_total, 0)
 
         purchased_total = (
-            RevenueRecord.objects.filter(prescription=self.id, prescription_return__isnull=True)
+            RevenueRecord.objects.filter(
+                prescription=self.id, prescription_return__isnull=True
+            )
             .aggregate(total=Sum("amount"))
-            .get("total") or 0
+            .get("total")
+            or 0
         )
 
-        if purchased_total :
+        if purchased_total:
             self.purchased_value = purchased_total
             self.refund = self.grand_total - purchased_total
         else:
@@ -579,14 +617,17 @@ class PrescriptionReturn(models.Model):
                     + float(self.over_money)
                 )
                 self.grand_total = round(grand_total, 1)
-                
+
         purchased_total = (
-            RevenueRecord.objects.filter(prescription_return=self.id, prescription__isnull=True)
+            RevenueRecord.objects.filter(
+                prescription_return=self.id, prescription__isnull=True
+            )
             .aggregate(total=Sum("amount"))
-            .get("total") or 0
+            .get("total")
+            or 0
         )
 
-        if purchased_total :
+        if purchased_total:
             self.purchased_value = purchased_total
             self.refund = self.grand_total - purchased_total
         else:
@@ -708,11 +749,21 @@ class RevenueRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
 
     def __str__(self):
-        if (self.prescription):            
-            return str(self.revenue.id) + " | " + str(self.prescription.prescription_number)
-        if (self.prescription_return):
-            return str(self.revenue.id) + " | " + str(self.prescription_return.prescription_number)
-        else: str(self.revenue.id)
+        if self.prescription:
+            return (
+                str(self.revenue.id)
+                + " | "
+                + str(self.prescription.prescription_number)
+            )
+        if self.prescription_return:
+            return (
+                str(self.revenue.id)
+                + " | "
+                + str(self.prescription_return.prescription_number)
+            )
+        else:
+            str(self.revenue.id)
+
 
 auditlog.register(
     Prescription,
@@ -1048,40 +1099,42 @@ class PurchaseListManual(models.Model):
             self.medicine.unsubmited_existence = self.arrival
             self.medicine.save()
         super(PurchaseListManual, self).save(*args, **kwargs)
-        
+
+
 class JournalCategory(models.Model):
     name = models.CharField(max_length=150)
     info = models.TextField(null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.RESTRICT)   
-    
+    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+
     def __str__(self):
-        return self.name  
-         
+        return self.name
+
+
 class JournalEntry(models.Model):
-    related_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='related_user')
+    related_user = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="related_user"
+    )
     amount = models.FloatField(default=0)
     category = models.ForeignKey(JournalCategory, on_delete=models.PROTECT)
     description = models.TextField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.RESTRICT)
     history = AuditlogHistoryField()
-    
+
     def __str__(self):
-        return f'{self.related_user}: {self.amount}, {self.category.name}'
-    
+        return f"{self.related_user}: {self.amount}, {self.category.name}"
+
+
 auditlog.register(
     JournalEntry,
-    include_fields=[
-        "related_user",
-        "amount",
-        "category",
-        "description",
-        'user'
-    ]
+    include_fields=["related_user", "amount", "category", "description", "user"],
 )
 
+
 class SalaryEntry(models.Model):
-    employee = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='salary_employee')
+    employee = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="salary_employee"
+    )
     payment_date = models.DateField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     hourly_rate = models.FloatField(null=True, blank=True)
@@ -1091,10 +1144,10 @@ class SalaryEntry(models.Model):
     penalty = models.FloatField(null=True, blank=True)
     bonus = models.FloatField(null=True, blank=True)
     checked = models.BooleanField(default=True)
-    user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='user')
-    
+    user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="user")
+
     def __str__(self):
         return f"Salary for {self.employee.first_name} on {self.payment_date} - {self.amount}"
-    
+
 
 from . import signals
