@@ -39,7 +39,8 @@ from core.models import (
     RevenueRecord,
     JournalCategory,
     JournalEntry,
-    SalaryEntry
+    SalaryEntry,
+    GlobalSettings
 )
 import ast
 from datetime import datetime, timedelta
@@ -2232,3 +2233,8 @@ class UniqueMedicineSerializer(serializers.ModelSerializer):
         # Fetch all batches related to this medicine
         batches = EntranceThrough.objects.filter(medician=medician_id, expire_date__lte=end_date)
         return BatchDetailSerializer(batches, many=True).data
+    
+class GlobalSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalSettings
+        fields = "__all__"

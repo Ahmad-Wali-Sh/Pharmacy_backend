@@ -58,7 +58,8 @@ from .views import (
     EntranceThroughExcelView,
     SalaryEntryViewSet,
     EntranceExcelView,
-    UniqueMedicineViewSet
+    UniqueMedicineViewSet,
+    GlobalSettingsView
 )
 
 prescription_extra_actions = {
@@ -127,6 +128,7 @@ router.register(r"medicine-expiry", UniqueMedicineViewSet, basename="medicine-ex
 urlpatterns = [
     path("", include(router.urls)),
     path("user/permissions/", user_permissions, name="user_permissions"),
+    path('global-settings/', GlobalSettingsView.as_view(), name='global_settings'),
     path(
         "prescription/<int:pk>/previous/",
         PrescriptionViewSet.as_view({"get": "previous"}),

@@ -59,10 +59,32 @@ UserAdmin.fieldsets += (
 )
 
 class GlobalSettingsAdmin(admin.ModelAdmin):
-    list_display = ('barcode_type',)
+    list_display = (
+        'barcode_type',
+        'ticket_paper_width',
+        'detailed_paper_width',
+        'ticket_printer',
+        'detailed_printer' 
+    )
     fieldsets = (
-        (None, {
-            'fields': ('barcode_type',),
+        ('Barcode Settings', {
+            'fields': (
+                'barcode_type',
+            )
+        }),
+        ('Ticket Print Settings', {
+            'fields': (
+                'ticket_paper_width', 
+                'ticket_fields',
+                'ticket_printer',
+            )
+        }),
+        ('Detailed Print Settings', {
+            'fields': (
+                'detailed_paper_width',
+                'detailed_fields',
+                'detailed_printer',
+            )
         }),
     )
 

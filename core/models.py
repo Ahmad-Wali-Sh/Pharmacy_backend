@@ -47,9 +47,15 @@ class GlobalSettings(models.Model):
         ("qrcode", "QR Code"),
     )
 
-    barcode_type = models.CharField(
-        max_length=10, choices=BARCODE_TYPES, default="code128"
-    )
+    ticket_paper_width = models.CharField(max_length=20, default='250px')
+    ticket_fields = models.JSONField(default=dict)
+    detailed_paper_width = models.CharField(max_length=20, default='2600px')
+    detailed_fields = models.JSONField(default=dict)
+    detailed_printer = models.CharField(max_length=255, default='default-printer')
+    ticket_printer = models.CharField(max_length=255, default='default-printer')
+    
+    barcode_type = models.CharField(max_length=10, choices=BARCODE_TYPES, default="code128")
+
 
     @classmethod
     def get_settings(cls):
@@ -60,8 +66,7 @@ class GlobalSettings(models.Model):
 
     @classmethod
     def create_default_settings(cls):
-        settings = cls.objects.create(barcode_type="code128")
-        return settings
+        return cls.objects.create(barcode_type="code128")
 
 
 class User(AbstractUser):

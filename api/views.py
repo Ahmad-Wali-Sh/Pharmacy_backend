@@ -49,6 +49,7 @@ from .serializers import (
     SalaryEntrySerializer,
     EntranceExcelSerializer,
     UniqueMedicineSerializer,
+    GlobalSettingsSerializer
 )
 from rest_framework_csv.renderers import CSVRenderer
 from django.db.models import Subquery, OuterRef, Sum
@@ -98,6 +99,7 @@ from core.models import (
     JournalCategory,
     JournalEntry,
     SalaryEntry,
+    GlobalSettings
 )
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -1911,3 +1913,29 @@ class UniqueMedicineViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return EntranceThrough.objects.distinct("medician")
+   
+class GlobalSettingsView(APIView):
+    def get(self, request):
+        """
+        Get the global settings.
+        """
+        try:
+            settings = GlobalSettings.get_settings()
+            serializer = GlobalSettingsSerializer(settings)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except GlobalSettings.DoesNotExist:
+            return Response({"detail": "Settings not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request):
+        """
+        Update the global settings.
+        """
+        try:
+            settings = GlobalSettings.get_settings()
+            serializer = GlobalSettingsSerializer(settings, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except GlobalSettings.DoesNotExist:
+            return Response({"detail": "Settings not found."}, status=status.HTTP_404_NOT_FOUND)
