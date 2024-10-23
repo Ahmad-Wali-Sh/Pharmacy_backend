@@ -102,6 +102,16 @@ class GlobalSettingsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+class AdditionalPermissionsAdmin (admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 admin.site.register(GlobalSettings, GlobalSettingsAdmin)
 
 
@@ -228,7 +238,7 @@ class MedicineAdmin(ImportExportModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(AdditionalPermission, ImportAdmin)
+admin.site.register(AdditionalPermission, AdditionalPermissionsAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, MedicineAdmin)
 admin.site.register(Kind, ImportAdmin)

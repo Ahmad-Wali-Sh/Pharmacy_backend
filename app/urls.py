@@ -20,6 +20,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from api.views import TerminateTokenView, LoginView
 
+
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
@@ -28,3 +31,5 @@ urlpatterns = [
     path("api/terminate-token/", TerminateTokenView.as_view(), name='terminate-token'),
     path("api/login/", LoginView.as_view(), name='login'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+from core.startup import *
