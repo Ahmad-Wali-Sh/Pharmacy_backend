@@ -2,41 +2,20 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import Sum
 from image_optimizer.fields import OptimizedImageField
-from django.contrib.auth.models import User
 from django.utils import timezone
 import random
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime
-from django.utils.encoding import force_str
-from django.forms.widgets import DateTimeInput
 from django.utils.translation import gettext_lazy as _
-from django import forms
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import AbstractUser
 from barcode.writer import ImageWriter
-from io import BytesIO
-from django.core.files import File
 from django.db.models import Q
 from jdatetime import datetime as jdatetime
-from django.contrib.auth.models import Group
 from core.utils import calculate_rounded_value
 from auditlog.registry import auditlog
 from auditlog.models import AuditlogHistoryField
 from barcode import Code39, Code128, EAN13, UPCA
-import qrcode
-from django.core.files.base import ContentFile
-
-Group.add_to_class(
-    "description", models.CharField(max_length=180, null=True, blank=True)
-)
 
 
-class AdditionalPermission(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
-
+from .user_models import AdditionalPermission, User
 
 class GlobalSettings(models.Model):
     BARCODE_TYPES = (
@@ -103,48 +82,6 @@ class GlobalSettings(models.Model):
     @classmethod
     def create_default_settings(cls):
         return cls.objects.create(barcode_type="code128")
-
-
-class User(AbstractUser):
-    image = models.ImageField(
-        null=True, blank=True, default="", upload_to="frontend/public/dist/images/users"
-    )
-    additional_permissions = models.ManyToManyField(AdditionalPermission, blank=True)
-    REQUIRED_FIELDS = ["image", "email", "first_name", "last_name", "hourly_rate"]
-    hourly_rate = models.FloatField(null=True, blank=True)
-
-    def get_additional_permissions(self):
-        return ", ".join(str(p) for p in self.additional_permissions.all())
-
-    get_additional_permissions.short_description = "Additional permissions"
-
-    def __str__(self):
-        if self.first_name and self.last_name:
-            return self.first_name + " " + self.last_name
-        elif self.first_name:
-            return self.first_name
-        else:
-            return self.username
-
-
-class ISODateTimeField(forms.DateTimeField):
-
-    widget = DateTimeInput
-    default_error_messages = {
-        "invalid": _("Enter a valid date/time."),
-    }
-
-    def to_python(self, value):
-        value = value.strip()
-        try:
-            return self.strptime(value, format)
-        except (ValueError, TypeError):
-            raise forms.ValidationError(self.error_messages["invalid"], code="invalid")
-
-    def strptime(self, value, format):
-        """stackoverflow won't let me save just an indent!"""
-        return parse_datetime(force_str(value))
-
 
 class Kind(models.Model):
     name_english = models.CharField(max_length=60, null=True, blank=True, unique=True)
@@ -529,9 +466,6 @@ class Prescription(models.Model):
                 self.barcode_str = upca.get_fullcode()
 
         return super().save(*args, **kwargs)
-
-
-# Prescriptio Returns Models...
 
 
 class DepartmentReturn(models.Model):
