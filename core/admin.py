@@ -84,6 +84,7 @@ class GlobalSettingsAdmin(admin.ModelAdmin):
                 'detailed_paper_width',
                 'detailed_fields',
                 'detailed_printer',
+                'detailed_text_font'
             )
         }),
     )

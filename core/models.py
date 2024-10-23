@@ -61,6 +61,7 @@ class GlobalSettings(models.Model):
         )
     )
     detailed_paper_width = models.CharField(max_length=20, default="2600px")
+    detailed_text_font = models.CharField(max_length=20, default="12px")
     detailed_fields = models.JSONField(
         default=dict(
             {
