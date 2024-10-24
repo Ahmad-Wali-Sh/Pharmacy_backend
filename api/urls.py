@@ -36,7 +36,6 @@ from .views import (
     LastPrescriptionView,
     BigCompanyView,
     EntranceThroughExpiresView,
-    user_permissions,
     StockView,
     StockExcelView,
     MedicianOrderViewSet,
@@ -127,7 +126,6 @@ router.register(r"medicine-expiry", UniqueMedicineViewSet, basename="medicine-ex
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("user/permissions/", user_permissions, name="user_permissions"),
     path('global-settings/', GlobalSettingsView.as_view(), name='global_settings'),
     path(
         "prescription/<int:pk>/previous/",

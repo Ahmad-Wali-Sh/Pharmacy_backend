@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "single_session",
     "api",
     "core",
+    "authentication",
+    "user",
     "auditlog",
     "django_cleanup.apps.CleanupConfig",
 ]

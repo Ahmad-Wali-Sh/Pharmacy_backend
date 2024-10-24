@@ -46,17 +46,8 @@ from core.models import (
 )
 
 from django_jalali.admin.filters import JDateFieldListFilter
-from django.contrib.auth.admin import UserAdmin
-from .models import User, AdditionalPermission
+from .models import AdditionalPermission
 
-
-UserAdmin.list_display += ("image",)
-UserAdmin.list_filter += ("image",)
-
-UserAdmin.list_display += ("get_additional_permissions",)
-UserAdmin.fieldsets += (
-    ("Extra Fields", {"fields": ("image", "hourly_rate","additional_permissions")}),
-)
 
 class GlobalSettingsAdmin(admin.ModelAdmin):
     list_display = (
@@ -237,7 +228,7 @@ class MedicineAdmin(ImportExportModelAdmin):
     export_to_excel.short_description = 'Export to Excel'
 
 
-admin.site.register(User, UserAdmin)
+
 admin.site.register(AdditionalPermission, AdditionalPermissionsAdmin)
 admin.site.register(PharmGroup, ImportAdmin)
 admin.site.register(Medician, MedicineAdmin)

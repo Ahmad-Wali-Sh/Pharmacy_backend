@@ -178,67 +178,6 @@ class CustomXMLRendererPrescription(XMLRenderer):
                 item[new_field] = item.pop(old_field)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def user_permissions(request):
-    user = request.user
-    permissions = list(user.get_all_permissions())
-    additional_permissions = user.additional_permissions.all()
-    additional_permissions_list = [str(p) for p in additional_permissions]
-    all_permissions = permissions + additional_permissions_list
-    return JsonResponse({"permissions": all_permissions})
-
-
-class TerminateTokenView(APIView):
-    def post(self, request):
-        # Extract username and password from the request data
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        # Authenticate the user using Django's built-in authentication
-        user = authenticate(username=username, password=password)
-
-        if user is not None:
-            try:
-                # Try to retrieve the token associated with the user
-                token = Token.objects.get(user=user)
-                token.delete()  # Delete the token if it exists
-                return Response({'detail': 'Token successfully deleted.'}, status=status.HTTP_200_OK)
-            except Token.DoesNotExist:
-                # Handle the case where the token does not exist for the user
-                return Response({'detail': 'No active token found for this user.'}, status=status.HTTP_200_OK)
-        else:
-            # If authentication fails, return a 401 unauthorized response
-            return Response({'detail': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-class LoginView(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
-
-        if user is not None:
-            try:
-                token = Token.objects.get(user=user)
-                token.delete()
-            except Token.DoesNotExist:
-                pass
-
-            new_token, created = Token.objects.get_or_create(user=user)
-
-            return Response({'token': new_token.key}, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Invalid username or password.'}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-class ArrayOverlapFilter(Filter):
-    field_class = SimpleArrayField
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("lookup_expr", "overlap")
-        super().__init__(*args, **kwargs)
-
-
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 50
     page_size_query_param = "page_size"
@@ -258,9 +197,6 @@ def filter_by_generics(queryset, name, value):
 class CharArrayFilter(django_filters.BaseCSVFilter, django_filters.CharFilter):
     pass
 
-
-class CharInFilter(django_filters.BaseInFilter, django_filters.CharFilter):
-    pass
 
 
 class ListFilter(Filter):
@@ -676,11 +612,6 @@ class MedicianMinimumViewSet(viewsets.ModelViewSet):
     ]
     renderer_classes = [JSONRenderer, MedicianMinimumSorted]
 
-
-class UserView(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [D7896DjangoModelPermissions]
 
 
 class StoreFilter(django_filters.FilterSet):
